@@ -1,0 +1,4 @@
+../Core/Src/oled_gifs.c:21:6:displayGIF24fps	2
+../Core/Src/oled_gifs.c:30:6:displayGIF	2
+../Core/Src/oled_gifs.c:39:6:displaySadPepe	1
+../Core/Src/oled_gifs.c:43:6:displayAreYouGey	1
