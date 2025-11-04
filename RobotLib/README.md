@@ -45,7 +45,17 @@ The library is now organized into four logical components:
    - Exponential moving average filter
    - Simple odometry
 
-Total size: ~97KB (header-only library)
+5. **[units_math.h](units_math.h)** (13KB) ⭐ NEW!
+   - Advanced mathematical functions for typed units
+   - Square root and power operations
+   - Interpolation (linear, cubic Hermite, smoothstep)
+   - Ramp/slew rate limiting for smooth motion
+   - Statistical functions (mean, variance, std deviation)
+   - Angle wrapping and shortest angular distance
+   - Hysteresis comparator (Schmitt trigger)
+   - Numerical derivatives and first-order lag filter
+
+Total size: ~110KB (header-only library)
 
 ## Why This Architecture?
 
