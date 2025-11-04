@@ -21,6 +21,7 @@ RobotLib/examples/arm_kin
 RobotLib/examples/sensor_fusion
 RobotLib/examples/omni_robot
 RobotLib/examples/motor_control
+RobotLib/examples/ex??
 
 # PlatformIO
 .pio/
