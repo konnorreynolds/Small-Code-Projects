@@ -1,0 +1,44 @@
+# Build artifacts
+*.o
+*.obj
+*.exe
+*.out
+*.app
+*.i*86
+*.x86_64
+*.hex
+
+# Test executables
+test_*
+!test_*.cpp
+!test_*.h
+
+# PlatformIO
+.pio/
+.vscode/
+.pioenvs/
+.piolibdeps/
+
+# IDE
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
