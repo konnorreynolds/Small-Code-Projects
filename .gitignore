@@ -13,6 +13,15 @@ test_*
 !test_*.cpp
 !test_*.h
 
+# Example executables
+RobotLib/examples/diff_drive
+RobotLib/examples/pid_tune
+RobotLib/examples/line_follow
+RobotLib/examples/arm_kin
+RobotLib/examples/sensor_fusion
+RobotLib/examples/omni_robot
+RobotLib/examples/motor_control
+
 # PlatformIO
 .pio/
 .vscode/
