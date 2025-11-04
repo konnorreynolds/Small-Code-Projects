@@ -157,13 +157,13 @@ inline T cubicHermite(const T& p0, const T& v0, const T& p1, const T& v1, double
 /// Smooth step function (ease in/out)
 /// Returns smooth interpolation from 0 to 1 as x goes from 0 to 1
 inline double smoothstep(double x) {
-    x = clamp(x, 0.0, 1.0);
+    x = numerical::clamp(x, 0.0, 1.0);
     return x * x * (3.0 - 2.0 * x);
 }
 
 /// Smoother step function (even smoother than smoothstep)
 inline double smootherstep(double x) {
-    x = clamp(x, 0.0, 1.0);
+    x = numerical::clamp(x, 0.0, 1.0);
     return x * x * x * (x * (x * 6.0 - 15.0) + 10.0);
 }
 
@@ -249,13 +249,21 @@ inline double applyDeadbandSimple(double value, double threshold) {
 /// Wrap angle to [-PI, +PI] range
 template<typename AngleRatio>
 inline Angle<AngleRatio> wrapToPi(const Angle<AngleRatio>& angle) {
-    return angle.normalizeSymmetric();
+    double rad = angle.toRadians();
+    // Normalize to [-PI, PI]
+    while (rad > constants::PI) rad -= constants::TWO_PI;
+    while (rad < -constants::PI) rad += constants::TWO_PI;
+    return Angle<AngleRatio>::fromRadians(rad);
 }
 
 /// Wrap angle to [0, 2*PI] range
 template<typename AngleRatio>
 inline Angle<AngleRatio> wrapTo2Pi(const Angle<AngleRatio>& angle) {
-    return angle.normalizePositive();
+    double rad = angle.toRadians();
+    // Normalize to [0, 2*PI]
+    while (rad < 0) rad += constants::TWO_PI;
+    while (rad >= constants::TWO_PI) rad -= constants::TWO_PI;
+    return Angle<AngleRatio>::fromRadians(rad);
 }
 
 /// Compute shortest angular distance from a to b
@@ -342,7 +350,7 @@ inline double map(double value, double fromMin, double fromMax,
 inline double mapClamped(double value, double fromMin, double fromMax,
                         double toMin, double toMax) {
     double result = map(value, fromMin, fromMax, toMin, toMax);
-    return clamp(result, min(toMin, toMax), max(toMin, toMax));
+    return numerical::clamp(result, numerical::min(toMin, toMax), numerical::max(toMin, toMax));
 }
 
 // ============================================================================

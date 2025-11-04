@@ -33,8 +33,8 @@ using namespace robotics;
 // ============================================================================
 struct RobotConfig {
     // Physical dimensions
-    Meters wheelbase = m(0.15);           // 15 cm between wheels
-    Meters wheelDiameter = cm(6.5);       // 6.5 cm wheel diameter
+    Meters wheelbase = m(0.15);            // 15 cm between wheels
+    Meters wheelDiameter = m(0.065);       // 6.5 cm wheel diameter
 
     // Motion limits
     MetersPerSecond baseSpeed = mps(0.3);  // Base forward speed
@@ -43,7 +43,7 @@ struct RobotConfig {
 
     // Sensor configuration
     static constexpr size_t NUM_SENSORS = 5;
-    Meters sensorSpacing = cm(1.0);        // 1 cm between sensors
+    Meters sensorSpacing = m(0.01);        // 1 cm between sensors
 
     // PID gains for line following
     double kP = 2.5;    // Proportional gain
@@ -96,7 +96,7 @@ public:
                 double range = blackCalibration_[i] - whiteCalibration_[i];
                 if (std::abs(range) > 0.001) {
                     normalized = (readings[i] - whiteCalibration_[i]) / range;
-                    normalized = clamp(normalized, 0.0, 1.0);
+                    normalized = numerical::clamp(normalized, 0.0, 1.0);
                 }
             }
 
@@ -132,7 +132,7 @@ public:
         double normalizedPosition = weightedSum / totalWeight;
         normalizedPosition /= ((NUM_SENSORS - 1) / 2.0);
 
-        return clamp(normalizedPosition, -1.0, 1.0);
+        return numerical::clamp(normalizedPosition, -1.0, 1.0);
     }
 
     // Check if line is lost (all sensors see white)
@@ -211,6 +211,7 @@ public:
         // Check for special conditions
         lineLost_ = sensors_.isLineLost();
         bool atIntersection = sensors_.isAtIntersection();
+        (void)atIntersection;  // Reserved for future use
 
         if (lineLost_) {
             // Line lost - use last known position
@@ -228,9 +229,9 @@ public:
         double speedFactor = 1.0 - std::abs(steering) * 0.5;
         MetersPerSecond adjustedSpeed = config_.baseSpeed * speedFactor;
         adjustedSpeed = MetersPerSecond::fromMetersPerSecond(
-            clamp(adjustedSpeed.toMetersPerSecond(),
-                  config_.minSpeed.toMetersPerSecond(),
-                  config_.maxSpeed.toMetersPerSecond())
+            numerical::clamp(adjustedSpeed.toMetersPerSecond(),
+                            config_.minSpeed.toMetersPerSecond(),
+                            config_.maxSpeed.toMetersPerSecond())
         );
 
         // Convert steering to angular velocity

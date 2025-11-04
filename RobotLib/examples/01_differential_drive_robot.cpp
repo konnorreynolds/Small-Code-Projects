@@ -23,12 +23,12 @@ using namespace units;
 // Robot Configuration
 // ============================================================================
 struct RobotConfig {
-    Meters wheelbase = m(0.30);           // 30cm between wheels
-    Meters wheelDiameter = cm(10);         // 10cm diameter wheels
-    RPM maxMotorRPM = RPM::fromRPM(200);  // Max 200 RPM
-    Volts nominalVoltage = V(12.0);       // 12V battery
-    Volts minVoltage = V(10.0);           // Low battery threshold
-    Volts maxVoltage = V(12.6);           // Fully charged
+    Meters wheelbase = m(0.30);            // 30cm between wheels
+    Meters wheelDiameter = m(0.10);        // 10cm diameter wheels
+    RPM maxMotorRPM = RPM::fromRPM(200);   // Max 200 RPM
+    Volts nominalVoltage = V(12.0);        // 12V battery
+    Volts minVoltage = V(10.0);            // Low battery threshold
+    Volts maxVoltage = V(12.6);            // Fully charged
 };
 
 // ============================================================================
@@ -145,10 +145,10 @@ int main() {
     std::cout << "-----------------------------------\n";
     robot.setVelocity(mps(0.5), radps(0.0));
 
-    auto [leftRPM, rightRPM] = robot.getMotorCommands();
+    std::pair<RPM, RPM> motors1 = robot.getMotorCommands();
     std::cout << "Motor commands:\n";
-    std::cout << "  Left motor:  " << leftRPM.toRPM() << " RPM\n";
-    std::cout << "  Right motor: " << rightRPM.toRPM() << " RPM\n\n";
+    std::cout << "  Left motor:  " << motors1.first.toRPM() << " RPM\n";
+    std::cout << "  Right motor: " << motors1.second.toRPM() << " RPM\n\n";
 
     // ========================================================================
     // Test 2: Turn in Place
@@ -157,10 +157,10 @@ int main() {
     std::cout << "---------------------------------------\n";
     robot.setVelocity(mps(0.0), radps(0.5));
 
-    auto [leftRPM2, rightRPM2] = robot.getMotorCommands();
+    std::pair<RPM, RPM> motors2 = robot.getMotorCommands();
     std::cout << "Motor commands:\n";
-    std::cout << "  Left motor:  " << leftRPM2.toRPM() << " RPM\n";
-    std::cout << "  Right motor: " << rightRPM2.toRPM() << " RPM\n\n";
+    std::cout << "  Left motor:  " << motors2.first.toRPM() << " RPM\n";
+    std::cout << "  Right motor: " << motors2.second.toRPM() << " RPM\n\n";
 
     // ========================================================================
     // Test 3: Arc Turn (forward + rotation)
@@ -169,10 +169,10 @@ int main() {
     std::cout << "------------------------------------------------------\n";
     robot.setVelocity(mps(0.3), radps(0.3));
 
-    auto [leftRPM3, rightRPM3] = robot.getMotorCommands();
+    std::pair<RPM, RPM> motors3 = robot.getMotorCommands();
     std::cout << "Motor commands:\n";
-    std::cout << "  Left motor:  " << leftRPM3.toRPM() << " RPM\n";
-    std::cout << "  Right motor: " << rightRPM3.toRPM() << " RPM\n\n";
+    std::cout << "  Left motor:  " << motors3.first.toRPM() << " RPM\n";
+    std::cout << "  Right motor: " << motors3.second.toRPM() << " RPM\n\n";
 
     // ========================================================================
     // Test 4: Odometry Update

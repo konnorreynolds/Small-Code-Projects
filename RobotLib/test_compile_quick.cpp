@@ -233,6 +233,7 @@ int main() {
         auto d = m(10);
         auto t = s(5);
         auto v = d / t;  // OK: creates velocity
+        (void)v;  // Suppress unused variable warning
 
         // These would NOT compile (commented out):
         // auto bad1 = d + t;  // ERROR: can't add distance and time

@@ -19,27 +19,6 @@
 #include "../units_utilities.h"
 
 #include <iostream>
-<parameter name="content">// ============================================================================
-// Example 4: 2-DOF Robot Arm Kinematics
-// ============================================================================
-// This example demonstrates forward and inverse kinematics for a 2-joint
-// planar robot arm (SCARA-style or RR manipulator).
-//
-// Topics covered:
-// - Forward kinematics (joint angles → end-effector position)
-// - Inverse kinematics (desired position → joint angles)
-// - Workspace analysis
-// - Singularity detection
-// - Trajectory planning
-// - Joint limits and collision avoidance
-// ============================================================================
-
-#include "../units_core.h"
-#include "../units_physics.h"
-#include "../units_robotics.h"
-#include "../units_utilities.h"
-
-#include <iostream>
 #include <vector>
 #include <iomanip>
 #include <cmath>
@@ -56,10 +35,10 @@ struct ArmConfig {
     Meters link2Length = m(0.25);   // 25 cm elbow to wrist
 
     // Joint limits
-    Radians joint1Min = deg(-135);
-    Radians joint1Max = deg(135);
-    Radians joint2Min = deg(-150);
-    Radians joint2Max = deg(150);
+    Radians joint1Min = Radians::fromDegrees(-135);
+    Radians joint1Max = Radians::fromDegrees(135);
+    Radians joint2Min = Radians::fromDegrees(-150);
+    Radians joint2Max = Radians::fromDegrees(150);
 
     // Motion limits
     RadiansPerSecond maxJointVelocity = radps(2.0);  // 2 rad/s
@@ -73,8 +52,8 @@ struct ArmConfig {
 
     // Clamp joint angles to limits
     void clampJoints(Radians& j1, Radians& j2) const {
-        double j1_rad = clamp(j1.toRadians(), joint1Min.toRadians(), joint1Max.toRadians());
-        double j2_rad = clamp(j2.toRadians(), joint2Min.toRadians(), joint2Max.toRadians());
+        double j1_rad = numerical::clamp(j1.toRadians(), joint1Min.toRadians(), joint1Max.toRadians());
+        double j2_rad = numerical::clamp(j2.toRadians(), joint2Min.toRadians(), joint2Max.toRadians());
         j1 = rad(j1_rad);
         j2 = rad(j2_rad);
     }
@@ -189,7 +168,7 @@ public:
         double cosTheta2 = (x * x + y * y - l1 * l1 - l2 * l2) / (2 * l1 * l2);
 
         // Numerical safety
-        cosTheta2 = clamp(cosTheta2, -1.0, 1.0);
+        cosTheta2 = numerical::clamp(cosTheta2, -1.0, 1.0);
 
         double theta2 = std::acos(cosTheta2);
 
@@ -399,10 +378,10 @@ int main() {
     std::cout << "===========================\n";
 
     std::vector<JointState> testConfigs = {
-        JointState(deg(0), deg(0)),
-        JointState(deg(45), deg(45)),
-        JointState(deg(90), deg(-90)),
-        JointState(deg(-45), deg(90))
+        JointState(rad(0), rad(0)),
+        JointState(rad(0.785), rad(0.785)),
+        JointState(rad(1.571), rad(-1.571)),
+        JointState(rad(-0.785), rad(1.571))
     };
 
     for (const auto& joints : testConfigs) {
@@ -476,10 +455,10 @@ int main() {
     std::cout << "==============================\n";
 
     std::vector<JointState> singularityTests = {
-        JointState(deg(45), deg(0)),      // Extended
-        JointState(deg(45), deg(180)),    // Retracted
-        JointState(deg(45), deg(90)),     // Not singular
-        JointState(deg(0), deg(5))        // Nearly extended
+        JointState(rad(0.785), rad(0)),      // Extended
+        JointState(rad(0.785), rad(3.142)),    // Retracted
+        JointState(rad(0.785), rad(1.571)),     // Not singular
+        JointState(rad(0), rad(0.087))        // Nearly extended
     };
 
     for (const auto& joints : singularityTests) {
@@ -499,7 +478,7 @@ int main() {
     std::cout << "\n\nTest 5: Jacobian Analysis\n";
     std::cout << "==========================\n";
 
-    JointState testJoint(deg(45), deg(60));
+    JointState testJoint(rad(0.785), rad(1.047));
     std::cout << "Configuration: ";
     testJoint.print();
     std::cout << "\n\n";
@@ -513,8 +492,8 @@ int main() {
     std::cout << "\n\nTest 6: Trajectory Planning\n";
     std::cout << "============================\n";
 
-    JointState trajStart(deg(0), deg(0));
-    JointState trajGoal(deg(90), deg(-45));
+    JointState trajStart(rad(0), rad(0));
+    JointState trajGoal(rad(1.571), rad(-0.785));
 
     std::cout << "Planning trajectory from ";
     trajStart.print();

@@ -279,24 +279,24 @@ public:
 
         if (time_ < 2.0) {
             // Ramp up to 30°
-            currentAngle_ = deg(15.0 * time_);
-            currentAngularVel_ = radps(deg(15).toRadians());
+            currentAngle_ = Radians::fromDegrees(15.0 * time_);
+            currentAngularVel_ = radps(Radians::fromDegrees(15).toRadians());
         } else if (time_ < 4.0) {
             // Hold at 30°
-            currentAngle_ = deg(30);
+            currentAngle_ = Radians::fromDegrees(30);
             currentAngularVel_ = radps(0);
         } else if (time_ < 6.0) {
             // Return to 0°
-            currentAngle_ = deg(30 - 15.0 * (time_ - 4.0));
+            currentAngle_ = Radians::fromDegrees(30 - 15.0 * (time_ - 4.0));
             currentAngularVel_ = radps(-deg(15).toRadians());
         } else if (time_ < 8.0) {
             // Tilt to -20°
-            currentAngle_ = deg(-10.0 * (time_ - 6.0));
+            currentAngle_ = Radians::fromDegrees(-10.0 * (time_ - 6.0));
             currentAngularVel_ = radps(-deg(10).toRadians());
         } else {
             // Return to 0°
-            currentAngle_ = deg(-20 + 10.0 * (time_ - 8.0));
-            currentAngularVel_ = radps(deg(10).toRadians());
+            currentAngle_ = Radians::fromDegrees(-20 + 10.0 * (time_ - 8.0));
+            currentAngularVel_ = radps(Radians::fromDegrees(10).toRadians());
         }
 
         return {currentAngle_, currentAngularVel_};
