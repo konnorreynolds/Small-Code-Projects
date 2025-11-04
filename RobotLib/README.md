@@ -1,9 +1,17 @@
 # Professional Robotics Units Library v2.1
 ## A Type-Safe, Zero-Overhead Units System for Robotics & Engineering
 
+## ⚠️ RECENT UPDATES (Nov 2025)
+- ✅ **Fixed C++11 compatibility** (removed C++17 `inline constexpr`)
+- ✅ **Fixed constexpr functions** for strict C++11 compliance
+- ✅ **Enhanced Pose2D** to accept any Angle type (deg, rad, etc.)
+- ✅ **Added utilities header** with streaming operators, differential drive, battery monitoring, and more!
+
+See [CHANGES.md](CHANGES.md) for detailed changelog.
+
 ### 📁 File Structure
 
-The library is now organized into three logical components:
+The library is now organized into four logical components:
 
 1. **[units_core.h](units_core.h)** (28KB)
    - Foundation and base units
@@ -28,7 +36,16 @@ The library is now organized into three logical components:
    - Digital filters (Kalman, complementary, low-pass, median)
    - Path following algorithms (Pure Pursuit)
 
-Total size: ~84KB (header-only library)
+4. **[units_utilities.h](units_utilities.h)** (13KB) ⭐ NEW!
+   - Streaming operators (std::cout support)
+   - Additional Vec2D utilities (perpendicular, clamp, etc.)
+   - Differential drive kinematics
+   - Battery monitoring utilities
+   - Motor controller helpers (RPM conversion, deadband)
+   - Exponential moving average filter
+   - Simple odometry
+
+Total size: ~97KB (header-only library)
 
 ## Why This Architecture?
 
