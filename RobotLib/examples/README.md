@@ -175,6 +175,103 @@ double estimatedBias = kalman.getEstimatedBias();
 
 ---
 
+### 06. Omnidirectional Robot (`06_omnidirectional_robot.cpp`)
+**Difficulty**: ⭐⭐ Intermediate
+**Topics**: Mecanum wheels, holonomic drive, field-centric control
+
+Complete mecanum wheel robot with omnidirectional kinematics. Features:
+- **Inverse kinematics**: Desired motion → wheel speeds
+- **Forward kinematics**: Measured wheels → actual robot motion
+- Holonomic motion (3 degrees of freedom)
+- Field-centric control (drive relative to field, not robot)
+- Velocity normalization for wheel saturation
+- Omnidirectional odometry
+
+**Compile**: `g++ -std=c++11 -I.. 06_omnidirectional_robot.cpp -o omni_robot`
+
+**What you'll learn**:
+```cpp
+// Calculate wheel velocities for desired motion
+auto wheels = drive.inverseKinematics(
+    mps(0.5),    // Forward velocity
+    mps(0.3),    // Strafe velocity (sideways!)
+    radps(0.2)   // Rotation
+);
+
+// Field-centric control (drive relative to field)
+auto robotVel = MecanumDrive::fieldToRobot(
+    vx_field, vy_field, omega, robotHeading
+);
+
+// Normalize to prevent wheel saturation
+wheels.normalize(maxSpeed);
+```
+
+**Real-world use cases**:
+- Warehouse robots (AGVs)
+- Competition robots (FRC, VEX)
+- Mobile manipulation platforms
+- Precision maneuvering in tight spaces
+
+**Advantages over differential drive**:
+- Can strafe sideways without turning
+- Maintain heading while translating
+- Superior maneuverability
+
+---
+
+### 07. Advanced Motor Control (`07_motor_control_encoders.cpp`)
+**Difficulty**: ⭐⭐⭐ Advanced
+**Topics**: Velocity control, encoder feedback, feedforward+feedback control
+
+Professional-grade motor control with encoder feedback. Demonstrates:
+- **Velocity control**: Precise RPM control with PID
+- **Feedforward control**: Model-based control (kS, kV, kA)
+- **Feedback control**: PID for error correction
+- Encoder filtering (moving average + low-pass)
+- Acceleration limiting for smooth motion
+- Load disturbance rejection
+
+**Compile**: `g++ -std=c++11 -I.. 07_motor_control_encoders.cpp -o motor_control`
+
+**What you'll learn**:
+```cpp
+// Configure feedforward gains
+controller.setFeedforward(
+    0.5,   // kS: Static friction (volts)
+    0.002, // kV: Velocity feedforward (V per RPM)
+    0.01   // kA: Acceleration feedforward
+);
+
+// Configure feedback (PID) gains
+controller.setVelocityPID(0.05, 0.5, 0.002);
+
+// Control loop
+auto output = controller.update(targetRPM, currentTime, dt);
+motor.setVoltage(output.voltage);
+```
+
+**Key concepts**:
+- Feedforward provides ~90% of control effort
+- Feedback (PID) corrects for model errors and disturbances
+- Acceleration limiting prevents wheel slip
+- Encoder filtering reduces measurement noise
+
+**Applications**:
+- FRC/VEX competition robots
+- Precision CNC machines
+- Electric vehicle traction control
+- Drone motor control
+- Industrial automation
+
+**Tuning procedure included**:
+1. Measure kV (velocity feedforward)
+2. Measure kS (static friction)
+3. Tune feedback PID
+4. Add kA for acceleration
+
+---
+
 ## 🚀 Quick Start
 
 ### Running All Examples
@@ -188,6 +285,8 @@ g++ -std=c++11 -I.. 02_pid_tuning_guide.cpp -o pid_tune
 g++ -std=c++11 -I.. 03_line_following_robot.cpp -o line_follow
 g++ -std=c++11 -I.. 04_robot_arm_kinematics.cpp -o arm_kin
 g++ -std=c++11 -I.. 05_sensor_fusion_imu.cpp -o sensor_fusion
+g++ -std=c++11 -I.. 06_omnidirectional_robot.cpp -o omni_robot
+g++ -std=c++11 -I.. 07_motor_control_encoders.cpp -o motor_control
 
 # Run them
 ./diff_drive
@@ -195,6 +294,8 @@ g++ -std=c++11 -I.. 05_sensor_fusion_imu.cpp -o sensor_fusion
 ./line_follow
 ./arm_kin
 ./sensor_fusion
+./omni_robot
+./motor_control
 ```
 
 ### On ESP32 with PlatformIO
