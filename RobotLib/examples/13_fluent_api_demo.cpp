@@ -31,10 +31,15 @@ void demonstrateArmControl() {
         .setSpeed(0.8);
 
     std::cout << "Arm configured with chaining:\n";
-    std::cout << "  PID: kP=1.5, kI=0.1, kD=0.05\n";
-    std::cout << "  Feedforward: kS=0.05, kV=0.001\n";
-    std::cout << "  Limits: -90° to 90°\n";
-    std::cout << "  Speed: 80%\n\n";
+    std::cout << "  PID: kP=" << leftArm.getKP() << ", kI=" << leftArm.getKI() << ", kD=" << leftArm.getKD() << "\n";
+    std::cout << "  Feedforward: kS=" << leftArm.getKS() << ", kV=" << leftArm.getKV() << "\n";
+    std::cout << "  Limits: " << leftArm.getMinAngle().toDegrees() << "° to " << leftArm.getMaxAngle().toDegrees() << "°\n";
+    std::cout << "  Speed: " << (leftArm.getSpeed() * 100.0) << "%\n";
+    std::cout << "  PID enabled: " << (leftArm.isPIDEnabled() ? "Yes" : "No") << "\n";
+    std::cout << "  Feedforward enabled: " << (leftArm.isFeedforwardEnabled() ? "Yes" : "No") << "\n";
+    std::cout << "  Has limits: " << (leftArm.hasLimits() ? "Yes" : "No") << "\n\n";
+
+    std::cout << "✓ Configuration stored and retrievable!\n\n";
 
     // Move to position with chaining
     std::cout << "Moving to 45 degrees...\n";
@@ -92,9 +97,11 @@ void demonstrateDifferentialDrive() {
         .withMaxSpeed(mps(2.0));
 
     std::cout << "Robot configured:\n";
-    std::cout << "  Wheelbase: 0.5m\n";
-    std::cout << "  Wheel diameter: 0.1m\n";
-    std::cout << "  Max speed: 2.0 m/s\n\n";
+    std::cout << "  Wheelbase: " << robot.getWheelbase().toMeters() << "m\n";
+    std::cout << "  Wheel diameter: " << robot.getWheelDiameter().toMeters() << "m\n";
+    std::cout << "  Max speed: " << robot.getMaxSpeed().toMetersPerSecond() << " m/s\n\n";
+
+    std::cout << "✓ Configuration stored - access anytime with robot.getWheelbase(), etc.\n\n";
 
     // Drive forward with chaining
     std::cout << "Arcade drive - Forward 50%, Turn left 30%:\n";
@@ -132,8 +139,11 @@ void demonstrateSensorFiltering() {
         .withMovingAverage();
 
     std::cout << "Sensor configured with:\n";
-    std::cout << "  - Low-pass filter (alpha=0.3)\n";
-    std::cout << "  - Moving average (5 samples)\n\n";
+    std::cout << "  - Low-pass filter (alpha=" << distanceSensor.getLowPassAlpha() << ")\n";
+    std::cout << "  - Moving average enabled: " << (distanceSensor.isMovingAverageEnabled() ? "Yes" : "No") << "\n";
+    std::cout << "  - Low-pass enabled: " << (distanceSensor.isLowPassEnabled() ? "Yes" : "No") << "\n\n";
+
+    std::cout << "✓ Filter configuration retrievable!\n\n";
 
     std::cout << "Reading noisy data:\n";
     std::cout << "Sample | Raw   | Filtered\n";
@@ -167,9 +177,11 @@ void demonstratePIDController() {
         .withIntegralLimit(10.0);
 
     std::cout << "PID configured:\n";
-    std::cout << "  Gains: kP=1.2, kI=0.1, kD=0.05\n";
+    std::cout << "  Gains: kP=" << controller.getKP() << ", kI=" << controller.getKI() << ", kD=" << controller.getKD() << "\n";
     std::cout << "  Output: -1.0 to 1.0\n";
     std::cout << "  Integral limit: 10.0\n\n";
+
+    std::cout << "✓ PID gains stored and retrievable!\n\n";
 
     std::cout << "Controlling to setpoint=100:\n";
     std::cout << "Step | Error | Output\n";

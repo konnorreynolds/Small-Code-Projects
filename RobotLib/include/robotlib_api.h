@@ -211,12 +211,29 @@ public:
     // Query Methods (return values, end chain)
     // ========================================================================
 
+    // Current state
     double getDutyCycle() const { return duty_cycle_; }
-
     Radians getPosition() const { return current_position_; }
-
     Radians getTarget() const { return target_position_; }
+    double getSpeed() const { return speed_; }
 
+    // Configuration
+    Radians getMinAngle() const { return min_angle_; }
+    Radians getMaxAngle() const { return max_angle_; }
+    bool hasLimits() const { return has_limits_; }
+
+    // PID configuration
+    double getKP() const { return kP_; }
+    double getKI() const { return kI_; }
+    double getKD() const { return kD_; }
+    bool isPIDEnabled() const { return pid_enabled_; }
+
+    // Feedforward configuration
+    double getKS() const { return kS_; }
+    double getKV() const { return kV_; }
+    bool isFeedforwardEnabled() const { return ff_enabled_; }
+
+    // Status
     double getError() const {
         return target_position_.toRadians() - current_position_.toRadians();
     }
@@ -342,11 +359,21 @@ public:
     // Query
     // ========================================================================
 
+    // Current state
     double getLeftDuty() const { return left_duty_; }
     double getRightDuty() const { return right_duty_; }
-
     MetersPerSecond getLinearVelocity() const { return linear_velocity_; }
     RadiansPerSecond getAngularVelocity() const { return angular_velocity_; }
+
+    // Configuration (retrieve stored values)
+    Meters getWheelbase() const { return wheelbase_; }
+    Meters getWheelDiameter() const { return wheel_diameter_; }
+    MetersPerSecond getMaxSpeed() const { return max_speed_; }
+
+    // Status
+    bool isStopped(double threshold = 0.01) const {
+        return std::abs(left_duty_) < threshold && std::abs(right_duty_) < threshold;
+    }
 };
 
 // ============================================================================
@@ -423,8 +450,14 @@ public:
     // Query
     // ========================================================================
 
+    // Current values
     double getValue() const { return filtered_value_; }
     double getRawValue() const { return raw_value_; }
+
+    // Configuration
+    bool isMovingAverageEnabled() const { return use_ma_; }
+    bool isLowPassEnabled() const { return use_lpf_; }
+    double getLowPassAlpha() const { return lpf_alpha_; }
 };
 
 // ============================================================================
@@ -496,8 +529,14 @@ public:
     // Query
     // ========================================================================
 
+    // Current values
     double getOutput() const { return output_; }
     double getError() const { return error_; }
+
+    // Configuration
+    double getKP() const { return kP_; }
+    double getKI() const { return kI_; }
+    double getKD() const { return kD_; }
 };
 
 } // namespace robotlib
