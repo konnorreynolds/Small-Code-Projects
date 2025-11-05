@@ -1,0 +1,5 @@
+
+# Test executables
+test
+tests/test
+tests/test_math

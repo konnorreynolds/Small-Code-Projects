@@ -14,10 +14,10 @@
 // - Smooth motion profiles
 // ============================================================================
 
-#include "../units_core.h"
-#include "../units_physics.h"
-#include "../units_robotics.h"
-#include "../units_control.h"
+#include "../include/units_core.h"
+#include "../include/units_physics.h"
+#include "../include/units_robotics.h"
+#include "../include/units_control.h"
 
 #include <iostream>
 #include <iomanip>

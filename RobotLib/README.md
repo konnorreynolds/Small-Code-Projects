@@ -8,8 +8,8 @@
 ## 🎯 Quick Start
 
 ```cpp
-#include "RobotLib/units_core.h"
-#include "RobotLib/units_physics.h"
+#include "RobotLib/include/units_core.h"
+#include "RobotLib/include/units_physics.h"
 
 using namespace units;
 
@@ -48,14 +48,14 @@ See [docs/CHANGES.md](docs/CHANGES.md) for complete changelog.
 
 The library is now organized into four logical components:
 
-1. **[units_core.h](units_core.h)** (28KB)
+1. **[units_core.h](include/units_core.h)** (28KB)
    - Foundation and base units
    - Mathematical constants and utilities
    - Core units: Distance, Time, Angle, Mass, Temperature
    - Helper functions for unit creation
    - Type traits and metaprogramming utilities
 
-2. **[units_physics.h](units_physics.h)** (29KB)
+2. **[units_physics.h](include/units_physics.h)** (29KB)
    - Derived physics units
    - Velocity, Acceleration (linear and angular)
    - Force, Energy, Power, Torque
@@ -63,7 +63,7 @@ The library is now organized into four logical components:
    - Frequency and related conversions
    - Automatic unit operations (F=ma, P=VI, etc.)
 
-3. **[units_robotics.h](units_robotics.h)** (27KB)
+3. **[units_robotics.h](include/units_robotics.h)** (27KB)
    - Control systems and filters
    - 2D vectors and poses (SE(2))
    - PID and feedforward controllers
@@ -71,7 +71,7 @@ The library is now organized into four logical components:
    - Digital filters (Kalman, complementary, low-pass, median)
    - Path following algorithms (Pure Pursuit)
 
-4. **[units_utilities.h](units_utilities.h)** (13KB) ⭐ NEW!
+4. **[units_utilities.h](include/units_utilities.h)** (13KB) ⭐ NEW!
    - Streaming operators (std::cout support)
    - Additional Vec2D utilities (perpendicular, clamp, etc.)
    - Differential drive kinematics
@@ -80,7 +80,7 @@ The library is now organized into four logical components:
    - Exponential moving average filter
    - Simple odometry
 
-5. **[units_math.h](units_math.h)** (13KB) ⭐ NEW!
+5. **[units_math.h](include/units_math.h)** (13KB) ⭐ NEW!
    - Advanced mathematical functions for typed units
    - Square root and power operations
    - Interpolation (linear, cubic Hermite, smoothstep)
@@ -90,39 +90,39 @@ The library is now organized into four logical components:
    - Hysteresis comparator (Schmitt trigger)
    - Numerical derivatives and first-order lag filter
 
-6. **[units_3d.h](units_3d.h)** (21KB) ⭐ NEW in v2.2!
+6. **[units_3d.h](include/units_3d.h)** (21KB) ⭐ NEW in v2.2!
    - 3D vector operations (Vec3D)
    - Quaternion-based rotations (gimbal-lock free)
    - SE(3) transformations (Pose3D)
    - SLERP interpolation for smooth rotations
    - Euler angle conversions
 
-7. **[units_estimation.h](units_estimation.h)** (13KB) ⭐ NEW in v2.2!
+7. **[units_estimation.h](include/units_estimation.h)** (13KB) ⭐ NEW in v2.2!
    - Extended Kalman Filter (template-based)
    - User-defined nonlinear models
    - Automatic Jacobian-based linearization
    - Pre-configured 2D position/velocity tracker
    - Covariance tracking and prediction/update steps
 
-8. **[units_planning.h](units_planning.h)** (19KB) ⭐ NEW in v2.2!
+8. **[units_planning.h](include/units_planning.h)** (19KB) ⭐ NEW in v2.2!
    - A* pathfinding with obstacle avoidance
    - Dubins paths for car-like robots (all 6 types)
    - Path sampling and interpolation
    - Configurable costs and diagonal movement
 
-9. **[units_control.h](units_control.h)** (16KB) ⭐ NEW in v2.2!
+9. **[units_control.h](include/units_control.h)** (16KB) ⭐ NEW in v2.2!
    - Model Predictive Control (MPC) framework
    - Linear system optimization with constraints
    - Receding horizon control
    - Pre-configured controllers (double integrator, velocity control)
 
-10. **[units_ros2_interop.h](units_ros2_interop.h)** (15KB) ⭐ NEW in v2.2!
+10. **[units_ros2_interop.h](include/units_ros2_interop.h)** (15KB) ⭐ NEW in v2.2!
    - ROS2 message type conversions
    - geometry_msgs, sensor_msgs, nav_msgs support
    - Works with or without ROS2 installed
    - 2D and 3D pose/velocity/acceleration conversions
 
-11. **[units_matlab_interop.h](units_matlab_interop.h)** (14KB) ⭐ NEW in v2.2!
+11. **[units_matlab_interop.h](include/units_matlab_interop.h)** (14KB) ⭐ NEW in v2.2!
    - MATLAB/Simulink integration helpers
    - CSV export for data analysis
    - Simulink Coder compatible C code generation
@@ -420,8 +420,8 @@ RobotLib has **184 automated tests** with **100% pass rate**:
 
 ```bash
 # Run all tests
-g++ -std=c++11 -Wall -Wextra -Wpedantic -Werror test_compile_quick.cpp -o test && ./test
-g++ -std=c++11 -Wall -Wextra -Wpedantic -Werror test_math_features.cpp -o test_math && ./test_math
+g++ -std=c++11 -Wall -Wextra -Wpedantic -Werror tests/test_compile_quick.cpp -o test && ./test
+g++ -std=c++11 -Wall -Wextra -Wpedantic -Werror tests/test_math_features.cpp -o test_math && ./test_math
 ```
 
 See [docs/TEST_REPORT.md](docs/TEST_REPORT.md) for detailed results.

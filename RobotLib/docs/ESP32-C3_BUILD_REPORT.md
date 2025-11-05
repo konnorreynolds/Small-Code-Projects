@@ -292,10 +292,10 @@ ESP32-C3 has limited stack. The library is stack-friendly:
 
 ### 4. Include Only What You Need
 ```cpp
-#include "units_core.h"      // Always needed
-#include "units_physics.h"   // If using physics units
-#include "units_robotics.h"  // If using control systems
-#include "units_utilities.h" // Optional extras
+#include "include/units_core.h"      // Always needed
+#include "include/units_physics.h"   // If using physics units
+#include "include/units_robotics.h"  // If using control systems
+#include "include/units_utilities.h" // Optional extras
 ```
 
 ### 5. Disable Streaming on Embedded
@@ -409,7 +409,7 @@ pio device monitor
 
 ### 2. Add Your Robot Code
 ```cpp
-#include "units_utilities.h"
+#include "include/units_utilities.h"
 
 void robotMain() {
     // Your differential drive robot

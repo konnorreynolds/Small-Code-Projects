@@ -190,9 +190,9 @@ Expected execution time: **< 10ms** on modern hardware
 To add custom tests, follow this pattern:
 
 ```cpp
-#include "units_core.h"
-#include "units_physics.h"
-#include "units_robotics.h"
+#include "include/units_core.h"
+#include "include/units_physics.h"
+#include "include/units_robotics.h"
 
 int main() {
     // Your robot-specific code
