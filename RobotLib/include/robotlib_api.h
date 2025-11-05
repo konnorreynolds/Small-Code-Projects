@@ -36,40 +36,46 @@ using namespace units::robotics;
 // ============================================================================
 class Arm {
 private:
-    // State
-    Radians current_position_;
-    Radians target_position_;
+    // Configuration
     Radians min_angle_;
     Radians max_angle_;
     double speed_;
-    double duty_cycle_;
     bool has_limits_;
 
-    // PID
+    // PID configuration
     PIDController pid_;
     double kP_, kI_, kD_;
     bool pid_enabled_;
 
-    // Feedforward
+    // Feedforward configuration
     double kS_;  // Static friction
     double kV_;  // Velocity feedforward
     bool ff_enabled_;
 
+    // Command state (what we commanded)
+    Radians target_position_;
+    double duty_cycle_;
+
+    // Measured state (sensor feedback)
+    Radians current_position_;      // Actual measured position
+    RadiansPerSecond current_velocity_;  // Actual measured velocity
+
 public:
     // Constructor
     Arm()
-        : current_position_(Radians::fromRadians(0.0))
-        , target_position_(Radians::fromRadians(0.0))
-        , min_angle_(Radians::fromRadians(-M_PI))
+        : min_angle_(Radians::fromRadians(-M_PI))
         , max_angle_(Radians::fromRadians(M_PI))
         , speed_(1.0)
-        , duty_cycle_(0.0)
         , has_limits_(false)
         , pid_(PIDController::Gains(1.0, 0.0, 0.0))
         , kP_(1.0), kI_(0.0), kD_(0.0)
         , pid_enabled_(false)
         , kS_(0.0), kV_(0.0)
         , ff_enabled_(false)
+        , target_position_(Radians::fromRadians(0.0))
+        , duty_cycle_(0.0)
+        , current_position_(Radians::fromRadians(0.0))
+        , current_velocity_(radps(0.0))
     {}
 
     // ========================================================================
@@ -187,7 +193,36 @@ public:
 
     template<typename AngleRatio>
     Arm& update(double dt, const Angle<AngleRatio>& measured_position) {
+        // Calculate velocity from position change
+        double prev_pos = current_position_.toRadians();
         current_position_ = Radians::fromRadians(measured_position.toRadians());
+        double new_pos = current_position_.toRadians();
+        current_velocity_ = RadiansPerSecond::fromRadiansPerSecond((new_pos - prev_pos) / dt);
+
+        if (pid_enabled_) {
+            double error = target_position_.toRadians() - current_position_.toRadians();
+            duty_cycle_ = pid_.calculate(error, dt) * speed_;
+
+            // Add feedforward if enabled
+            if (ff_enabled_) {
+                double velocity = error / dt;  // Simplified
+                duty_cycle_ += kS_ * (error > 0 ? 1.0 : -1.0) + kV_ * velocity;
+            }
+        }
+
+        // Clamp output
+        if (duty_cycle_ < -1.0) duty_cycle_ = -1.0;
+        if (duty_cycle_ > 1.0) duty_cycle_ = 1.0;
+
+        return *this;
+    }
+
+    // Update with measured velocity (if available from sensor)
+    template<typename AngleRatio, typename AngularVelocityRatio>
+    Arm& update(double dt, const Angle<AngleRatio>& measured_position,
+                const AngularVelocity<AngularVelocityRatio>& measured_velocity) {
+        current_position_ = Radians::fromRadians(measured_position.toRadians());
+        current_velocity_ = RadiansPerSecond::fromRadiansPerSecond(measured_velocity.toRadiansPerSecond());
 
         if (pid_enabled_) {
             double error = target_position_.toRadians() - current_position_.toRadians();
@@ -211,15 +246,10 @@ public:
     // Query Methods (return values, end chain)
     // ========================================================================
 
-    // Current state
-    double getDutyCycle() const { return duty_cycle_; }
-    Radians getPosition() const { return current_position_; }
-    Radians getTarget() const { return target_position_; }
-    double getSpeed() const { return speed_; }
-
     // Configuration
     Radians getMinAngle() const { return min_angle_; }
     Radians getMaxAngle() const { return max_angle_; }
+    double getSpeed() const { return speed_; }
     bool hasLimits() const { return has_limits_; }
 
     // PID configuration
@@ -233,7 +263,15 @@ public:
     double getKV() const { return kV_; }
     bool isFeedforwardEnabled() const { return ff_enabled_; }
 
-    // Status
+    // Command state (what we commanded)
+    Radians getTarget() const { return target_position_; }
+    double getDutyCycle() const { return duty_cycle_; }
+
+    // Measured state (sensor feedback)
+    Radians getPosition() const { return current_position_; }
+    RadiansPerSecond getVelocity() const { return current_velocity_; }
+
+    // Calculated status
     double getError() const {
         return target_position_.toRadians() - current_position_.toRadians();
     }
@@ -253,15 +291,27 @@ public:
 // ============================================================================
 class DifferentialDrive {
 private:
+    // Configuration (robot hardware parameters)
     Meters wheelbase_;
     Meters wheel_diameter_;
     MetersPerSecond max_speed_;
+
+    // Command state (what we commanded the robot to do)
     double left_duty_;
     double right_duty_;
-
-    // Current velocity
     MetersPerSecond linear_velocity_;
     RadiansPerSecond angular_velocity_;
+
+    // Odometry state (where the robot thinks it is)
+    double x_position_;      // meters
+    double y_position_;      // meters
+    double theta_;           // radians (heading)
+
+    // Measured state (sensor feedback)
+    Meters left_distance_;   // Total distance traveled by left wheel
+    Meters right_distance_;  // Total distance traveled by right wheel
+    MetersPerSecond left_velocity_;   // Measured left wheel velocity
+    MetersPerSecond right_velocity_;  // Measured right wheel velocity
 
 public:
     DifferentialDrive()
@@ -272,6 +322,13 @@ public:
         , right_duty_(0.0)
         , linear_velocity_(mps(0.0))
         , angular_velocity_(radps(0.0))
+        , x_position_(0.0)
+        , y_position_(0.0)
+        , theta_(0.0)
+        , left_distance_(m(0.0))
+        , right_distance_(m(0.0))
+        , left_velocity_(mps(0.0))
+        , right_velocity_(mps(0.0))
     {}
 
     // ========================================================================
@@ -356,19 +413,76 @@ public:
     }
 
     // ========================================================================
+    // State Update (sensor feedback and odometry)
+    // ========================================================================
+
+    DifferentialDrive& updateEncoders(const Meters& left_dist, const Meters& right_dist) {
+        left_distance_ = left_dist;
+        right_distance_ = right_dist;
+        return *this;
+    }
+
+    DifferentialDrive& updateVelocities(const MetersPerSecond& left_vel, const MetersPerSecond& right_vel) {
+        left_velocity_ = left_vel;
+        right_velocity_ = right_vel;
+        return *this;
+    }
+
+    DifferentialDrive& updateOdometry(double dt) {
+        // Calculate distance traveled by each wheel since last update
+        double left_vel = left_velocity_.toMetersPerSecond();
+        double right_vel = right_velocity_.toMetersPerSecond();
+
+        double left_delta = left_vel * dt;
+        double right_delta = right_vel * dt;
+
+        // Calculate robot motion
+        double distance = (left_delta + right_delta) / 2.0;
+        double dtheta = (right_delta - left_delta) / wheelbase_.toMeters();
+
+        // Update position
+        theta_ += dtheta;
+        x_position_ += distance * std::cos(theta_);
+        y_position_ += distance * std::sin(theta_);
+
+        return *this;
+    }
+
+    DifferentialDrive& resetOdometry(double x = 0.0, double y = 0.0, double theta = 0.0) {
+        x_position_ = x;
+        y_position_ = y;
+        theta_ = theta;
+        left_distance_ = m(0.0);
+        right_distance_ = m(0.0);
+        return *this;
+    }
+
+    // ========================================================================
     // Query
     // ========================================================================
 
-    // Current state
+    // Configuration (robot hardware parameters)
+    Meters getWheelbase() const { return wheelbase_; }
+    Meters getWheelDiameter() const { return wheel_diameter_; }
+    MetersPerSecond getMaxSpeed() const { return max_speed_; }
+
+    // Command state (what we commanded)
     double getLeftDuty() const { return left_duty_; }
     double getRightDuty() const { return right_duty_; }
     MetersPerSecond getLinearVelocity() const { return linear_velocity_; }
     RadiansPerSecond getAngularVelocity() const { return angular_velocity_; }
 
-    // Configuration (retrieve stored values)
-    Meters getWheelbase() const { return wheelbase_; }
-    Meters getWheelDiameter() const { return wheel_diameter_; }
-    MetersPerSecond getMaxSpeed() const { return max_speed_; }
+    // Odometry state (where the robot thinks it is)
+    double getX() const { return x_position_; }
+    double getY() const { return y_position_; }
+    double getTheta() const { return theta_; }
+    double getThetaDegrees() const { return theta_ * 180.0 / M_PI; }
+
+    // Measured state (sensor feedback)
+    Meters getLeftDistance() const { return left_distance_; }
+    Meters getRightDistance() const { return right_distance_; }
+    MetersPerSecond getLeftVelocity() const { return left_velocity_; }
+    MetersPerSecond getRightVelocity() const { return right_velocity_; }
 
     // Status
     bool isStopped(double threshold = 0.01) const {

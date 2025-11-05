@@ -126,6 +126,30 @@ void demonstrateDifferentialDrive() {
 
     std::cout << "  Left motor: " << (robot.getLeftDuty() * 100.0) << "%\n";
     std::cout << "  Right motor: " << (robot.getRightDuty() * 100.0) << "%\n\n";
+
+    // Demonstrate comprehensive state tracking with odometry
+    std::cout << "State tracking with odometry:\n";
+    robot.resetOdometry(0.0, 0.0, 0.0);  // Start at origin
+
+    // Simulate driving forward with encoder feedback
+    for (int i = 0; i < 5; i++) {
+        // Simulate wheel velocities from encoders
+        robot.updateVelocities(mps(1.0), mps(1.0))  // Both wheels 1 m/s
+              .updateOdometry(0.1);  // Update position every 0.1s
+
+        if (i == 4) {
+            std::cout << "  Position: (" << robot.getX() << ", " << robot.getY() << ") m\n";
+            std::cout << "  Heading: " << robot.getThetaDegrees() << "°\n";
+            std::cout << "  Left velocity: " << robot.getLeftVelocity().toMetersPerSecond() << " m/s\n";
+            std::cout << "  Right velocity: " << robot.getRightVelocity().toMetersPerSecond() << " m/s\n";
+        }
+    }
+
+    std::cout << "\n✓ Complete robot state stored and accessible!\n";
+    std::cout << "  • Configuration: wheelbase, wheel diameter, max speed\n";
+    std::cout << "  • Command state: duty cycles, commanded velocities\n";
+    std::cout << "  • Measured state: encoder distances, wheel velocities\n";
+    std::cout << "  • Odometry state: X, Y, theta position\n\n";
 }
 
 void demonstrateSensorFiltering() {
