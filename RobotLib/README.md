@@ -21,7 +21,7 @@ auto velocity = distance / time;  // Automatically m/s!
 std::cout << velocity.toMetersPerSecond() << " m/s\n";
 ```
 
-**New to RobotLib?** Start with [examples/08_hello_units.cpp](examples/08_hello_units.cpp)!
+**New to RobotLib?** Start with [examples/06_fluent_api/08_hello_units.cpp](examples/06_fluent_api/08_hello_units.cpp)!
 
 ## 📋 What's New in v2.2
 
@@ -33,7 +33,8 @@ std::cout << velocity.toMetersPerSecond() << " m/s\n";
 - ✅ **MATLAB/Simulink Support** - Code generation and data export utilities
 - ✅ **Fluent/Chaining API** - Beautiful method chaining for easy robotics programming
 - ✅ **Reorganized File Structure** - Clean separation: include/, tests/, examples/, docs/
-- ✅ **3 New Examples** - Quadcopter navigation, MPC tracking, and fluent API demo
+- ✅ **Reorganized Examples** - 6 folders: basics, feedback, full systems, algorithms, advanced, fluent API
+- ✅ **8 New Examples** - Simple motor/servo/drive, servo feedback, drive odometry, and more
 - ✅ **Enhanced Documentation** - All advanced features fully documented
 
 ### What Was New in v2.1
@@ -388,7 +389,7 @@ gains.kF = 0.5;            // Add feedforward if model known
 RobotLib includes comprehensive documentation:
 
 - **[QUICKSTART.md](QUICKSTART.md)** - Step-by-step getting started guide
-- **[examples/README.md](examples/README.md)** - All 13 examples documented
+- **[examples/README.md](examples/README.md)** - All 18 examples documented in 6 organized folders
 - **[docs/FINAL_VERIFICATION.md](docs/FINAL_VERIFICATION.md)** - Pre-use validation report
 - **[docs/TEST_REPORT.md](docs/TEST_REPORT.md)** - Comprehensive testing results
 - **[docs/FEATURE_SUMMARY.md](docs/FEATURE_SUMMARY.md)** - Complete API reference
@@ -400,28 +401,42 @@ RobotLib includes comprehensive documentation:
 
 ## 🎓 Examples
 
-RobotLib includes 13 comprehensive examples:
+RobotLib includes **18 comprehensive examples** organized into 6 folders:
 
-### Beginner (⭐)
-1. **Hello Units** - Your first type-safe program
-2. **Differential Drive** - Basic robot control
-3. **PID Tuning** - Controller tuning guide
-4. **Line Following** - Sensor processing
+### 📁 01_basics/ - Simple Control (⭐ Beginner)
+No sensor feedback required - perfect for testing!
+1. **Simple Motor** - Open-loop motor control ⭐ NEW!
+2. **Simple Servo** - Hobby servo control (gripper, pan/tilt, arms) ⭐ NEW!
+3. **Simple Differential Drive** - Basic robot driving without odometry ⭐ NEW!
 
-### Intermediate (⭐⭐)
-5. **Robot Arm** - Forward/inverse kinematics
-6. **Sensor Fusion** - IMU data fusion
-7. **Mecanum Drive** - Omnidirectional robot
-8. **Motor Control** - Advanced velocity control
-9. **Battery Management** - Power monitoring
+### 📁 02_with_feedback/ - Closed-Loop Control (⭐⭐ Intermediate)
+With encoders and position sensors
+4. **Servo with Position Feedback** - PID servo control ⭐ NEW!
+5. **Drive with Odometry** - Navigation with wheel encoders ⭐ NEW!
 
-### Advanced (⭐⭐⭐)
-10. **Swerve Drive** - Professional holonomic system
-11. **3D Quadcopter Navigation** - Quaternions, EKF, path planning ⭐ NEW!
-12. **MPC Trajectory Tracking** - Model Predictive Control with constraints ⭐ NEW!
-13. **Fluent API Demo** - Beautiful method chaining for easy programming ⭐ NEW!
+### 📁 03_full_systems/ - Complete Robots (⭐⭐ Intermediate)
+6. **Differential Drive Robot** - Tank-style robot
+7. **Line Following Robot** - Sensor array processing
+8. **Omnidirectional Robot** - Mecanum wheels
+9. **Swerve Drive** - Professional holonomic system
 
-See [examples/README.md](examples/README.md) for details!
+### 📁 04_algorithms/ - Control Theory (⭐⭐⭐ Advanced)
+10. **PID Tuning Guide** - Controller optimization
+11. **Sensor Fusion IMU** - Kalman & complementary filters
+12. **Motor Control Encoders** - Feedforward + feedback
+13. **MPC Trajectory Tracking** - Model Predictive Control ⭐ NEW!
+
+### 📁 05_advanced/ - Advanced Topics (⭐⭐⭐ Advanced)
+14. **Robot Arm Kinematics** - Forward/inverse kinematics, Jacobian
+15. **3D Quadcopter Navigation** - Quaternions, EKF, path planning ⭐ NEW!
+
+### 📁 06_fluent_api/ - Fluent API (⭐ Beginner)
+Beautiful chainable API for easy programming
+16. **Hello Units** - Your first type-safe program
+17. **Battery Management** - Power monitoring
+18. **Fluent API Demo** - Complete demonstration ⭐ NEW!
+
+See [examples/README.md](examples/README.md) for compilation commands and details!
 
 ## 🧪 Testing
 
