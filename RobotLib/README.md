@@ -28,7 +28,10 @@ std::cout << velocity.toMetersPerSecond() << " m/s\n";
 - ✅ **Advanced 3D Robotics** - Quaternions, SE(3) transformations, SLERP interpolation
 - ✅ **State Estimation** - Template-based Extended Kalman Filter (EKF)
 - ✅ **Path Planning** - A* pathfinding and Dubins paths for car-like robots
-- ✅ **New Example** - 3D quadcopter navigation with EKF localization
+- ✅ **Model Predictive Control** - MPC with constraints for optimal trajectory tracking
+- ✅ **ROS2 Integration** - Message conversion helpers for ROS2 projects
+- ✅ **MATLAB/Simulink Support** - Code generation and data export utilities
+- ✅ **2 New Examples** - 3D quadcopter navigation and MPC trajectory tracking
 - ✅ **Enhanced Documentation** - All advanced features fully documented
 
 ### What Was New in v2.1
@@ -107,7 +110,25 @@ The library is now organized into four logical components:
    - Path sampling and interpolation
    - Configurable costs and diagonal movement
 
-Total size: ~163KB (header-only library)
+9. **[units_control.h](units_control.h)** (16KB) ⭐ NEW in v2.2!
+   - Model Predictive Control (MPC) framework
+   - Linear system optimization with constraints
+   - Receding horizon control
+   - Pre-configured controllers (double integrator, velocity control)
+
+10. **[units_ros2_interop.h](units_ros2_interop.h)** (15KB) ⭐ NEW in v2.2!
+   - ROS2 message type conversions
+   - geometry_msgs, sensor_msgs, nav_msgs support
+   - Works with or without ROS2 installed
+   - 2D and 3D pose/velocity/acceleration conversions
+
+11. **[units_matlab_interop.h](units_matlab_interop.h)** (14KB) ⭐ NEW in v2.2!
+   - MATLAB/Simulink integration helpers
+   - CSV export for data analysis
+   - Simulink Coder compatible C code generation
+   - MEX function utilities
+
+Total size: ~208KB (header-only library)
 
 ## Why This Architecture?
 
@@ -371,7 +392,7 @@ RobotLib includes comprehensive documentation:
 
 ## 🎓 Examples
 
-RobotLib includes 11 comprehensive examples:
+RobotLib includes 12 comprehensive examples:
 
 ### Beginner (⭐)
 1. **Hello Units** - Your first type-safe program
@@ -389,6 +410,7 @@ RobotLib includes 11 comprehensive examples:
 ### Advanced (⭐⭐⭐)
 10. **Swerve Drive** - Professional holonomic system
 11. **3D Quadcopter Navigation** - Quaternions, EKF, path planning ⭐ NEW!
+12. **MPC Trajectory Tracking** - Model Predictive Control with constraints ⭐ NEW!
 
 See [examples/README.md](examples/README.md) for details!
 
@@ -404,14 +426,14 @@ g++ -std=c++11 -Wall -Wextra -Wpedantic -Werror test_math_features.cpp -o test_m
 
 See [docs/TEST_REPORT.md](docs/TEST_REPORT.md) for detailed results.
 
-## 🚀 Future Enhancements
+## 🚀 Features Completed in v2.2
 
-- [x] 3D transformations (SE(3), quaternions) ✅ **NEW in v2.2**
-- [x] Extended Kalman Filter (EKF) ✅ **NEW in v2.2**
-- [x] Path planning algorithms (A*, Dubins) ✅ **NEW in v2.2**
-- [ ] Model Predictive Control (MPC)
-- [ ] ROS2 message conversions
-- [ ] MATLAB/Simulink code generation
+- [x] 3D transformations (SE(3), quaternions) ✅ **COMPLETE**
+- [x] Extended Kalman Filter (EKF) ✅ **COMPLETE**
+- [x] Path planning algorithms (A*, Dubins) ✅ **COMPLETE**
+- [x] Model Predictive Control (MPC) ✅ **COMPLETE**
+- [x] ROS2 message conversions ✅ **COMPLETE**
+- [x] MATLAB/Simulink code generation ✅ **COMPLETE**
 
 ## 📄 License
 
