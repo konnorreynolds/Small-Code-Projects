@@ -268,12 +268,12 @@ void loop() {
 
 ### Level 2: Intermediate
 - 📖 Read the full [README.md](README.md)
-- 🔍 Study [CHANGES.md](CHANGES.md) to understand design decisions
+- 🔍 Study [docs/CHANGES.md](docs/CHANGES.md) to understand design decisions
 - 💻 Build your first robot with RobotLib
 
 ### Level 3: Advanced
-- 📖 Read [ESP32-C3_BUILD_REPORT.md](ESP32-C3_BUILD_REPORT.md)
-- 🧠 Study [ANALYSIS.md](ANALYSIS.md) for deep insights
+- 📖 Read [docs/ESP32-C3_BUILD_REPORT.md](docs/ESP32-C3_BUILD_REPORT.md)
+- 🧠 Study [docs/ANALYSIS.md](docs/ANALYSIS.md) for deep insights
 - 🤝 Contribute improvements!
 
 ---
@@ -411,9 +411,9 @@ You've completed the quickstart guide! You now know enough to:
 ## 💬 Need Help?
 
 - 📖 Read the [full documentation](README.md)
-- 🐛 Found a bug? Check [CHANGES.md](CHANGES.md)
-- ❓ Question? Review [TESTING.md](TESTING.md)
-- 💡 Want to contribute? See [ANALYSIS.md](ANALYSIS.md)
+- 🐛 Found a bug? Check [docs/CHANGES.md](docs/CHANGES.md)
+- ❓ Question? Review [docs/TESTING.md](docs/TESTING.md)
+- 💡 Want to contribute? See [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ---
 

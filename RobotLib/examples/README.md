@@ -1,8 +1,26 @@
-# RobotLib Examples
+# 📚 RobotLib Examples
 
-This directory contains comprehensive, working examples that demonstrate how to use RobotLib in real-world robotics applications.
+Comprehensive, working examples demonstrating RobotLib in real-world robotics applications.
 
-## 📚 Example Index
+## 🎯 Quick Start
+
+**New to RobotLib?** Start with **Example 08 (Hello Units)** for a gentle introduction!
+
+## 📑 Example Index
+
+### ⭐ Beginner Examples
+
+### 08. Hello Units - Your First Program (`08_hello_units.cpp`) 🆕
+**Difficulty**: ⭐ Beginner
+**Topics**: Basic units, conversions, type safety
+
+The perfect first program! Friendly introduction to type-safe units.
+
+**Compile**: `g++ -std=c++11 -I.. 08_hello_units.cpp -o hello`
+
+**Features**: Creating units, arithmetic, conversions, angles, temperature
+
+---
 
 ### 01. Differential Drive Robot (`01_differential_drive_robot.cpp`)
 **Difficulty**: ⭐ Beginner
@@ -272,6 +290,30 @@ motor.setVoltage(output.voltage);
 
 ---
 
+### 09. Battery Management System (`09_battery_management.cpp`) 🆕
+**Difficulty**: ⭐⭐ Intermediate
+**Topics**: Power monitoring, battery health, electrical units
+
+Practical battery management system with monitoring and safety features.
+
+**Compile**: `g++ -std=c++11 -I.. 09_battery_management.cpp -o battery`
+
+**Features**: Voltage/current monitoring, state of charge, power budgets, warnings
+
+---
+
+### 10. Swerve Drive Kinematics (`10_swerve_drive.cpp`) 🆕
+**Difficulty**: ⭐⭐⭐ Advanced
+**Topics**: Swerve drive, holonomic motion, advanced kinematics
+
+Complete swerve drive implementation - the most advanced drive system!
+
+**Compile**: `g++ -std=c++11 -I.. 10_swerve_drive.cpp -o swerve`
+
+**Features**: Inverse/forward kinematics, module optimization, speed normalization, field-centric control
+
+---
+
 ## 🚀 Quick Start
 
 ### Running All Examples
@@ -287,8 +329,12 @@ g++ -std=c++11 -I.. 04_robot_arm_kinematics.cpp -o arm_kin
 g++ -std=c++11 -I.. 05_sensor_fusion_imu.cpp -o sensor_fusion
 g++ -std=c++11 -I.. 06_omnidirectional_robot.cpp -o omni_robot
 g++ -std=c++11 -I.. 07_motor_control_encoders.cpp -o motor_control
+g++ -std=c++11 -I.. 08_hello_units.cpp -o hello
+g++ -std=c++11 -I.. 09_battery_management.cpp -o battery
+g++ -std=c++11 -I.. 10_swerve_drive.cpp -o swerve
 
-# Run them
+# Run them (start with hello for beginners!)
+./hello
 ./diff_drive
 ./pid_tune
 ./line_follow
@@ -296,6 +342,8 @@ g++ -std=c++11 -I.. 07_motor_control_encoders.cpp -o motor_control
 ./sensor_fusion
 ./omni_robot
 ./motor_control
+./battery
+./swerve
 ```
 
 ### On ESP32 with PlatformIO
