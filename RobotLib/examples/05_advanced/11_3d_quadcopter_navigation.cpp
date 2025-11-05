@@ -15,11 +15,11 @@
 // - Complete autonomous navigation pipeline
 // ============================================================================
 
-#include "../include/units_core.h"
-#include "../include/units_physics.h"
-#include "../include/units_3d.h"
-#include "../include/units_estimation.h"
-#include "../include/units_planning.h"
+#include "../../include/units_core.h"
+#include "../../include/units_physics.h"
+#include "../../include/units_3d.h"
+#include "../../include/units_estimation.h"
+#include "../../include/units_planning.h"
 
 #include <iostream>
 #include <iomanip>

@@ -12,7 +12,7 @@
 // - PID controller with chaining
 // ============================================================================
 
-#include "../include/robotlib_api.h"
+#include "../../include/robotlib_api.h"
 #include <iostream>
 #include <iomanip>
 

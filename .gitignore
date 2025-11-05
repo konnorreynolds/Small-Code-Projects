@@ -31,6 +31,21 @@ RobotLib/examples/mpc_test
 RobotLib/examples/fluent_demo
 RobotLib/examples/ex??
 
+# New organized examples (ignore executables, keep source)
+RobotLib/examples/01_basics/simple_motor
+RobotLib/examples/01_basics/simple_servo
+RobotLib/examples/01_basics/simple_drive
+RobotLib/examples/02_with_feedback/servo_feedback
+RobotLib/examples/02_with_feedback/drive_odometry
+RobotLib/examples/03_full_systems/*
+!RobotLib/examples/03_full_systems/*.cpp
+RobotLib/examples/04_algorithms/*
+!RobotLib/examples/04_algorithms/*.cpp
+RobotLib/examples/05_advanced/*
+!RobotLib/examples/05_advanced/*.cpp
+RobotLib/examples/06_fluent_api/*
+!RobotLib/examples/06_fluent_api/*.cpp
+
 # PlatformIO
 .pio/
 .vscode/

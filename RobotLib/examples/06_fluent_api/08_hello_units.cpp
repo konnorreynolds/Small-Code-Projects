@@ -11,8 +11,8 @@
 // - Simple conversions
 // ============================================================================
 
-#include "../include/units_core.h"
-#include "../include/units_physics.h"
+#include "../../include/units_core.h"
+#include "../../include/units_physics.h"
 
 #include <iostream>
 
