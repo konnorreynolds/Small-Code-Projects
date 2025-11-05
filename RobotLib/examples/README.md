@@ -314,6 +314,57 @@ Complete swerve drive implementation - the most advanced drive system!
 
 ---
 
+### 11. 3D Quadcopter Navigation (`11_3d_quadcopter_navigation.cpp`) 🆕
+**Difficulty**: ⭐⭐⭐ Advanced
+**Topics**: 3D transformations, quaternions, EKF, path planning
+
+Complete demonstration of advanced robotics features for 3D navigation.
+
+**Compile**: `g++ -std=c++11 -I.. 11_3d_quadcopter_navigation.cpp -o quadcopter`
+
+**What you'll learn**:
+```cpp
+// Quaternion rotations (gimbal-lock free)
+auto quat = Quaternion::fromAxisAngle(Vec3D(0, 0, 1), deg(90).toRadians());
+auto rotated = quat.rotate(point);
+
+// SLERP interpolation for smooth rotations
+auto interpolated = q_start.slerp(q_end, t);
+
+// Extended Kalman Filter for state estimation
+EKF2DPositionVelocity ekf;
+ekf.predict(dt);
+ekf.update({gps_x, gps_y});  // Noisy measurements
+auto state = ekf.getState();  // Filtered position/velocity
+
+// A* pathfinding with obstacles
+AStarPlanner planner(width, height);
+planner.setObstacle(5, 5);
+auto path = planner.plan(start, goal);
+
+// Dubins paths for car-like robots
+auto dubins = DubinsPath::shortestPath(start, goal, turning_radius);
+auto samples = DubinsPath::sample(start, dubins, turning_radius, 0.1);
+```
+
+**Features**:
+- 3D vector operations and transformations
+- Quaternion-based rotations (no gimbal lock)
+- SLERP interpolation for smooth motion
+- Extended Kalman Filter with noisy GPS
+- A* pathfinding with obstacle avoidance
+- Dubins paths for smooth trajectories
+- SE(3) transformations and pose composition
+
+**Real-world applications**:
+- Drone navigation and control
+- 3D SLAM systems
+- Robotic manipulators
+- Autonomous vehicles
+- Motion planning systems
+
+---
+
 ## 🚀 Quick Start
 
 ### Running All Examples
@@ -332,6 +383,7 @@ g++ -std=c++11 -I.. 07_motor_control_encoders.cpp -o motor_control
 g++ -std=c++11 -I.. 08_hello_units.cpp -o hello
 g++ -std=c++11 -I.. 09_battery_management.cpp -o battery
 g++ -std=c++11 -I.. 10_swerve_drive.cpp -o swerve
+g++ -std=c++11 -I.. 11_3d_quadcopter_navigation.cpp -o quadcopter
 
 # Run them (start with hello for beginners!)
 ./hello
@@ -344,6 +396,7 @@ g++ -std=c++11 -I.. 10_swerve_drive.cpp -o swerve
 ./motor_control
 ./battery
 ./swerve
+./quadcopter
 ```
 
 ### On ESP32 with PlatformIO

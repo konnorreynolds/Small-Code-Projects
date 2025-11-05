@@ -1,4 +1,4 @@
-# 🤖 RobotLib v2.1
+# 🤖 RobotLib v2.2
 > A Type-Safe, Zero-Overhead Units System for Robotics & Engineering
 
 [![C++11](https://img.shields.io/badge/C%2B%2B-11-blue.svg)](https://en.cppreference.com/w/cpp/11)
@@ -23,7 +23,15 @@ std::cout << velocity.toMetersPerSecond() << " m/s\n";
 
 **New to RobotLib?** Start with [examples/08_hello_units.cpp](examples/08_hello_units.cpp)!
 
-## 📋 What's New in v2.1
+## 📋 What's New in v2.2
+
+- ✅ **Advanced 3D Robotics** - Quaternions, SE(3) transformations, SLERP interpolation
+- ✅ **State Estimation** - Template-based Extended Kalman Filter (EKF)
+- ✅ **Path Planning** - A* pathfinding and Dubins paths for car-like robots
+- ✅ **New Example** - 3D quadcopter navigation with EKF localization
+- ✅ **Enhanced Documentation** - All advanced features fully documented
+
+### What Was New in v2.1
 
 - ✅ **3 New Beginner-Friendly Examples** (Hello Units, Battery Management, Swerve Drive)
 - ✅ **Reorganized Documentation** - All reports now in `docs/` folder
@@ -79,7 +87,27 @@ The library is now organized into four logical components:
    - Hysteresis comparator (Schmitt trigger)
    - Numerical derivatives and first-order lag filter
 
-Total size: ~110KB (header-only library)
+6. **[units_3d.h](units_3d.h)** (21KB) ⭐ NEW in v2.2!
+   - 3D vector operations (Vec3D)
+   - Quaternion-based rotations (gimbal-lock free)
+   - SE(3) transformations (Pose3D)
+   - SLERP interpolation for smooth rotations
+   - Euler angle conversions
+
+7. **[units_estimation.h](units_estimation.h)** (13KB) ⭐ NEW in v2.2!
+   - Extended Kalman Filter (template-based)
+   - User-defined nonlinear models
+   - Automatic Jacobian-based linearization
+   - Pre-configured 2D position/velocity tracker
+   - Covariance tracking and prediction/update steps
+
+8. **[units_planning.h](units_planning.h)** (19KB) ⭐ NEW in v2.2!
+   - A* pathfinding with obstacle avoidance
+   - Dubins paths for car-like robots (all 6 types)
+   - Path sampling and interpolation
+   - Configurable costs and diagonal movement
+
+Total size: ~163KB (header-only library)
 
 ## Why This Architecture?
 
@@ -343,7 +371,7 @@ RobotLib includes comprehensive documentation:
 
 ## 🎓 Examples
 
-RobotLib includes 10 comprehensive examples:
+RobotLib includes 11 comprehensive examples:
 
 ### Beginner (⭐)
 1. **Hello Units** - Your first type-safe program
@@ -360,6 +388,7 @@ RobotLib includes 10 comprehensive examples:
 
 ### Advanced (⭐⭐⭐)
 10. **Swerve Drive** - Professional holonomic system
+11. **3D Quadcopter Navigation** - Quaternions, EKF, path planning ⭐ NEW!
 
 See [examples/README.md](examples/README.md) for details!
 
@@ -377,12 +406,12 @@ See [docs/TEST_REPORT.md](docs/TEST_REPORT.md) for detailed results.
 
 ## 🚀 Future Enhancements
 
-- [ ] 3D transformations (SE(3), quaternions)
-- [ ] Extended Kalman Filter (EKF)
+- [x] 3D transformations (SE(3), quaternions) ✅ **NEW in v2.2**
+- [x] Extended Kalman Filter (EKF) ✅ **NEW in v2.2**
+- [x] Path planning algorithms (A*, Dubins) ✅ **NEW in v2.2**
 - [ ] Model Predictive Control (MPC)
 - [ ] ROS2 message conversions
 - [ ] MATLAB/Simulink code generation
-- [ ] More path planning algorithms
 
 ## 📄 License
 
