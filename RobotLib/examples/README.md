@@ -365,6 +365,45 @@ auto samples = DubinsPath::sample(start, dubins, turning_radius, 0.1);
 
 ---
 
+### 12. MPC Trajectory Tracking (`12_mpc_trajectory_tracking.cpp`) 🆕
+**Difficulty**: ⭐⭐⭐ Advanced
+**Topics**: Model Predictive Control, optimal control, constraints
+
+Complete demonstration of MPC for trajectory tracking with hard constraints.
+
+**Compile**: `g++ -std=c++11 -I.. 12_mpc_trajectory_tracking.cpp -o mpc`
+
+**What you'll learn**:
+```cpp
+// MPC for double integrator (position + velocity)
+MPCDoubleIntegrator mpc(0.1);  // 0.1s time step
+mpc.setLimits(2.0, 1.0);  // max velocity, max acceleration
+
+// Solve optimization problem
+auto control = mpc.solve(current_state, target_state);
+double acceleration = control[0];
+
+// Get predicted trajectory
+auto trajectory = mpc.getPredictedTrajectory(current_state);
+```
+
+**Features**:
+- Point-to-point motion with constraints
+- Sinusoidal trajectory tracking
+- MPC vs PID comparison
+- Constraint satisfaction (velocity, acceleration limits)
+- Receding horizon optimization
+- Gradient descent solver (embedded-friendly)
+
+**Real-world applications**:
+- Autonomous vehicle path following
+- Robot arm motion planning
+- Drone trajectory optimization
+- Constrained motion control
+- Optimal trajectory generation
+
+---
+
 ## 🚀 Quick Start
 
 ### Running All Examples
@@ -384,6 +423,7 @@ g++ -std=c++11 -I.. 08_hello_units.cpp -o hello
 g++ -std=c++11 -I.. 09_battery_management.cpp -o battery
 g++ -std=c++11 -I.. 10_swerve_drive.cpp -o swerve
 g++ -std=c++11 -I.. 11_3d_quadcopter_navigation.cpp -o quadcopter
+g++ -std=c++11 -I.. 12_mpc_trajectory_tracking.cpp -o mpc
 
 # Run them (start with hello for beginners!)
 ./hello
@@ -397,6 +437,7 @@ g++ -std=c++11 -I.. 11_3d_quadcopter_navigation.cpp -o quadcopter
 ./battery
 ./swerve
 ./quadcopter
+./mpc
 ```
 
 ### On ESP32 with PlatformIO
