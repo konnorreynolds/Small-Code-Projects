@@ -31,7 +31,9 @@ std::cout << velocity.toMetersPerSecond() << " m/s\n";
 - ✅ **Model Predictive Control** - MPC with constraints for optimal trajectory tracking
 - ✅ **ROS2 Integration** - Message conversion helpers for ROS2 projects
 - ✅ **MATLAB/Simulink Support** - Code generation and data export utilities
-- ✅ **2 New Examples** - 3D quadcopter navigation and MPC trajectory tracking
+- ✅ **Fluent/Chaining API** - Beautiful method chaining for easy robotics programming
+- ✅ **Reorganized File Structure** - Clean separation: include/, tests/, examples/, docs/
+- ✅ **3 New Examples** - Quadcopter navigation, MPC tracking, and fluent API demo
 - ✅ **Enhanced Documentation** - All advanced features fully documented
 
 ### What Was New in v2.1
@@ -90,33 +92,33 @@ The library is now organized into four logical components:
    - Hysteresis comparator (Schmitt trigger)
    - Numerical derivatives and first-order lag filter
 
-6. **[units_3d.h](include/units_3d.h)** (21KB) ⭐ NEW in v2.2!
+6. **[units_3d.h](include/units_3d.h)** (15KB) ⭐ NEW in v2.2!
    - 3D vector operations (Vec3D)
    - Quaternion-based rotations (gimbal-lock free)
    - SE(3) transformations (Pose3D)
    - SLERP interpolation for smooth rotations
    - Euler angle conversions
 
-7. **[units_estimation.h](include/units_estimation.h)** (13KB) ⭐ NEW in v2.2!
+7. **[units_estimation.h](include/units_estimation.h)** (15KB) ⭐ NEW in v2.2!
    - Extended Kalman Filter (template-based)
    - User-defined nonlinear models
    - Automatic Jacobian-based linearization
    - Pre-configured 2D position/velocity tracker
    - Covariance tracking and prediction/update steps
 
-8. **[units_planning.h](include/units_planning.h)** (19KB) ⭐ NEW in v2.2!
+8. **[units_planning.h](include/units_planning.h)** (20KB) ⭐ NEW in v2.2!
    - A* pathfinding with obstacle avoidance
    - Dubins paths for car-like robots (all 6 types)
    - Path sampling and interpolation
    - Configurable costs and diagonal movement
 
-9. **[units_control.h](include/units_control.h)** (16KB) ⭐ NEW in v2.2!
+9. **[units_control.h](include/units_control.h)** (14KB) ⭐ NEW in v2.2!
    - Model Predictive Control (MPC) framework
    - Linear system optimization with constraints
    - Receding horizon control
    - Pre-configured controllers (double integrator, velocity control)
 
-10. **[units_ros2_interop.h](include/units_ros2_interop.h)** (15KB) ⭐ NEW in v2.2!
+10. **[units_ros2_interop.h](include/units_ros2_interop.h)** (13KB) ⭐ NEW in v2.2!
    - ROS2 message type conversions
    - geometry_msgs, sensor_msgs, nav_msgs support
    - Works with or without ROS2 installed
@@ -128,7 +130,13 @@ The library is now organized into four logical components:
    - Simulink Coder compatible C code generation
    - MEX function utilities
 
-Total size: ~208KB (header-only library)
+12. **[robotlib_api.h](include/robotlib_api.h)** (15KB) ⭐ NEW in v2.2!
+   - Fluent/chaining API for easy programming
+   - Arm, DifferentialDrive, Sensor, PID wrappers
+   - Every method returns *this for chaining
+   - Beginner-friendly, discoverable interface
+
+Total size: ~220KB (header-only library)
 
 ## Why This Architecture?
 
@@ -380,7 +388,7 @@ gains.kF = 0.5;            // Add feedforward if model known
 RobotLib includes comprehensive documentation:
 
 - **[QUICKSTART.md](QUICKSTART.md)** - Step-by-step getting started guide
-- **[examples/README.md](examples/README.md)** - All 10 examples documented
+- **[examples/README.md](examples/README.md)** - All 13 examples documented
 - **[docs/FINAL_VERIFICATION.md](docs/FINAL_VERIFICATION.md)** - Pre-use validation report
 - **[docs/TEST_REPORT.md](docs/TEST_REPORT.md)** - Comprehensive testing results
 - **[docs/FEATURE_SUMMARY.md](docs/FEATURE_SUMMARY.md)** - Complete API reference
@@ -392,7 +400,7 @@ RobotLib includes comprehensive documentation:
 
 ## 🎓 Examples
 
-RobotLib includes 12 comprehensive examples:
+RobotLib includes 13 comprehensive examples:
 
 ### Beginner (⭐)
 1. **Hello Units** - Your first type-safe program
@@ -411,6 +419,7 @@ RobotLib includes 12 comprehensive examples:
 10. **Swerve Drive** - Professional holonomic system
 11. **3D Quadcopter Navigation** - Quaternions, EKF, path planning ⭐ NEW!
 12. **MPC Trajectory Tracking** - Model Predictive Control with constraints ⭐ NEW!
+13. **Fluent API Demo** - Beautiful method chaining for easy programming ⭐ NEW!
 
 See [examples/README.md](examples/README.md) for details!
 

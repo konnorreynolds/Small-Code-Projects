@@ -18,9 +18,9 @@ In just **5 minutes**, you'll be writing type-safe robotics code with zero overh
 Let's build a simple robot controller:
 
 ```cpp
-#include "units_core.h"
-#include "units_physics.h"
-#include "units_utilities.h"
+#include "include/units_core.h"
+#include "include/units_physics.h"
+#include "include/units_utilities.h"
 
 using namespace units;
 
@@ -40,7 +40,7 @@ int main() {
 }
 ```
 
-**That's it!** Compile with: `g++ -std=c++11 -I. robot.cpp`
+**That's it!** Compile with: `g++ -std=c++11 -I. robot.cpp` (from RobotLib root directory)
 
 ---
 
@@ -133,7 +133,7 @@ double output = pid.calculate(error, dt);
 ### Use Case 1: Differential Drive Robot
 
 ```cpp
-#include "units_utilities.h"
+#include "include/units_utilities.h"
 
 // Robot specs
 Meters wheelbase = m(0.3);
@@ -264,7 +264,7 @@ void loop() {
 ### Level 1: Beginner (You are here!)
 - ✅ Read this quickstart
 - 📖 Review the [examples](examples/) directory
-- 🧪 Run the [quick test](test_compile_quick.cpp)
+- 🧪 Run the [quick test](tests/test_compile_quick.cpp)
 
 ### Level 2: Intermediate
 - 📖 Read the full [README.md](README.md)
@@ -350,7 +350,7 @@ void loop() {
 ### STM32 (HAL)
 ```cpp
 #include "main.h"
-#include "units_core.h"
+#include "include/units_core.h"
 
 extern TIM_HandleTypeDef htim1;
 
@@ -363,7 +363,7 @@ void updateMotor(RPM targetRPM) {
 
 ### Raspberry Pi / Linux
 ```cpp
-#include "units_utilities.h"
+#include "include/units_utilities.h"
 #include <iostream>
 
 int main() {

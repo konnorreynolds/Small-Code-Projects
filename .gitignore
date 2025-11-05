@@ -28,6 +28,7 @@ RobotLib/examples/quadcopter
 RobotLib/examples/quad_nav
 RobotLib/examples/mpc
 RobotLib/examples/mpc_test
+RobotLib/examples/fluent_demo
 RobotLib/examples/ex??
 
 # PlatformIO

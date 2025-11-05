@@ -404,6 +404,85 @@ auto trajectory = mpc.getPredictedTrajectory(current_state);
 
 ---
 
+### 13. Fluent API Demo (`13_fluent_api_demo.cpp`) ⭐ NEW!
+**Difficulty**: ⭐⭐ Intermediate
+**Topics**: Fluent/chaining API, builder pattern, modern C++ design
+
+Complete demonstration of RobotLib's beautiful fluent/chaining API for easy robotics programming.
+
+**Compile**: `g++ -std=c++11 -I.. 13_fluent_api_demo.cpp -o fluent_demo`
+
+**What you'll learn**:
+```cpp
+// Configuration chaining - reads like English!
+Arm leftArm = Arm()
+    .withPID(1.5, 0.1, 0.05)
+    .withFeedforward(0.05, 0.001)
+    .withLimits(deg(-90), deg(90))
+    .setSpeed(0.8);
+
+// Action chaining - multiple operations in one line
+leftArm.moveTo(deg(45))
+       .setSpeed(1.0)
+       .update(0.1, measured_position);
+
+// Differential drive with chaining
+DifferentialDrive robot = DifferentialDrive()
+    .withWheelbase(m(0.5))
+    .withWheelDiameter(m(0.1))
+    .withMaxSpeed(mps(2.0))
+    .arcade(0.5, -0.3);  // Forward 50%, turn left 30%
+
+// Sensor filtering with chaining
+Sensor rangefinder = Sensor()
+    .withLowPassFilter(0.3)
+    .withMovingAverage()
+    .read(150.5);
+
+// PID controller with chaining
+PID controller = PID()
+    .withGains(1.2, 0.1, 0.05)
+    .withOutputLimits(-1.0, 1.0)
+    .withIntegralLimit(10.0)
+    .calculate(error, dt);
+```
+
+**Features**:
+- Every configuration method returns `*this` for chaining
+- Query methods return values (end the chain)
+- Template methods accept both Degrees and Radians
+- Type-safe units preserved throughout
+- IDE autocomplete shows all available options
+- Readable, discoverable, and beginner-friendly
+
+**Components demonstrated**:
+1. **Arm Controller**: PID control, feedforward, limits, movement sequences
+2. **DifferentialDrive**: Arcade/tank drive modes, velocity control
+3. **Sensor**: Moving average filter, low-pass filter, noise reduction
+4. **PID**: Controller wrapper with configurable gains and limits
+
+**Real-world applications**:
+- Teaching robotics to beginners
+- Rapid prototyping and experimentation
+- Competition robots (clean, readable code)
+- Team projects (consistent code style)
+- Code review and maintenance
+
+**Key advantages**:
+- ✅ Readable: Configuration reads like English
+- ✅ Compact: Multiple actions in one line
+- ✅ Type-safe: Still uses RobotLib's unit system
+- ✅ Discoverable: IDE autocomplete shows all options
+- ✅ Flexible: Chain as much or as little as you want
+
+**Perfect for**:
+- Beginners wanting a simple API
+- Teams wanting consistent code style
+- Rapid prototyping
+- Educational settings (FRC, VEX, classrooms)
+
+---
+
 ## 🚀 Quick Start
 
 ### Running All Examples
@@ -424,9 +503,11 @@ g++ -std=c++11 -I.. 09_battery_management.cpp -o battery
 g++ -std=c++11 -I.. 10_swerve_drive.cpp -o swerve
 g++ -std=c++11 -I.. 11_3d_quadcopter_navigation.cpp -o quadcopter
 g++ -std=c++11 -I.. 12_mpc_trajectory_tracking.cpp -o mpc
+g++ -std=c++11 -I.. 13_fluent_api_demo.cpp -o fluent_demo
 
 # Run them (start with hello for beginners!)
 ./hello
+./fluent_demo
 ./diff_drive
 ./pid_tune
 ./line_follow
@@ -438,6 +519,7 @@ g++ -std=c++11 -I.. 12_mpc_trajectory_tracking.cpp -o mpc
 ./swerve
 ./quadcopter
 ./mpc
+./fluent_demo
 ```
 
 ### On ESP32 with PlatformIO
