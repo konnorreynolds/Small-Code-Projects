@@ -32,6 +32,13 @@ int main() {
     Arm servo = Arm()
         .withLimits(deg(0), deg(180));  // Typical servo: 0° to 180°
 
+    // 🔌 HARDWARE SETUP:
+    // Connect servo (SG90, MG996R, or similar) to:
+    // - Arduino Pin 9 (PWM) → Servo signal wire (usually orange/white)
+    // - Arduino 5V → Servo power (red wire)
+    // - Arduino GND → Servo ground (brown/black wire)
+    // Note: Large servos need external power supply!
+
     std::cout << "✓ Servo created!\n";
     std::cout << "  Range: " << servo.getMinAngle().toDegrees()
               << "° to " << servo.getMaxAngle().toDegrees() << "°\n\n";
@@ -43,6 +50,11 @@ int main() {
 
     servo.moveTo(deg(90));  // Move to 90 degrees
 
+    // 🔧 WHAT HAPPENS IN REAL HARDWARE:
+    // servo.write(90);                    // Arduino Servo library
+    // OR: Send 1500µs pulse width
+    // The servo rotates to 90° (center/neutral position)
+
     std::cout << "  Target position: " << servo.getTarget().toDegrees() << "°\n";
     std::cout << "  💡 Servo will move to center position\n\n";
 
@@ -53,6 +65,11 @@ int main() {
 
     servo.moveTo(deg(0));  // Move to 0 degrees
 
+    // 🔧 WHAT HAPPENS IN REAL HARDWARE:
+    // servo.write(0);                     // Arduino Servo library
+    // OR: Send 1000µs pulse width
+    // The servo rotates all the way to the left
+
     std::cout << "  Target position: " << servo.getTarget().toDegrees() << "°\n";
     std::cout << "  💡 Servo rotates all the way left\n\n";
 
@@ -62,6 +79,11 @@ int main() {
     std::cout << "STEP 4: Move servo to maximum (180°)\n\n";
 
     servo.moveTo(deg(180));  // Move to 180 degrees
+
+    // 🔧 WHAT HAPPENS IN REAL HARDWARE:
+    // servo.write(180);                   // Arduino Servo library
+    // OR: Send 2000µs pulse width
+    // The servo rotates all the way to the right
 
     std::cout << "  Target position: " << servo.getTarget().toDegrees() << "°\n";
     std::cout << "  💡 Servo rotates all the way right\n\n";
@@ -150,9 +172,25 @@ int main() {
     std::cout << "  3. Move servo: servo.moveTo(deg(90))\n";
     std::cout << "  4. Get position: servo.getTarget()\n\n";
 
-    std::cout << "💡 Hardware tip:\n";
-    std::cout << "  Connect servo to PWM pin\n";
-    std::cout << "  0° = 1000µs pulse, 90° = 1500µs, 180° = 2000µs\n\n";
+    std::cout << "========================================\n";
+    std::cout << "🔧 COMPLETE ARDUINO IMPLEMENTATION:\n";
+    std::cout << "========================================\n\n";
+    std::cout << "#include <Servo.h>\n\n";
+    std::cout << "Servo myServo;\n";
+    std::cout << "const int SERVO_PIN = 9;\n\n";
+    std::cout << "void setup() {\n";
+    std::cout << "  myServo.attach(SERVO_PIN);\n";
+    std::cout << "}\n\n";
+    std::cout << "void loop() {\n";
+    std::cout << "  // Get target angle from RobotLib\n";
+    std::cout << "  double angle = servo.getTarget().toDegrees();\n\n";
+    std::cout << "  // Command the physical servo\n";
+    std::cout << "  myServo.write(angle);\n\n";
+    std::cout << "  delay(15);  // Small delay for servo to move\n";
+    std::cout << "}\n\n";
+
+    std::cout << "💡 Pulse widths:\n";
+    std::cout << "  0° = 1000µs | 90° = 1500µs | 180° = 2000µs\n\n";
 
     std::cout << "Next: Try 'simple_differential_drive.cpp'!\n";
     std::cout << "========================================\n\n";
