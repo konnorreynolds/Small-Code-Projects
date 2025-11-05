@@ -21,6 +21,13 @@ RobotLib/examples/arm_kin
 RobotLib/examples/sensor_fusion
 RobotLib/examples/omni_robot
 RobotLib/examples/motor_control
+RobotLib/examples/hello
+RobotLib/examples/battery
+RobotLib/examples/swerve
+RobotLib/examples/quadcopter
+RobotLib/examples/quad_nav
+RobotLib/examples/mpc
+RobotLib/examples/mpc_test
 RobotLib/examples/ex??
 
 # PlatformIO
