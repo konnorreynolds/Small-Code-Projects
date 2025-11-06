@@ -16,9 +16,7 @@
 #include "../../include/units_physics.h"
 #include "../../include/units_robotics.h"
 
-#include <iostream>
 #include <vector>
-#include <iomanip>
 
 using namespace units;
 
@@ -64,19 +62,19 @@ struct StepResponse {
     std::vector<double> output;
 
     void print(size_t maxSamples = 20) const {
-        std::cout << std::fixed << std::setprecision(3);
-        std::cout << "\nTime(s) | Setpoint | Measured | Error | Output\n";
-        std::cout << "--------|----------|----------|-------|--------\n";
+        print(, );
+        println("\nTime(s) | Setpoint | Measured | Error | Output");
+        println("--------|----------|----------|-------|--------");
 
         size_t step = time.size() / maxSamples;
         if (step < 1) step = 1;
 
         for (size_t i = 0; i < time.size(); i += step) {
-            std::cout << std::setw(7) << time[i] << " | ";
-            std::cout << std::setw(8) << setpoint[i] << " | ";
-            std::cout << std::setw(8) << measured[i] << " | ";
-            std::cout << std::setw(5) << error[i] << " | ";
-            std::cout << std::setw(6) << output[i] << "\n";
+            print(, time[i], " | ");
+            print(, setpoint[i], " | ");
+            print(, measured[i], " | ");
+            print(, error[i], " | ");
+            println(, output[i], "");
         }
     }
 
@@ -125,11 +123,11 @@ struct StepResponse {
         // Steady-state error
         steadyStateError = finalSetpoint - measured.back();
 
-        std::cout << "\nPerformance Metrics:\n";
-        std::cout << "  Overshoot: " << std::fixed << std::setprecision(1) << overshoot << "%\n";
-        std::cout << "  Settling time (2%): " << std::setprecision(3) << settlingTime << " s\n";
-        std::cout << "  Rise time (10%-90%): " << riseTime << " s\n";
-        std::cout << "  Steady-state error: " << steadyStateError << "\n";
+        println("\nPerformance Metrics:");
+        println("  Overshoot: ", , overshoot, "%");
+        println("  Settling time (2%): ", settlingTime, " s");
+        println("  Rise time (10%-90%): ", riseTime, " s");
+        println("  Steady-state error: ", steadyStateError, "");
     }
 };
 
@@ -166,9 +164,9 @@ StepResponse runSimulation(PIDController& pid, SimulatedMotor& motor,
 // Main Program
 // ============================================================================
 int main() {
-    std::cout << "========================================\n";
-    std::cout << "  PID Controller Tuning Guide\n";
-    std::cout << "========================================\n\n";
+    println("========================================");
+    println("  PID Controller Tuning Guide");
+    println("========================================\n");
 
     const double dt = 0.01;      // 10ms timestep
     const double duration = 2.0; // 2 second simulation
@@ -177,9 +175,9 @@ int main() {
     // ========================================================================
     // Test 1: P-Only Control
     // ========================================================================
-    std::cout << "Test 1: Proportional-Only Control (kP=1.0)\n";
-    std::cout << "===========================================\n";
-    std::cout << "Expected: Fast response but steady-state error\n";
+    println("Test 1: Proportional-Only Control (kP=1.0)");
+    println("===========================================");
+    println("Expected: Fast response but steady-state error");
 
     SimulatedMotor motor1;
     PIDController pid1(1.0, 0.0, 0.0);  // P-only
@@ -191,9 +189,9 @@ int main() {
     // ========================================================================
     // Test 2: PI Control
     // ========================================================================
-    std::cout << "\n\nTest 2: Proportional-Integral Control (kP=1.0, kI=0.5)\n";
-    std::cout << "======================================================\n";
-    std::cout << "Expected: Eliminates steady-state error, might overshoot\n";
+    println("\n\nTest 2: Proportional-Integral Control (kP=1.0, kI=0.5)");
+    println("======================================================");
+    println("Expected: Eliminates steady-state error, might overshoot");
 
     SimulatedMotor motor2;
     PIDController pid2(1.0, 0.5, 0.0);  // PI
@@ -205,9 +203,9 @@ int main() {
     // ========================================================================
     // Test 3: PID Control
     // ========================================================================
-    std::cout << "\n\nTest 3: Full PID Control (kP=1.2, kI=0.5, kD=0.1)\n";
-    std::cout << "==================================================\n";
-    std::cout << "Expected: Fast response, no overshoot, no steady-state error\n";
+    println("\n\nTest 3: Full PID Control (kP=1.2, kI=0.5, kD=0.1)");
+    println("==================================================");
+    println("Expected: Fast response, no overshoot, no steady-state error");
 
     SimulatedMotor motor3;
     PIDController pid3(1.2, 0.5, 0.1);  // Full PID
@@ -219,9 +217,9 @@ int main() {
     // ========================================================================
     // Test 4: Aggressive vs Conservative Tuning
     // ========================================================================
-    std::cout << "\n\nTest 4: Aggressive Tuning (kP=3.0, kI=2.0, kD=0.5)\n";
-    std::cout << "==================================================\n";
-    std::cout << "Expected: Very fast but might oscillate\n";
+    println("\n\nTest 4: Aggressive Tuning (kP=3.0, kI=2.0, kD=0.5)");
+    println("==================================================");
+    println("Expected: Very fast but might oscillate");
 
     SimulatedMotor motor4;
     PIDController pid4(3.0, 2.0, 0.5);
@@ -233,9 +231,9 @@ int main() {
     // ========================================================================
     // Test 5: Anti-Windup Demonstration
     // ========================================================================
-    std::cout << "\n\nTest 5: Anti-Windup Protection\n";
-    std::cout << "================================\n";
-    std::cout << "Testing integral windup protection with output limits\n";
+    println("\n\nTest 5: Anti-Windup Protection");
+    println("================================");
+    println("Testing integral windup protection with output limits");
 
     SimulatedMotor motor5;
     PIDController::Gains gains5(1.0, 1.0, 0.1);
@@ -245,65 +243,65 @@ int main() {
     PIDController pid5(gains5);
 
     auto response5 = runSimulation(pid5, motor5, setpoint, duration, dt);
-    std::cout << "Integral value at end: " << pid5.getIntegral() << " (limited to ±10.0)\n";
+    println("Integral value at end: ", pid5.getIntegral(), " (limited to ±10.0)");
     response5.print(15);
     response5.analyzePerformance();
 
     // ========================================================================
     // Tuning Guidelines
     // ========================================================================
-    std::cout << "\n\n========================================\n";
-    std::cout << "  PID Tuning Guidelines\n";
-    std::cout << "========================================\n\n";
+    println("\n\n========================================");
+    println("  PID Tuning Guidelines");
+    println("========================================\n");
 
-    std::cout << "Manual Tuning Method:\n";
-    std::cout << "1. Start with kP=0, kI=0, kD=0\n";
-    std::cout << "2. Increase kP until system oscillates\n";
-    std::cout << "3. Set kP to 50-60% of that value\n";
-    std::cout << "4. Increase kI to eliminate steady-state error\n";
-    std::cout << "5. Add kD to reduce overshoot and oscillation\n\n";
+    println("Manual Tuning Method:");
+    println("1. Start with kP=0, kI=0, kD=0");
+    println("2. Increase kP until system oscillates");
+    println("3. Set kP to 50-60% of that value");
+    println("4. Increase kI to eliminate steady-state error");
+    println("5. Add kD to reduce overshoot and oscillation\n");
 
-    std::cout << "Effect of Each Gain:\n";
-    std::cout << "  kP (Proportional):\n";
-    std::cout << "    ↑ kP → Faster response, more overshoot\n";
-    std::cout << "    ↓ kP → Slower response, less overshoot\n\n";
+    println("Effect of Each Gain:");
+    println("  kP (Proportional):");
+    println("    ↑ kP → Faster response, more overshoot");
+    println("    ↓ kP → Slower response, less overshoot\n");
 
-    std::cout << "  kI (Integral):\n";
-    std::cout << "    ↑ kI → Eliminates steady-state error faster\n";
-    std::cout << "    ↓ kI → Slower to eliminate error\n";
-    std::cout << "    ⚠️  Too high kI → Oscillation, instability\n\n";
+    println("  kI (Integral):");
+    println("    ↑ kI → Eliminates steady-state error faster");
+    println("    ↓ kI → Slower to eliminate error");
+    println("    ⚠️  Too high kI → Oscillation, instability\n");
 
-    std::cout << "  kD (Derivative):\n";
-    std::cout << "    ↑ kD → Reduces overshoot, dampens oscillation\n";
-    std::cout << "    ↓ kD → More overshoot possible\n";
-    std::cout << "    ⚠️  Too high kD → Amplifies noise\n\n";
+    println("  kD (Derivative):");
+    println("    ↑ kD → Reduces overshoot, dampens oscillation");
+    println("    ↓ kD → More overshoot possible");
+    println("    ⚠️  Too high kD → Amplifies noise\n");
 
-    std::cout << "Ziegler-Nichols Method:\n";
-    std::cout << "1. Set kI=0, kD=0\n";
-    std::cout << "2. Increase kP until sustained oscillation\n";
-    std::cout << "3. Note critical gain (Ku) and oscillation period (Tu)\n";
-    std::cout << "4. Calculate:\n";
-    std::cout << "   kP = 0.6 * Ku\n";
-    std::cout << "   kI = 2 * kP / Tu\n";
-    std::cout << "   kD = kP * Tu / 8\n\n";
+    println("Ziegler-Nichols Method:");
+    println("1. Set kI=0, kD=0");
+    println("2. Increase kP until sustained oscillation");
+    println("3. Note critical gain (Ku) and oscillation period (Tu)");
+    println("4. Calculate:");
+    println("   kP = 0.6 * Ku");
+    println("   kI = 2 * kP / Tu");
+    println("   kD = kP * Tu / 8\n");
 
-    std::cout << "Common Issues:\n";
-    std::cout << "  • Oscillation → Reduce kP or increase kD\n";
-    std::cout << "  • Slow response → Increase kP\n";
-    std::cout << "  • Steady-state error → Increase kI\n";
-    std::cout << "  • Overshoot → Increase kD or reduce kP\n";
-    std::cout << "  • Noise sensitivity → Reduce kD, add filtering\n\n";
+    println("Common Issues:");
+    println("  • Oscillation → Reduce kP or increase kD");
+    println("  • Slow response → Increase kP");
+    println("  • Steady-state error → Increase kI");
+    println("  • Overshoot → Increase kD or reduce kP");
+    println("  • Noise sensitivity → Reduce kD, add filtering\n");
 
-    std::cout << "Advanced Tips:\n";
-    std::cout << "  1. Always set output limits (outputMin, outputMax)\n";
-    std::cout << "  2. Set integral limits (iMax) to prevent windup\n";
-    std::cout << "  3. Consider derivative filtering for noisy sensors\n";
-    std::cout << "  4. Add feedforward for known system dynamics\n";
-    std::cout << "  5. Use different gains for different operating ranges\n\n";
+    println("Advanced Tips:");
+    println("  1. Always set output limits (outputMin, outputMax)");
+    println("  2. Set integral limits (iMax) to prevent windup");
+    println("  3. Consider derivative filtering for noisy sensors");
+    println("  4. Add feedforward for known system dynamics");
+    println("  5. Use different gains for different operating ranges\n");
 
-    std::cout << "========================================\n";
-    std::cout << "  Example Complete!\n";
-    std::cout << "========================================\n\n";
+    println("========================================");
+    println("  Example Complete!");
+    println("========================================\n");
 
     return 0;
 }

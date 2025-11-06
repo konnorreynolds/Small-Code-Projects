@@ -15,7 +15,6 @@
 #include "../../include/units_physics.h"
 #include "../../include/units_utilities.h"
 
-#include <iostream>
 
 using namespace units;
 
@@ -70,12 +69,12 @@ public:
         state_.leftVelocity = drive.leftVelocity;
         state_.rightVelocity = drive.rightVelocity;
 
-        std::cout << "Command:\n";
-        std::cout << "  Linear:  " << linear.toMetersPerSecond() << " m/s\n";
-        std::cout << "  Angular: " << angular.toRadiansPerSecond() << " rad/s\n";
-        std::cout << "Wheel velocities:\n";
-        std::cout << "  Left:  " << state_.leftVelocity.toMetersPerSecond() << " m/s\n";
-        std::cout << "  Right: " << state_.rightVelocity.toMetersPerSecond() << " m/s\n";
+        println("Command:");
+        println("  Linear:  ", linear.toMetersPerSecond(), " m/s");
+        println("  Angular: ", angular.toRadiansPerSecond(), " rad/s");
+        println("Wheel velocities:");
+        println("  Left:  ", state_.leftVelocity.toMetersPerSecond(), " m/s");
+        println("  Right: ", state_.rightVelocity.toMetersPerSecond(), " m/s");
     }
 
     // Get motor RPM for each wheel
@@ -86,7 +85,7 @@ public:
         // Clamp to max RPM
         double maxRPM = config_.maxMotorRPM.toRPM();
         if (std::abs(leftRPM.toRPM()) > maxRPM || std::abs(rightRPM.toRPM()) > maxRPM) {
-            std::cout << "⚠️  Warning: Commanded velocity exceeds motor limits!\n";
+            println("⚠️  Warning: Commanded velocity exceeds motor limits!");
         }
 
         return {leftRPM, rightRPM};
@@ -109,10 +108,10 @@ public:
         battery_.update(voltage);
 
         if (battery_.isCritical()) {
-            std::cout << "🔋 CRITICAL: Battery at " << battery_.getPercentage() << "%!\n";
-            std::cout << "   Initiating emergency shutdown...\n";
+            println("🔋 CRITICAL: Battery at ", battery_.getPercentage(), "%!");
+            println("   Initiating emergency shutdown...");
         } else if (battery_.isLow()) {
-            std::cout << "🔋 Warning: Battery low at " << battery_.getPercentage() << "%\n";
+            println("🔋 Warning: Battery low at ", battery_.getPercentage(), "%");
         }
     }
 
@@ -125,60 +124,60 @@ public:
 // Main Program
 // ============================================================================
 int main() {
-    std::cout << "========================================\n";
-    std::cout << "  Differential Drive Robot Example\n";
-    std::cout << "========================================\n\n";
+    println("========================================");
+    println("  Differential Drive Robot Example");
+    println("========================================\n");
 
     // Create robot with configuration
     RobotConfig config;
     DifferentialDriveRobot robot(config);
 
-    std::cout << "Robot Configuration:\n";
-    std::cout << "  Wheelbase: " << config.wheelbase.toMeters() << " m\n";
-    std::cout << "  Wheel diameter: " << config.wheelDiameter.toCentimeters() << " cm\n";
-    std::cout << "  Max RPM: " << config.maxMotorRPM.toRPM() << "\n\n";
+    println("Robot Configuration:");
+    println("  Wheelbase: ", config.wheelbase.toMeters(), " m");
+    println("  Wheel diameter: ", config.wheelDiameter.toCentimeters(), " cm");
+    println("  Max RPM: ", config.maxMotorRPM.toRPM(), "\n");
 
     // ========================================================================
     // Test 1: Move Forward
     // ========================================================================
-    std::cout << "Test 1: Moving forward at 0.5 m/s\n";
-    std::cout << "-----------------------------------\n";
+    println("Test 1: Moving forward at 0.5 m/s");
+    println("-----------------------------------");
     robot.setVelocity(mps(0.5), radps(0.0));
 
     std::pair<RPM, RPM> motors1 = robot.getMotorCommands();
-    std::cout << "Motor commands:\n";
-    std::cout << "  Left motor:  " << motors1.first.toRPM() << " RPM\n";
-    std::cout << "  Right motor: " << motors1.second.toRPM() << " RPM\n\n";
+    println("Motor commands:");
+    println("  Left motor:  ", motors1.first.toRPM(), " RPM");
+    println("  Right motor: ", motors1.second.toRPM(), " RPM\n");
 
     // ========================================================================
     // Test 2: Turn in Place
     // ========================================================================
-    std::cout << "Test 2: Rotating in place at 0.5 rad/s\n";
-    std::cout << "---------------------------------------\n";
+    println("Test 2: Rotating in place at 0.5 rad/s");
+    println("---------------------------------------");
     robot.setVelocity(mps(0.0), radps(0.5));
 
     std::pair<RPM, RPM> motors2 = robot.getMotorCommands();
-    std::cout << "Motor commands:\n";
-    std::cout << "  Left motor:  " << motors2.first.toRPM() << " RPM\n";
-    std::cout << "  Right motor: " << motors2.second.toRPM() << " RPM\n\n";
+    println("Motor commands:");
+    println("  Left motor:  ", motors2.first.toRPM(), " RPM");
+    println("  Right motor: ", motors2.second.toRPM(), " RPM\n");
 
     // ========================================================================
     // Test 3: Arc Turn (forward + rotation)
     // ========================================================================
-    std::cout << "Test 3: Arc turn (forward 0.3 m/s, turning 0.3 rad/s)\n";
-    std::cout << "------------------------------------------------------\n";
+    println("Test 3: Arc turn (forward 0.3 m/s, turning 0.3 rad/s)");
+    println("------------------------------------------------------");
     robot.setVelocity(mps(0.3), radps(0.3));
 
     std::pair<RPM, RPM> motors3 = robot.getMotorCommands();
-    std::cout << "Motor commands:\n";
-    std::cout << "  Left motor:  " << motors3.first.toRPM() << " RPM\n";
-    std::cout << "  Right motor: " << motors3.second.toRPM() << " RPM\n\n";
+    println("Motor commands:");
+    println("  Left motor:  ", motors3.first.toRPM(), " RPM");
+    println("  Right motor: ", motors3.second.toRPM(), " RPM\n");
 
     // ========================================================================
     // Test 4: Odometry Update
     // ========================================================================
-    std::cout << "Test 4: Simulating odometry over 5 seconds\n";
-    std::cout << "-------------------------------------------\n";
+    println("Test 4: Simulating odometry over 5 seconds");
+    println("-------------------------------------------");
 
     // Simulate forward motion
     robot.setVelocity(mps(0.5), radps(0.0));
@@ -187,50 +186,50 @@ int main() {
         robot.updateOdometry(s(i));
         auto pose = robot.getState().pose;
 
-        std::cout << "t=" << i << "s: ";
-        std::cout << "x=" << pose.position.x << " m, ";
-        std::cout << "y=" << pose.position.y << " m, ";
-        std::cout << "θ=" << pose.theta.toDegrees() << "°\n";
+        print("t=", i, "s: ");
+        print("x=", pose.position.x, " m, ");
+        print("y=", pose.position.y, " m, ");
+        println("θ=", pose.theta.toDegrees(), "°");
     }
-    std::cout << "\n";
+    println("");
 
     // ========================================================================
     // Test 5: Battery Monitoring
     // ========================================================================
-    std::cout << "Test 5: Battery monitoring\n";
-    std::cout << "--------------------------\n";
+    println("Test 5: Battery monitoring");
+    println("--------------------------");
 
     // Simulate battery discharge
     robot.updateBattery(V(12.6));
-    std::cout << "Fully charged: " << robot.getBattery().getPercentage() << "%\n";
+    println("Fully charged: ", robot.getBattery().getPercentage(), "%");
 
     robot.updateBattery(V(11.5));
-    std::cout << "Normal operation: " << robot.getBattery().getPercentage() << "%\n";
+    println("Normal operation: ", robot.getBattery().getPercentage(), "%");
 
     robot.updateBattery(V(10.5));
-    std::cout << "Getting low: " << robot.getBattery().getPercentage() << "%\n";
+    println("Getting low: ", robot.getBattery().getPercentage(), "%");
 
     robot.updateBattery(V(10.0));
-    std::cout << "Critical: " << robot.getBattery().getPercentage() << "%\n\n";
+    println("Critical: ", robot.getBattery().getPercentage(), "%\n");
 
     // ========================================================================
     // Summary
     // ========================================================================
-    std::cout << "========================================\n";
-    std::cout << "  Example Complete!\n";
-    std::cout << "========================================\n";
-    std::cout << "This example demonstrated:\n";
-    std::cout << "  ✓ Differential drive kinematics\n";
-    std::cout << "  ✓ Velocity to RPM conversion\n";
-    std::cout << "  ✓ Odometry tracking\n";
-    std::cout << "  ✓ Battery monitoring\n";
-    std::cout << "  ✓ Type-safe unit handling\n\n";
+    println("========================================");
+    println("  Example Complete!");
+    println("========================================");
+    println("This example demonstrated:");
+    println("  ✓ Differential drive kinematics");
+    println("  ✓ Velocity to RPM conversion");
+    println("  ✓ Odometry tracking");
+    println("  ✓ Battery monitoring");
+    println("  ✓ Type-safe unit handling\n");
 
-    std::cout << "Next steps:\n";
-    std::cout << "  1. Adapt this code for your robot platform\n";
-    std::cout << "  2. Add sensor feedback (encoders, IMU)\n";
-    std::cout << "  3. Implement closed-loop control\n";
-    std::cout << "  4. Add obstacle avoidance\n\n";
+    println("Next steps:");
+    println("  1. Adapt this code for your robot platform");
+    println("  2. Add sensor feedback (encoders, IMU)");
+    println("  3. Implement closed-loop control");
+    println("  4. Add obstacle avoidance\n");
 
     return 0;
 }

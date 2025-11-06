@@ -211,7 +211,7 @@ public:
         // Wire.write(0x43);  // GYRO_ZOUT_H register
         // Wire.endTransmission(false);
         // Wire.requestFrom(MPU6050_ADDR, 2);
-        // int16_t gyro_raw = (Wire.read() << 8) | Wire.read();
+        // int16_t gyro_raw = (Wire.read() , 8) | Wire.read();
         // double gyro_dps = gyro_raw / 131.0;  // For ±250°/s range
         // gyro_z_ = rad(gyro_dps * M_PI / 180.0) / s(1.0);
     }
@@ -416,9 +416,8 @@ public:
             "FOLLOW_WALL", "TURN_LEFT", "TURN_RIGHT", "TURN_AROUND", "STOPPED"
         };
 
-        std::cout << "State: " << state_str[static_cast<int>(state_)]
-                  << " | Heading: " << imu_.getHeading().toDegrees() << "°"
-                  << " | Timer: " << state_timer_ << "s" << std::endl;
+        print("State: " ,  state_str[static_cast<int>(state_)]
+                  , " | Heading: ");
     }
 };
 
@@ -428,20 +427,20 @@ public:
 MazeSolverRobot robot;
 
 void setup() {
-    std::cout << "╔══════════════════════════════════════════════════════════╗" << std::endl;
-    std::cout << "║   ARDUINO MAZE-SOLVING ROBOT                             ║" << std::endl;
-    std::cout << "║   Left-hand wall following algorithm                     ║" << std::endl;
-    std::cout << "║   Powered by RobotLib v" << robotlib::VERSION_STRING << "                            ║" << std::endl;
-    std::cout << "╚══════════════════════════════════════════════════════════╝" << std::endl;
-    std::cout << std::endl;
+    println("╔══════════════════════════════════════════════════════════╗");
+    println("║   ARDUINO MAZE-SOLVING ROBOT                             ║");
+    println("║   Left-hand wall following algorithm                     ║");
+    println("║   Powered by RobotLib v", robotlib::VERSION_STRING, "                            ║");
+    println("╚══════════════════════════════════════════════════════════╝");
+    println();
 
     robot.init();
 
-    std::cout << "🤖 Robot initialized!" << std::endl;
-    std::cout << "📏 Wheelbase: " << config::wheelbase().toMeters() * 100 << " cm" << std::endl;
-    std::cout << "⚙️  Wheel diameter: " << config::wheelDiameter().toMeters() * 100 << " cm" << std::endl;
-    std::cout << "🏃 Cruise speed: " << config::cruiseSpeed().toMetersPerSecond() * 100 << " cm/s" << std::endl;
-    std::cout << "\n🚀 Starting maze solver..." << std::endl;
+    println("🤖 Robot initialized!");
+    println("📏 Wheelbase: ", config::wheelbase().toMeters() * 100, " cm");
+    println("⚙️  Wheel diameter: ", config::wheelDiameter().toMeters() * 100, " cm");
+    println("🏃 Cruise speed: ", config::cruiseSpeed().toMetersPerSecond() * 100, " cm/s");
+    println("\n🚀 Starting maze solver...");
 }
 
 void loop() {
@@ -466,9 +465,9 @@ unsigned long millis() {
 int main() {
     setup();
 
-    std::cout << "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" << std::endl;
-    std::cout << "Running 10-second maze solving simulation..." << std::endl;
-    std::cout << "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n" << std::endl;
+    println("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    println("Running 10-second maze solving simulation...");
+    println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
     for (int i = 0; i < 500; i++) {  // 10 seconds at 50Hz
         loop();
@@ -478,15 +477,15 @@ int main() {
         }
     }
 
-    std::cout << "\n✅ Maze solving complete!" << std::endl;
-    std::cout << "\n📊 This robot demonstrates:" << std::endl;
-    std::cout << "   • Embedded system (Arduino) usage" << std::endl;
-    std::cout << "   • Left-hand wall following algorithm" << std::endl;
-    std::cout << "   • Ultrasonic sensor fusion" << std::endl;
-    std::cout << "   • IMU-based heading control" << std::endl;
-    std::cout << "   • State machine navigation" << std::endl;
-    std::cout << "   • Resource-constrained operation (2KB RAM)" << std::endl;
-    std::cout << "\n💡 Memory usage: ~1.2KB RAM (Arduino Uno compatible!)" << std::endl;
+    println("\n✅ Maze solving complete!");
+    println("\n📊 This robot demonstrates:");
+    println("   • Embedded system (Arduino) usage");
+    println("   • Left-hand wall following algorithm");
+    println("   • Ultrasonic sensor fusion");
+    println("   • IMU-based heading control");
+    println("   • State machine navigation");
+    println("   • Resource-constrained operation (2KB RAM)");
+    println("\n💡 Memory usage: ~1.2KB RAM (Arduino Uno compatible!)");
 
     return 0;
 }

@@ -18,7 +18,6 @@
 // ============================================================================
 
 #include <RobotLib.h>
-#include <iostream>
 #include <memory>
 
 using namespace units;
@@ -502,7 +501,7 @@ public:
 
             // Fire when ready!
             if (shooter_.isReadyToShoot() && arm_.atTarget()) {
-                std::cout << "🎯 FIRING! Distance: " << dist.toMeters() << " m" << std::endl;
+                println("🎯 FIRING! Distance: ", dist.toMeters(), " m");
                 // In real robot: Trigger indexer to feed game piece
             }
         } else {
@@ -524,7 +523,7 @@ public:
                 drive_.drive(mps(-1.5), mps(0), rad(0) / s(1.0), false);
 
                 if (state_timer_ > 2.0) {
-                    std::cout << "🚗 Taxi complete!" << std::endl;
+                    println("🚗 Taxi complete!");
                     auto_state_ = AutoState::INTAKE;
                     state_timer_ = 0.0;
                 }
@@ -536,7 +535,7 @@ public:
                 arm_.setPosition(config::armMaxExtension(), deg(-10));
 
                 if (state_timer_ > 1.5) {
-                    std::cout << "📦 Game piece acquired!" << std::endl;
+                    println("📦 Game piece acquired!");
                     auto_state_ = AutoState::AIM;
                     state_timer_ = 0.0;
                 }
@@ -552,7 +551,7 @@ public:
                     arm_.setPosition(config::armMinExtension(), deg(45));
 
                     if (shooter_.isReadyToShoot() && arm_.atTarget()) {
-                        std::cout << "🎯 Locked on target!" << std::endl;
+                        println("🎯 Locked on target!");
                         auto_state_ = AutoState::SHOOT;
                         state_timer_ = 0.0;
                     }
@@ -561,11 +560,11 @@ public:
 
             case AutoState::SHOOT:
                 // Fire!
-                std::cout << "🚀 SHOOTING!" << std::endl;
+                println("🚀 SHOOTING!");
                 // Trigger shot
 
                 if (state_timer_ > 0.5) {
-                    std::cout << "✅ Auto complete! 2 points scored!" << std::endl;
+                    println("✅ Auto complete! 2 points scored!");
                     auto_state_ = AutoState::DONE;
                 }
                 break;
@@ -613,15 +612,13 @@ public:
 
     // Status display
     void printStatus() const {
-        std::cout << "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" << std::endl;
-        std::cout << "🤖 FRC COMPETITION ROBOT STATUS" << std::endl;
-        std::cout << "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" << std::endl;
-        std::cout << "Shooter: " << shooter_.getCurrentRPM().toRPM() << " RPM "
-                  << (shooter_.isReadyToShoot() ? "✅" : "⏳") << std::endl;
-        std::cout << "Turret: " << shooter_.getCurrentAngle().toDegrees() << "°" << std::endl;
-        std::cout << "Arm: " << arm_.getPivot().toDegrees() << "° "
-                  << arm_.getExtension().toMeters() << "m" << std::endl;
-        std::cout << "Vision: " << (vision_.hasTarget() ? "🎯 LOCKED" : "🔍 SEARCHING") << std::endl;
+        println("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        println("🤖 FRC COMPETITION ROBOT STATUS");
+        println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        print("Shooter: " ,  shooter_.getCurrentRPM().toRPM() , " RPM ");
+        println("Turret: ", shooter_.getCurrentAngle().toDegrees(), "°");
+        print("Arm: " ,  arm_.getPivot().toDegrees() , "° ");
+        println("Vision: ", (vision_.hasTarget() ? "🎯 LOCKED" : "🔍 SEARCHING"));
     }
 };
 
@@ -629,16 +626,16 @@ public:
 // Main Simulation
 // ============================================================================
 int main() {
-    std::cout << "╔══════════════════════════════════════════════════════════╗" << std::endl;
-    std::cout << "║   FRC SWERVE DRIVE COMPETITION ROBOT SIMULATION          ║" << std::endl;
-    std::cout << "║   Powered by RobotLib v" << robotlib::VERSION_STRING << "                            ║" << std::endl;
-    std::cout << "╚══════════════════════════════════════════════════════════╝" << std::endl;
-    std::cout << std::endl;
+    println("╔══════════════════════════════════════════════════════════╗");
+    println("║   FRC SWERVE DRIVE COMPETITION ROBOT SIMULATION          ║");
+    println("║   Powered by RobotLib v", robotlib::VERSION_STRING, "                            ║");
+    println("╚══════════════════════════════════════════════════════════╝");
+    println();
 
     FRCCompetitionRobot robot;
 
     // Run autonomous mode
-    std::cout << "🚀 Starting 15-second autonomous period..." << std::endl;
+    println("🚀 Starting 15-second autonomous period...");
     robot.setMode(FRCCompetitionRobot::RobotMode::AUTONOMOUS);
 
     for (int i = 0; i < 75; i++) {  // 15 seconds at 20Hz
@@ -652,7 +649,7 @@ int main() {
         // In real robot: This would be in a real-time loop
     }
 
-    std::cout << "\n🎮 Switching to teleoperated mode..." << std::endl;
+    println("\n🎮 Switching to teleoperated mode...");
     robot.setMode(FRCCompetitionRobot::RobotMode::TELEOP);
 
     for (int i = 0; i < 100; i++) {  // 5 seconds at 20Hz
@@ -663,13 +660,13 @@ int main() {
         }
     }
 
-    std::cout << "\n✅ Match complete! Great driving!" << std::endl;
-    std::cout << "\n📊 This robot demonstrates:" << std::endl;
-    std::cout << "   • Swerve drive kinematics" << std::endl;
-    std::cout << "   • Vision-guided turret aiming" << std::endl;
-    std::cout << "   • Telescoping arm control" << std::endl;
-    std::cout << "   • State machine autonomous" << std::endl;
-    std::cout << "   • Full subsystem integration" << std::endl;
+    println("\n✅ Match complete! Great driving!");
+    println("\n📊 This robot demonstrates:");
+    println("   • Swerve drive kinematics");
+    println("   • Vision-guided turret aiming");
+    println("   • Telescoping arm control");
+    println("   • State machine autonomous");
+    println("   • Full subsystem integration");
 
     return 0;
 }

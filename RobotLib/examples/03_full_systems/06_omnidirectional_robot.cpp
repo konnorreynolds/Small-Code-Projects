@@ -18,8 +18,6 @@
 #include "../../include/units_robotics.h"
 #include "../../include/units_utilities.h"
 
-#include <iostream>
-#include <iomanip>
 #include <cmath>
 #include <array>
 
@@ -247,139 +245,135 @@ public:
 // Demonstration Scenarios
 // ============================================================================
 void printWheelVelocities(const MecanumWheelVelocities& wheels) {
-    std::cout << "FL:" << std::setw(7) << std::fixed << std::setprecision(3)
-              << wheels.frontLeft.toMetersPerSecond() << " m/s  ";
-    std::cout << "FR:" << std::setw(7)
-              << wheels.frontRight.toMetersPerSecond() << " m/s  ";
-    std::cout << "BL:" << std::setw(7)
-              << wheels.backLeft.toMetersPerSecond() << " m/s  ";
-    std::cout << "BR:" << std::setw(7)
-              << wheels.backRight.toMetersPerSecond() << " m/s";
+    print("FL:" , wheels.frontLeft.toMetersPerSecond() , " m/s  ");
+    print("FR:" , wheels.frontRight.toMetersPerSecond() , " m/s  ");
+    print("BL:" , wheels.backLeft.toMetersPerSecond() , " m/s  ");
+    print("BR:" , wheels.backRight.toMetersPerSecond() , " m/s");
 }
 
 void demonstrateBasicMotions() {
-    std::cout << "========================================\n";
-    std::cout << "  Basic Omnidirectional Motions\n";
-    std::cout << "========================================\n\n";
+    println("========================================");
+    println("  Basic Omnidirectional Motions");
+    println("========================================\n");
 
     MecanumDrive drive;
 
     // 1. Forward motion
-    std::cout << "1. Forward Motion (vx = 0.5 m/s):\n";
+    println("1. Forward Motion (vx = 0.5 m/s):");
     auto forward = drive.inverseKinematics(mps(0.5), mps(0), radps(0));
-    std::cout << "   ";
+    print("   ");
     printWheelVelocities(forward);
-    std::cout << "\n   → All wheels move at same speed forward\n\n";
+    println("\n   → All wheels move at same speed forward\n");
 
     // 2. Strafe right
-    std::cout << "2. Strafe Right (vy = 0.5 m/s):\n";
+    println("2. Strafe Right (vy = 0.5 m/s):");
     auto strafe = drive.inverseKinematics(mps(0), mps(0.5), radps(0));
-    std::cout << "   ";
+    print("   ");
     printWheelVelocities(strafe);
-    std::cout << "\n   → FL/BR forward, FR/BL backward (diagonal motion)\n\n";
+    println("\n   → FL/BR forward, FR/BL backward (diagonal motion)\n");
 
     // 3. Rotate in place
-    std::cout << "3. Rotate in Place (ω = 1.0 rad/s):\n";
+    println("3. Rotate in Place (ω = 1.0 rad/s):");
     auto rotate = drive.inverseKinematics(mps(0), mps(0), radps(1.0));
-    std::cout << "   ";
+    print("   ");
     printWheelVelocities(rotate);
-    std::cout << "\n   → Left wheels forward, right wheels backward\n\n";
+    println("\n   → Left wheels forward, right wheels backward\n");
 
     // 4. Diagonal motion (45°)
-    std::cout << "4. Diagonal Motion (vx = 0.5, vy = 0.5):\n";
+    println("4. Diagonal Motion (vx = 0.5, vy = 0.5):");
     auto diagonal = drive.inverseKinematics(mps(0.5), mps(0.5), radps(0));
-    std::cout << "   ";
+    print("   ");
     printWheelVelocities(diagonal);
-    std::cout << "\n   → FL/BR move, FR/BL stationary\n\n";
+    println("\n   → FL/BR move, FR/BL stationary\n");
 
     // 5. Complex motion (forward + strafe + rotate)
-    std::cout << "5. Complex Motion (vx=0.3, vy=0.2, ω=0.5):\n";
+    println("5. Complex Motion (vx=0.3, vy=0.2, ω=0.5):");
     auto complex = drive.inverseKinematics(mps(0.3), mps(0.2), radps(0.5));
-    std::cout << "   ";
+    print("   ");
     printWheelVelocities(complex);
-    std::cout << "\n   → All wheels at different speeds (holonomic control)\n\n";
+    println("\n   → All wheels at different speeds (holonomic control)\n");
 }
 
 void demonstrateVelocityNormalization() {
-    std::cout << "========================================\n";
-    std::cout << "  Velocity Normalization\n";
-    std::cout << "========================================\n\n";
+    println("========================================");
+    println("  Velocity Normalization");
+    println("========================================\n");
 
     MecanumConfig config;
     config.maxLinearSpeed = mps(1.0);
     MecanumDrive drive(config);
 
-    std::cout << "Maximum wheel speed: " << config.maxLinearSpeed.toMetersPerSecond() << " m/s\n\n";
+    println("Maximum wheel speed: ", config.maxLinearSpeed.toMetersPerSecond(), " m/s\n");
 
     // Request very high velocities
-    std::cout << "Requested: vx=1.5, vy=1.5, ω=2.0 (exceeds limits)\n";
+    println("Requested: vx=1.5, vy=1.5, ω=2.0 (exceeds limits)");
     auto wheels = drive.inverseKinematics(mps(1.5), mps(1.5), radps(2.0));
 
-    std::cout << "Before normalization:\n   ";
+    println("Before normalization:\n   ");
     printWheelVelocities(wheels);
-    std::cout << "\n   Max: " << wheels.maxWheelSpeed().toMetersPerSecond() << " m/s (EXCEEDS LIMIT!)\n\n";
+    println("\n   Max: ", wheels.maxWheelSpeed().toMetersPerSecond(), " m/s (EXCEEDS LIMIT!)\n");
 
     wheels.normalize(config.maxLinearSpeed);
-    std::cout << "After normalization:\n   ";
+    println("After normalization:\n   ");
     printWheelVelocities(wheels);
-    std::cout << "\n   Max: " << wheels.maxWheelSpeed().toMetersPerSecond() << " m/s ✓\n";
-    std::cout << "   → Motion direction preserved, speed scaled down\n\n";
+    println("\n   Max: ", wheels.maxWheelSpeed().toMetersPerSecond(), " m/s ✓");
+    println("   → Motion direction preserved, speed scaled down\n");
 }
 
 void demonstrateFieldCentricControl() {
-    std::cout << "========================================\n";
-    std::cout << "  Field-Centric vs Robot-Centric\n";
-    std::cout << "========================================\n\n";
+    println("========================================");
+    println("  Field-Centric vs Robot-Centric");
+    println("========================================\n");
 
     MecanumDrive drive;
 
     // Robot is facing 90° (pointing left in field frame)
     Radians robotHeading = rad(constants::PI / 2.0);  // 90 degrees
 
-    std::cout << "Robot heading: " << robotHeading.toDegrees() << "° (pointing left)\n\n";
+    println("Robot heading: ", robotHeading.toDegrees(), "° (pointing left)\n");
 
     // Driver wants to move forward in field frame (positive X)
     MetersPerSecond vx_field = mps(0.5);
     MetersPerSecond vy_field = mps(0.0);
 
-    std::cout << "Field-centric command: Forward (field +X)\n";
-    std::cout << "Field velocities: vx=" << vx_field.toMetersPerSecond()
-              << ", vy=" << vy_field.toMetersPerSecond() << "\n\n";
+    println("Field-centric command: Forward (field +X)");
+    print("Field velocities: vx=" ,  vx_field.toMetersPerSecond()
+              , ", vy=");
 
     // Convert to robot frame
     auto robotVel = MecanumDrive::fieldToRobot(
         vx_field, vy_field, radps(0), robotHeading
     );
 
-    std::cout << "Converted to robot frame:\n";
-    std::cout << "Robot velocities: vx=" << robotVel.vx.toMetersPerSecond()
-              << ", vy=" << robotVel.vy.toMetersPerSecond() << "\n";
-    std::cout << "→ Robot must strafe right to move forward in field\n\n";
+    println("Converted to robot frame:");
+    print("Robot velocities: vx=" ,  robotVel.vx.toMetersPerSecond()
+              , ", vy=");
+    println("→ Robot must strafe right to move forward in field\n");
 
     // Calculate wheel velocities
     auto wheels = drive.inverseKinematics(robotVel.vx, robotVel.vy, robotVel.omega);
-    std::cout << "Wheel velocities: ";
+    print("Wheel velocities: ");
     printWheelVelocities(wheels);
-    std::cout << "\n\n";
+    println("\n");
 
-    std::cout << "This allows the driver to control the robot relative to\n";
-    std::cout << "the field, regardless of robot orientation!\n\n";
+    println("This allows the driver to control the robot relative to");
+    println("the field, regardless of robot orientation!\n");
 }
 
 void demonstrateOdometry() {
-    std::cout << "========================================\n";
-    std::cout << "  Omnidirectional Odometry\n";
-    std::cout << "========================================\n\n";
+    println("========================================");
+    println("  Omnidirectional Odometry");
+    println("========================================\n");
 
     MecanumDrive drive;
     OmniOdometry odometry;
 
     double dt = 0.05;  // 50ms update rate
 
-    std::cout << "Scenario: Square path (1m × 1m) using holonomic motion\n\n";
-    std::cout << std::fixed << std::setprecision(3);
-    std::cout << "Time(s) | Command           | X(m)  | Y(m)  | θ(°)  |\n";
-    std::cout << "--------|-------------------|-------|-------|-------|\n";
+    println("Scenario: Square path (1m × 1m) using holonomic motion\n");
+    print(, );
+    println("Time(s) | Command           | X(m)  | Y(m)  | θ(°)  |");
+    println("--------|-------------------|-------|-------|-------|");
 
     // Square path using omnidirectional motion
     struct PathSegment {
@@ -415,11 +409,11 @@ void demonstrateOdometry() {
 
         // Print status every 0.2 seconds
         if (static_cast<int>(totalTime / 0.2) != static_cast<int>((totalTime - dt) / 0.2)) {
-            std::cout << std::setw(6) << totalTime << "  | ";
-            std::cout << std::setw(17) << std::left << segment.description << std::right << " | ";
-            std::cout << std::setw(5) << odometry.getX().toMeters() << " | ";
-            std::cout << std::setw(5) << odometry.getY().toMeters() << " | ";
-            std::cout << std::setw(5) << odometry.getTheta().toDegrees() << " |\n";
+            print(, totalTime, "  | ");
+            print(, segment.description, std::right, " | ");
+            print(, odometry.getX().toMeters(), " | ");
+            print(, odometry.getY().toMeters(), " | ");
+            println(, odometry.getTheta().toDegrees(), " |");
         }
 
         // Move to next segment
@@ -429,75 +423,74 @@ void demonstrateOdometry() {
         }
     }
 
-    std::cout << "\nFinal position: ("
-              << odometry.getX().toMeters() << ", "
-              << odometry.getY().toMeters() << ") m\n";
-    std::cout << "Expected: (0, 0) - Close to start position ✓\n";
-    std::cout << "Heading: " << odometry.getTheta().toDegrees() << "° (unchanged)\n\n";
+    print("\nFinal position: ("
+              ,  odometry.getX().toMeters() , ", ");
+    println("Expected: (0, 0) - Close to start position ✓");
+    println("Heading: ", odometry.getTheta().toDegrees(), "° (unchanged)\n");
 
-    std::cout << "Key Advantage: Robot maintained heading throughout path!\n";
-    std::cout << "With differential drive, this would require 4 turns.\n\n";
+    println("Key Advantage: Robot maintained heading throughout path!");
+    println("With differential drive, this would require 4 turns.\n");
 }
 
 // ============================================================================
 // Main Program
 // ============================================================================
 int main() {
-    std::cout << "\n";
-    std::cout << "╔════════════════════════════════════════╗\n";
-    std::cout << "║  Omnidirectional Robot Kinematics     ║\n";
-    std::cout << "║  Mecanum Wheel Drive System            ║\n";
-    std::cout << "╚════════════════════════════════════════╝\n";
-    std::cout << "\n";
+    println("");
+    println("╔════════════════════════════════════════╗");
+    println("║  Omnidirectional Robot Kinematics     ║");
+    println("║  Mecanum Wheel Drive System            ║");
+    println("╚════════════════════════════════════════╝");
+    println("");
 
     demonstrateBasicMotions();
     demonstrateVelocityNormalization();
     demonstrateFieldCentricControl();
     demonstrateOdometry();
 
-    std::cout << "========================================\n";
-    std::cout << "  Key Concepts Summary\n";
-    std::cout << "========================================\n\n";
+    println("========================================");
+    println("  Key Concepts Summary");
+    println("========================================\n");
 
-    std::cout << "1. Holonomic Motion:\n";
-    std::cout << "   • Independent control of X, Y, and rotation\n";
-    std::cout << "   • Can move in any direction without turning\n";
-    std::cout << "   • 3 degrees of freedom (vs 2 for differential)\n\n";
+    println("1. Holonomic Motion:");
+    println("   • Independent control of X, Y, and rotation");
+    println("   • Can move in any direction without turning");
+    println("   • 3 degrees of freedom (vs 2 for differential)\n");
 
-    std::cout << "2. Mecanum Kinematics:\n";
-    std::cout << "   • Inverse: Desired motion → Wheel speeds\n";
-    std::cout << "   • Forward: Measured wheels → Actual motion\n";
-    std::cout << "   • 45° rollers enable sideways force\n\n";
+    println("2. Mecanum Kinematics:");
+    println("   • Inverse: Desired motion → Wheel speeds");
+    println("   • Forward: Measured wheels → Actual motion");
+    println("   • 45° rollers enable sideways force\n");
 
-    std::cout << "3. Field-Centric Control:\n";
-    std::cout << "   • Driver controls relative to field, not robot\n";
-    std::cout << "   • Requires IMU/gyro for heading\n";
-    std::cout << "   • Much easier for human operators\n\n";
+    println("3. Field-Centric Control:");
+    println("   • Driver controls relative to field, not robot");
+    println("   • Requires IMU/gyro for heading");
+    println("   • Much easier for human operators\n");
 
-    std::cout << "4. Velocity Normalization:\n";
-    std::cout << "   • Prevents wheel saturation\n";
-    std::cout << "   • Preserves motion direction\n";
-    std::cout << "   • Critical for safe operation\n\n";
+    println("4. Velocity Normalization:");
+    println("   • Prevents wheel saturation");
+    println("   • Preserves motion direction");
+    println("   • Critical for safe operation\n");
 
-    std::cout << "5. Applications:\n";
-    std::cout << "   • Warehouse robots (precise maneuvering)\n";
-    std::cout << "   • Competition robots (FRC, VEX)\n";
-    std::cout << "   • Industrial AGVs\n";
-    std::cout << "   • Mobile manipulation platforms\n\n";
+    println("5. Applications:");
+    println("   • Warehouse robots (precise maneuvering)");
+    println("   • Competition robots (FRC, VEX)");
+    println("   • Industrial AGVs");
+    println("   • Mobile manipulation platforms\n");
 
-    std::cout << "Advantages over Differential Drive:\n";
-    std::cout << "+ Can strafe sideways\n";
-    std::cout << "+ No need to turn before moving\n";
-    std::cout << "+ Better maneuverability in tight spaces\n";
-    std::cout << "+ Can maintain heading while translating\n\n";
+    println("Advantages over Differential Drive:");
+    println("+ Can strafe sideways");
+    println("+ No need to turn before moving");
+    println("+ Better maneuverability in tight spaces");
+    println("+ Can maintain heading while translating\n");
 
-    std::cout << "Disadvantages:\n";
-    std::cout << "- More complex kinematics\n";
-    std::cout << "- Mecanum wheels are expensive\n";
-    std::cout << "- Lower traction than normal wheels\n";
-    std::cout << "- More sensitive to wheel slip\n\n";
+    println("Disadvantages:");
+    println("- More complex kinematics");
+    println("- Mecanum wheels are expensive");
+    println("- Lower traction than normal wheels");
+    println("- More sensitive to wheel slip\n");
 
-    std::cout << "========================================\n\n";
+    println("========================================\n");
 
     return 0;
 }

@@ -32,6 +32,8 @@ std::cout << velocity.toMetersPerSecond() << " m/s\n";
 - ✅ **ROS2 Integration** - Message conversion helpers for ROS2 projects
 - ✅ **MATLAB/Simulink Support** - Code generation and data export utilities
 - ✅ **Fluent/Chaining API** - Beautiful method chaining for easy robotics programming
+- ✅ **Clean Output Utilities** - Platform-agnostic logging (Arduino + PC) - no more std::cout clutter!
+- ✅ **Platform-Specific Examples** - Complete robots for Arduino IDE, PlatformIO, ESP32, STM32, Teensy
 - ✅ **Reorganized File Structure** - Clean separation: include/, tests/, examples/, docs/
 - ✅ **Reorganized Examples** - 6 folders: basics, feedback, full systems, algorithms, advanced, fluent API
 - ✅ **8 New Examples** - Simple motor/servo/drive, servo feedback, drive odometry, and more
@@ -137,7 +139,14 @@ The library is now organized into four logical components:
    - Every method returns *this for chaining
    - Beginner-friendly, discoverable interface
 
-Total size: ~220KB (header-only library)
+13. **[units_output.h](include/units_output.h)** (8KB) ⭐ NEW in v2.2!
+   - Platform-agnostic logging (Arduino + std::cout)
+   - Clean API: print(), println(), log(), logUnit()
+   - Unit-aware printing with automatic formatting
+   - Debug macros for conditional compilation
+   - Replaces cluttered std::cout calls
+
+Total size: ~228KB (header-only library)
 
 ## Why This Architecture?
 
@@ -389,7 +398,7 @@ gains.kF = 0.5;            // Add feedforward if model known
 RobotLib includes comprehensive documentation:
 
 - **[QUICKSTART.md](QUICKSTART.md)** - Step-by-step getting started guide
-- **[examples/README.md](examples/README.md)** - All 18 examples documented in 6 organized folders
+- **[examples/README.md](examples/README.md)** - 20 core examples + 6 platform-specific examples (Arduino IDE, PlatformIO, ESP32, STM32, Teensy)
 - **[docs/FINAL_VERIFICATION.md](docs/FINAL_VERIFICATION.md)** - Pre-use validation report
 - **[docs/TEST_REPORT.md](docs/TEST_REPORT.md)** - Comprehensive testing results
 - **[docs/FEATURE_SUMMARY.md](docs/FEATURE_SUMMARY.md)** - Complete API reference

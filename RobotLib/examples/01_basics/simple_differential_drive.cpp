@@ -11,17 +11,16 @@
 // - Motor testing
 // ============================================================================
 
-#include "../../include/robotlib_api.h"
-#include <iostream>
-#include <iomanip>
+#include "../../include/RobotLib.h"
 
 using namespace robotlib;
+using namespace robotlib::output;
 
 int main() {
-    std::cout << "========================================\n";
-    std::cout << "  Simple Differential Drive\n";
-    std::cout << "  (No Odometry or Encoders)\n";
-    std::cout << "========================================\n\n";
+    println("========================================");
+    println("  Simple Differential Drive");
+    println("  (No Odometry or Encoders)");
+    println("========================================\n");
 
     // Configure robot - just the physical parameters
     DifferentialDrive robot = DifferentialDrive()
@@ -29,16 +28,16 @@ int main() {
         .withWheelDiameter(m(0.1))      // 10cm diameter wheels
         .withMaxSpeed(mps(1.0));        // 1 m/s max speed
 
-    std::cout << "Robot configured:\n";
-    std::cout << "  Wheelbase: " << robot.getWheelbase().toMeters() << " m\n";
-    std::cout << "  Wheel diameter: " << robot.getWheelDiameter().toMeters() << " m\n";
-    std::cout << "  Max speed: " << robot.getMaxSpeed().toMetersPerSecond() << " m/s\n";
-    std::cout << "  (No encoders or odometry configured)\n\n";
+    println("Robot configured:");
+    println("  Wheelbase: ", robot.getWheelbase().toMeters(), " m");
+    println("  Wheel diameter: ", robot.getWheelDiameter().toMeters(), " m");
+    println("  Max speed: ", robot.getMaxSpeed().toMetersPerSecond(), " m/s");
+    println("  (No encoders or odometry configured)\n");
 
     // Example 1: Arcade drive (like a video game)
-    std::cout << "Example 1: Arcade Drive Control\n";
-    std::cout << "  Command       | Forward | Turn  | Left(%) | Right(%)\n";
-    std::cout << "  --------------|---------|-------|---------|----------\n";
+    println("Example 1: Arcade Drive Control");
+    println("  Command       | Forward | Turn  | Left(%) | Right(%)");
+    println("  --------------|---------|-------|---------|----------");
 
     struct DriveCommand {
         const char* name;
@@ -59,20 +58,15 @@ int main() {
     for (const auto& cmd : commands) {
         robot.arcade(cmd.forward, cmd.turn);
 
-        std::cout << "  " << std::setw(13) << std::left << cmd.name << " | "
-                  << std::setw(7) << std::right << std::fixed << std::setprecision(1)
-                  << cmd.forward << " | "
-                  << std::setw(5) << cmd.turn << " | "
-                  << std::setw(7) << (robot.getLeftDuty() * 100.0) << " | "
-                  << std::setw(8) << (robot.getRightDuty() * 100.0) << "\n";
+        print("  " ,   cmd.name , " | ");
     }
 
-    std::cout << "\n";
+    println("");
 
     // Example 2: Tank drive (independent wheel control)
-    std::cout << "Example 2: Tank Drive Control\n";
-    std::cout << "  Command       | Left  | Right\n";
-    std::cout << "  --------------|-------|-------\n";
+    println("Example 2: Tank Drive Control");
+    println("  Command       | Left  | Right");
+    println("  --------------|-------|-------");
 
     struct TankCommand {
         const char* name;
@@ -92,17 +86,14 @@ int main() {
     for (const auto& cmd : tankCommands) {
         robot.tank(cmd.left, cmd.right);
 
-        std::cout << "  " << std::setw(13) << std::left << cmd.name << " | "
-                  << std::setw(5) << std::right << std::fixed << std::setprecision(1)
-                  << cmd.left << " | "
-                  << std::setw(5) << cmd.right << "\n";
+        print("  " ,   cmd.name , " | ");
     }
 
-    std::cout << "\n";
+    println("");
 
     // Example 3: Timed movement sequence (open-loop)
-    std::cout << "Example 3: Timed Movement Sequence\n";
-    std::cout << "  (Run each command for specified time)\n\n";
+    println("Example 3: Timed Movement Sequence");
+    println("  (Run each command for specified time)\n");
 
     struct TimedMove {
         const char* action;
@@ -120,42 +111,39 @@ int main() {
         {"Stop",           0.0,  0.0, 0.0},
     };
 
-    std::cout << "  Step | Action         | Duration(s)\n";
-    std::cout << "  -----|----------------|------------\n";
+    println("  Step | Action         | Duration(s)");
+    println("  -----|----------------|------------");
 
     int step = 1;
     for (const auto& move : sequence) {
         robot.arcade(move.forward, move.turn);
 
-        std::cout << "  " << std::setw(4) << step++ << " | "
-                  << std::setw(14) << std::left << move.action << " | "
-                  << std::setw(10) << std::right << std::fixed << std::setprecision(1)
-                  << move.duration << "\n";
+        print("  " , step++ , " | ");
     }
 
-    std::cout << "\n";
+    println("");
 
     // Example 4: Direct velocity control
-    std::cout << "Example 4: Direct Velocity Control\n";
+    println("Example 4: Direct Velocity Control");
     robot.drive(mps(0.5), radps(0.3));
 
-    std::cout << "  Commanded linear: " << robot.getLinearVelocity().toMetersPerSecond() << " m/s\n";
-    std::cout << "  Commanded angular: " << robot.getAngularVelocity().toRadiansPerSecond() << " rad/s\n";
-    std::cout << "  Left duty: " << (robot.getLeftDuty() * 100.0) << "%\n";
-    std::cout << "  Right duty: " << (robot.getRightDuty() * 100.0) << "%\n";
+    println("  Commanded linear: ", robot.getLinearVelocity().toMetersPerSecond(), " m/s");
+    println("  Commanded angular: ", robot.getAngularVelocity().toRadiansPerSecond(), " rad/s");
+    println("  Left duty: ", (robot.getLeftDuty() * 100.0), "%");
+    println("  Right duty: ", (robot.getRightDuty() * 100.0), "%");
 
-    std::cout << "\n========================================\n";
-    std::cout << "✓ Simple drive control without feedback\n";
-    std::cout << "  • No encoders or sensors needed\n";
-    std::cout << "  • Open-loop control only\n";
-    std::cout << "  • Use timers for movement duration\n";
-    std::cout << "  • Perfect for basic robots\n";
-    std::cout << "\nTypical usage pattern:\n";
-    std::cout << "  1. Configure robot parameters\n";
-    std::cout << "  2. Send drive commands\n";
-    std::cout << "  3. Get duty cycles for motors\n";
-    std::cout << "  4. Use hardware timers for duration\n";
-    std::cout << "========================================\n";
+    println("\n========================================");
+    println("✓ Simple drive control without feedback");
+    println("  • No encoders or sensors needed");
+    println("  • Open-loop control only");
+    println("  • Use timers for movement duration");
+    println("  • Perfect for basic robots");
+    println("\nTypical usage pattern:");
+    println("  1. Configure robot parameters");
+    println("  2. Send drive commands");
+    println("  3. Get duty cycles for motors");
+    println("  4. Use hardware timers for duration");
+    println("========================================");
 
     return 0;
 }

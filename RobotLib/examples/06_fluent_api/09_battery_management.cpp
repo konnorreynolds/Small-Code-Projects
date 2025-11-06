@@ -18,8 +18,6 @@
 #include "../../include/units_robotics.h"
 #include "../../include/units_utilities.h"
 
-#include <iostream>
-#include <iomanip>
 
 using namespace units;
 
@@ -129,45 +127,41 @@ public:
 // ============================================================================
 
 void demonstrateBasicMonitoring() {
-    std::cout << "========================================\n";
-    std::cout << "  Basic Battery Monitoring\n";
-    std::cout << "========================================\n\n";
+    println("========================================");
+    println("  Basic Battery Monitoring");
+    println("========================================\n");
 
     BatteryConfig config;
     RobotBatteryMonitor monitor(config);
 
-    std::cout << "Battery Configuration:\n";
-    std::cout << "  Nominal Voltage: " << config.nominalVoltage << " V\n";
-    std::cout << "  Voltage Range: " << config.minVoltage << " - "
-              << config.maxVoltage << " V\n";
-    std::cout << "  Capacity: " << config.capacityAh << " Ah\n\n";
+    println("Battery Configuration:");
+    println("  Nominal Voltage: ", config.nominalVoltage, " V");
+    print("  Voltage Range: " ,  config.minVoltage , " - ");
+    println("  Capacity: ", config.capacityAh, " Ah\n");
 
     // Simulate some readings
-    std::cout << "Initial Reading:\n";
+    println("Initial Reading:");
     monitor.update(12.6, 5.0, 0.0);
 
-    std::cout << "  Voltage: " << std::fixed << std::setprecision(2)
-              << monitor.getVoltage() << " V\n";
-    std::cout << "  Current: " << monitor.getCurrent() << " A\n";
-    std::cout << "  Power: " << monitor.getPower() << " W\n";
-    std::cout << "  State of Charge: " << std::setprecision(1)
-              << monitor.getStateOfCharge() << " %\n";
-    std::cout << "  Health: " << monitor.getHealthStatus() << "\n";
-    std::cout << "  Est. Runtime: " << std::setprecision(1)
-              << monitor.getEstimatedRuntimeMinutes() << " minutes\n\n";
+    print("  Voltage: " ,   monitor.getVoltage() , " V\n");
+    println("  Current: ", monitor.getCurrent(), " A");
+    println("  Power: ", monitor.getPower(), " W");
+    print("  State of Charge: " , monitor.getStateOfCharge() , " %\n");
+    println("  Health: ", monitor.getHealthStatus(), "");
+    print("  Est. Runtime: " , monitor.getEstimatedRuntimeMinutes() , " minutes\n\n");
 }
 
 void demonstrateDischargeCycle() {
-    std::cout << "========================================\n";
-    std::cout << "  Battery Discharge Simulation\n";
-    std::cout << "========================================\n\n";
+    println("========================================");
+    println("  Battery Discharge Simulation");
+    println("========================================\n");
 
     RobotBatteryMonitor monitor;
 
-    std::cout << "Simulating 30-minute robot operation with 10A draw...\n\n";
-    std::cout << std::fixed << std::setprecision(2);
-    std::cout << "Time(min) | Voltage(V) | Current(A) | Power(W) | SOC(%) | Status\n";
-    std::cout << "----------|------------|------------|----------|--------|-------------\n";
+    println("Simulating 30-minute robot operation with 10A draw...\n");
+    print(, );
+    println("Time(min) | Voltage(V) | Current(A) | Power(W) | SOC(%) | Status");
+    println("----------|------------|------------|----------|--------|-------------");
 
     double dt = 60.0;  // 1 minute time steps
     double voltage = 12.8;
@@ -179,31 +173,30 @@ void demonstrateDischargeCycle() {
 
         monitor.update(voltage, current, dt);
 
-        std::cout << std::setw(8) << minutes << "  | ";
-        std::cout << std::setw(10) << monitor.getVoltage() << " | ";
-        std::cout << std::setw(10) << monitor.getCurrent() << " | ";
-        std::cout << std::setw(8) << monitor.getPower() << " | ";
-        std::cout << std::setw(6) << std::setprecision(1)
-                  << monitor.getStateOfCharge() << " | ";
-        std::cout << monitor.getHealthStatus();
+        print(, minutes, "  | ");
+        print(, monitor.getVoltage(), " | ");
+        print(, monitor.getCurrent(), " | ");
+        print(, monitor.getPower(), " | ");
+        print(,  monitor.getStateOfCharge() , " | ");
+        print(monitor.getHealthStatus());
 
         if (monitor.hasCriticalBatteryWarning()) {
-            std::cout << " ⚠️ CRITICAL";
+            print(" ⚠️ CRITICAL");
         } else if (monitor.hasLowBatteryWarning()) {
-            std::cout << " ⚠️ LOW";
+            print(" ⚠️ LOW");
         }
 
-        std::cout << "\n";
+        println("");
     }
 
-    std::cout << "\nTotal energy consumed: "
-              << monitor.getTotalEnergyUsed() << " Wh\n\n";
+    print("\nTotal energy consumed: "
+              ,  monitor.getTotalEnergyUsed() , " Wh\n\n");
 }
 
 void demonstratePowerBudget() {
-    std::cout << "========================================\n";
-    std::cout << "  Power Budget Analysis\n";
-    std::cout << "========================================\n\n";
+    println("========================================");
+    println("  Power Budget Analysis");
+    println("========================================\n");
 
     // Robot subsystem power consumption
     struct Subsystem {
@@ -223,122 +216,121 @@ void demonstratePowerBudget() {
     double batteryVoltage = 12.0;
     double totalCurrent = 0.0;
 
-    std::cout << "Subsystem Power Analysis @ 12.0V:\n\n";
-    std::cout << "Subsystem           | Current(A) | Power(W)\n";
-    std::cout << "--------------------|------------|----------\n";
+    println("Subsystem Power Analysis @ 12.0V:\n");
+    println("Subsystem           | Current(A) | Power(W)");
+    println("--------------------|------------|----------");
 
     for (const auto& sub : subsystems) {
         double power = batteryVoltage * sub.currentDraw;
         totalCurrent += sub.currentDraw;
 
-        std::cout << std::left << std::setw(20) << sub.name << "| ";
-        std::cout << std::right << std::setw(10) << sub.currentDraw << " | ";
-        std::cout << std::setw(8) << power << "\n";
+        print(, sub.name, "| ");
+        print(std::right, sub.currentDraw, " | ");
+        println(, power, "");
     }
 
-    std::cout << "--------------------|------------|----------\n";
-    std::cout << std::left << std::setw(20) << "TOTAL" << "| ";
-    std::cout << std::right << std::setw(10) << totalCurrent << " | ";
-    std::cout << std::setw(8) << (batteryVoltage * totalCurrent) << "\n\n";
+    println("--------------------|------------|----------");
+    print(, "TOTAL", "| ");
+    print(std::right, totalCurrent, " | ");
+    println(, (batteryVoltage * totalCurrent), "\n");
 
     // Calculate battery life
     double batteryCapacityAh = 18.0;
     double runtimeHours = batteryCapacityAh / totalCurrent;
     double runtimeMinutes = runtimeHours * 60.0;
 
-    std::cout << "Battery Life Estimate:\n";
-    std::cout << "  Capacity: " << batteryCapacityAh << " Ah\n";
-    std::cout << "  Total Draw: " << totalCurrent << " A\n";
-    std::cout << "  Runtime: " << runtimeMinutes << " minutes\n\n";
+    println("Battery Life Estimate:");
+    println("  Capacity: ", batteryCapacityAh, " Ah");
+    println("  Total Draw: ", totalCurrent, " A");
+    println("  Runtime: ", runtimeMinutes, " minutes\n");
 
     if (runtimeMinutes < 15) {
-        std::cout << "⚠️  Warning: Runtime is very short!\n";
-        std::cout << "    Consider reducing power consumption.\n\n";
+        println("⚠️  Warning: Runtime is very short!");
+        println("    Consider reducing power consumption.\n");
     } else if (runtimeMinutes < 30) {
-        std::cout << "⚠️  Caution: Runtime is limited.\n";
-        std::cout << "    Monitor battery closely during matches.\n\n";
+        println("⚠️  Caution: Runtime is limited.");
+        println("    Monitor battery closely during matches.\n");
     } else {
-        std::cout << "✓  Runtime is sufficient for typical operations.\n\n";
+        println("✓  Runtime is sufficient for typical operations.\n");
     }
 }
 
 void demonstrateBatteryWarnings() {
-    std::cout << "========================================\n";
-    std::cout << "  Battery Warning System\n";
-    std::cout << "========================================\n\n";
+    println("========================================");
+    println("  Battery Warning System");
+    println("========================================\n");
 
     RobotBatteryMonitor monitor;
 
-    std::cout << "Testing warning thresholds...\n\n";
+    println("Testing warning thresholds...\n");
 
     double testVoltages[] = {12.6, 12.0, 11.5, 11.0, 10.5, 10.0};
 
     for (double voltage : testVoltages) {
         monitor.update(voltage, 5.0, 0.1);
 
-        std::cout << "Voltage: " << std::setprecision(2) << voltage << " V → ";
-        std::cout << "SOC: " << std::setprecision(1)
-                  << monitor.getStateOfCharge() << "% → ";
+        print("Voltage: ", voltage, " V → ");
+        print("SOC: " , monitor.getStateOfCharge() , "% → ");
 
         if (monitor.hasCriticalBatteryWarning()) {
-            std::cout << "🚨 CRITICAL - STOP ROBOT IMMEDIATELY!\n";
+            println("🚨 CRITICAL - STOP ROBOT IMMEDIATELY!");
         } else if (monitor.hasLowBatteryWarning()) {
-            std::cout << "⚠️  LOW BATTERY - Return to pit soon\n";
+            println("⚠️  LOW BATTERY - Return to pit soon");
         } else {
-            std::cout << "✓ Battery OK\n";
+            println("✓ Battery OK");
         }
     }
 
-    std::cout << "\n";
+    println("");
 }
 
 // ============================================================================
 // Main Program
 // ============================================================================
 int main() {
-    std::cout << "\n";
-    std::cout << "╔════════════════════════════════════════╗\n";
-    std::cout << "║  Battery Management System             ║\n";
-    std::cout << "║  Monitor, Track, and Protect           ║\n";
-    std::cout << "╚════════════════════════════════════════╝\n";
-    std::cout << "\n";
+    println("");
+    println("╔════════════════════════════════════════╗");
+    println("║  Battery Management System             ║");
+    println("║  Monitor, Track, and Protect           ║");
+    println("╚════════════════════════════════════════╝");
+    println("");
 
     demonstrateBasicMonitoring();
     demonstrateDischargeCycle();
     demonstratePowerBudget();
     demonstrateBatteryWarnings();
 
-    std::cout << "========================================\n";
-    std::cout << "  Key Takeaways\n";
-    std::cout << "========================================\n\n";
+    println("========================================");
+    println("  Key Takeaways");
+    println("========================================\n");
 
-    std::cout << "Battery Management Best Practices:\n\n";
+    println("Battery Management Best Practices:\n");
 
-    std::cout << "1. Always Monitor Voltage\n";
-    std::cout << "   • Track voltage continuously\n";
-    std::cout << "   • Use filtered values to reduce noise\n";
-    std::cout << "   • Set appropriate warning thresholds\n\n";
+    println("1. Always Monitor Voltage");
+    println("   • Track voltage continuously");
+    println("   • Use filtered values to reduce noise");
+    println("   • Set appropriate warning thresholds\n");
 
-    std::cout << "2. Track Power Consumption\n";
-    std::cout << "   • Know your subsystem current draws\n";
-    std::cout << "   • Calculate total power budget\n";
-    std::cout << "   • Estimate runtime accurately\n\n";
+    println("2. Track Power Consumption");
+    println("   • Know your subsystem current draws");
+    println("   • Calculate total power budget");
+    println("   • Estimate runtime accurately\n");
 
-    std::cout << "3. Implement Safety Warnings\n";
-    std::cout << "   • Low battery warning (11.5V)\n";
-    std::cout << "   • Critical warning (10.5V)\n";
-    std::cout << "   • Auto-disable high-power systems if needed\n\n";
+    println("3. Implement Safety Warnings");
+    println("   • Low battery warning (11.5V)");
+    println("   • Critical warning (10.5V)");
+    println("   • Auto-disable high-power systems if needed\n");
 
-    std::cout << "4. Understand Battery Behavior\n";
-    std::cout << "   • Voltage drops under load\n";
-    std::cout << "   • Capacity decreases with age\n";
-    std::cout << "   • Temperature affects performance\n\n";
+    println("4. Understand Battery Behavior");
+    println("   • Voltage drops under load");
+    println("   • Capacity decreases with age");
+    println("   • Temperature affects performance\n");
 
-    std::cout << "Real-World Applications:\n";
-    std::cout << "  • FRC robot battery monitoring\n";
-    std::cout << "  • Electric vehicle management\n";
-    std::cout << "  • Drone flight controllers\n";
-    std::cout << "  • Portable power systems\n\n";
+    println("Real-World Applications:");
+    println("  • FRC robot battery monitoring");
+    println("  • Electric vehicle management");
+    println("  • Drone flight controllers");
+    println("  • Portable power systems\n");
 
     return 0;
 }

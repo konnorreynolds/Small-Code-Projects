@@ -11,17 +11,16 @@
 // - Dead reckoning
 // ============================================================================
 
-#include "../../include/robotlib_api.h"
-#include <iostream>
-#include <iomanip>
+#include "../../include/RobotLib.h"
 #include <cmath>
 
 using namespace robotlib;
+using namespace robotlib::output;
 
 int main() {
-    std::cout << "========================================\n";
-    std::cout << "  Differential Drive with Odometry\n";
-    std::cout << "========================================\n\n";
+    println("========================================");
+    println("  Differential Drive with Odometry");
+    println("========================================\n");
 
     // Configure robot with full state tracking
     DifferentialDrive robot = DifferentialDrive()
@@ -29,17 +28,17 @@ int main() {
         .withWheelDiameter(m(0.1))
         .withMaxSpeed(mps(1.0));
 
-    std::cout << "Robot configured:\n";
-    std::cout << "  Wheelbase: " << robot.getWheelbase().toMeters() << " m\n";
-    std::cout << "  Wheel diameter: " << robot.getWheelDiameter().toMeters() << " m\n";
-    std::cout << "  Odometry: Enabled\n\n";
+    println("Robot configured:");
+    println("  Wheelbase: ", robot.getWheelbase().toMeters(), " m");
+    println("  Wheel diameter: ", robot.getWheelDiameter().toMeters(), " m");
+    println("  Odometry: Enabled\n");
 
     // Example 1: Drive straight and track position
-    std::cout << "Example 1: Drive straight forward 2 meters\n";
+    println("Example 1: Drive straight forward 2 meters");
     robot.resetOdometry(0.0, 0.0, 0.0);  // Start at origin
 
-    std::cout << "\nTime(s) | Cmd(m/s) | X(m) | Y(m) | Theta(°)\n";
-    std::cout << "--------|----------|------|------|----------\n";
+    println("\nTime(s) | Cmd(m/s) | X(m) | Y(m) | Theta(°)");
+    println("--------|----------|------|------|----------");
 
     robot.drive(mps(0.5), radps(0.0));  // Drive forward at 0.5 m/s
 
@@ -51,21 +50,20 @@ int main() {
               .updateOdometry(0.1);
 
         if (step % 5 == 0) {
-            std::cout << std::setw(7) << std::fixed << std::setprecision(1) << t << " | ";
-            std::cout << std::setw(8) << std::setprecision(2)
-                      << robot.getLinearVelocity().toMetersPerSecond() << " | ";
-            std::cout << std::setw(4) << std::setprecision(2) << robot.getX() << " | ";
-            std::cout << std::setw(4) << std::setprecision(2) << robot.getY() << " | ";
-            std::cout << std::setw(8) << std::setprecision(1) << robot.getThetaDegrees() << "\n";
+            print(, , t, " | ");
+            print(,  robot.getLinearVelocity().toMetersPerSecond() , " | ");
+            print(, robot.getX(), " | ");
+            print(, robot.getY(), " | ");
+            println(, robot.getThetaDegrees(), "");
         }
     }
 
-    std::cout << "\nFinal position: (" << robot.getX() << ", " << robot.getY() << ") m\n";
-    std::cout << "Expected: (2.0, 0.0) m - "
-              << (std::abs(robot.getX() - 2.0) < 0.1 ? "✓" : "✗") << "\n\n";
+    println("\nFinal position: (", robot.getX(), ", ", robot.getY(), ") m");
+    print("Expected: (2.0, 0.0) m - "
+              ,  (std::abs(robot.getX() - 2.0) < 0.1 ? "✓" : "✗") , "\n\n");
 
     // Example 2: Drive in a square
-    std::cout << "Example 2: Drive in a 1m x 1m square\n\n";
+    println("Example 2: Drive in a 1m x 1m square\n");
     robot.resetOdometry(0.0, 0.0, 0.0);
 
     struct SquareSegment {
@@ -86,11 +84,9 @@ int main() {
         {"Turn left 90°",  1.0, 0.0,  1.57},
     };
 
-    std::cout << "Segment        | X(m) | Y(m) | Heading(°)\n";
-    std::cout << "---------------|------|------|------------\n";
-    std::cout << "Start          | " << std::setw(4) << std::fixed << std::setprecision(2)
-              << robot.getX() << " | " << robot.getY() << " | "
-              << std::setw(10) << std::setprecision(1) << robot.getThetaDegrees() << "\n";
+    println("Segment        | X(m) | Y(m) | Heading(°)");
+    println("---------------|------|------|------------");
+    print("Start          | " , robot.getX() , " | ");
 
     for (const auto& seg : segments) {
         robot.drive(mps(seg.linear), radps(seg.angular));
@@ -105,19 +101,14 @@ int main() {
                   .updateOdometry(0.1);
         }
 
-        std::cout << std::setw(14) << std::left << seg.action << " | "
-                  << std::setw(4) << std::right << std::fixed << std::setprecision(2)
-                  << robot.getX() << " | "
-                  << std::setw(4) << robot.getY() << " | "
-                  << std::setw(10) << std::setprecision(1) << robot.getThetaDegrees() << "\n";
+        print(,  seg.action , " | ");
     }
 
-    std::cout << "\nClosure error: (" << std::abs(robot.getX()) << ", "
-              << std::abs(robot.getY()) << ") m\n";
-    std::cout << "Heading error: " << std::abs(robot.getThetaDegrees()) << "°\n\n";
+    print("\nClosure error: (" ,  std::abs(robot.getX()) , ", ");
+    println("Heading error: ", std::abs(robot.getThetaDegrees()), "°\n");
 
     // Example 3: Drive in a circle
-    std::cout << "Example 3: Drive in a circle (radius 1m)\n\n";
+    println("Example 3: Drive in a circle (radius 1m)\n");
     robot.resetOdometry(0.0, 0.0, 0.0);
 
     double radius = 1.0;  // meters
@@ -126,8 +117,8 @@ int main() {
 
     robot.drive(mps(linear_vel), radps(angular_vel));
 
-    std::cout << "Time(s) | X(m) | Y(m) | Heading(°)\n";
-    std::cout << "--------|------|------|------------\n";
+    println("Time(s) | X(m) | Y(m) | Heading(°)");
+    println("--------|------|------|------------");
 
     for (int step = 0; step <= 80; step++) {
         double t = step * 0.1;
@@ -140,50 +131,50 @@ int main() {
               .updateOdometry(0.1);
 
         if (step % 10 == 0) {
-            std::cout << std::setw(7) << std::fixed << std::setprecision(1) << t << " | ";
-            std::cout << std::setw(4) << std::setprecision(2) << robot.getX() << " | ";
-            std::cout << std::setw(4) << robot.getY() << " | ";
-            std::cout << std::setw(10) << std::setprecision(1) << robot.getThetaDegrees() << "\n";
+            print(, , t, " | ");
+            print(, robot.getX(), " | ");
+            print(, robot.getY(), " | ");
+            println(, robot.getThetaDegrees(), "");
         }
     }
 
-    std::cout << "\n";
+    println("");
 
     // Example 4: Retrieve complete robot state
-    std::cout << "Example 4: Complete Robot State\n\n";
+    println("Example 4: Complete Robot State\n");
 
-    std::cout << "Configuration:\n";
-    std::cout << "  Wheelbase: " << robot.getWheelbase().toMeters() << " m\n";
-    std::cout << "  Wheel diameter: " << robot.getWheelDiameter().toMeters() << " m\n";
-    std::cout << "  Max speed: " << robot.getMaxSpeed().toMetersPerSecond() << " m/s\n\n";
+    println("Configuration:");
+    println("  Wheelbase: ", robot.getWheelbase().toMeters(), " m");
+    println("  Wheel diameter: ", robot.getWheelDiameter().toMeters(), " m");
+    println("  Max speed: ", robot.getMaxSpeed().toMetersPerSecond(), " m/s\n");
 
-    std::cout << "Command State:\n";
-    std::cout << "  Left duty: " << (robot.getLeftDuty() * 100.0) << "%\n";
-    std::cout << "  Right duty: " << (robot.getRightDuty() * 100.0) << "%\n";
-    std::cout << "  Linear velocity: " << robot.getLinearVelocity().toMetersPerSecond() << " m/s\n";
-    std::cout << "  Angular velocity: " << robot.getAngularVelocity().toRadiansPerSecond() << " rad/s\n\n";
+    println("Command State:");
+    println("  Left duty: ", (robot.getLeftDuty() * 100.0), "%");
+    println("  Right duty: ", (robot.getRightDuty() * 100.0), "%");
+    println("  Linear velocity: ", robot.getLinearVelocity().toMetersPerSecond(), " m/s");
+    println("  Angular velocity: ", robot.getAngularVelocity().toRadiansPerSecond(), " rad/s\n");
 
-    std::cout << "Measured State:\n";
-    std::cout << "  Left velocity: " << robot.getLeftVelocity().toMetersPerSecond() << " m/s\n";
-    std::cout << "  Right velocity: " << robot.getRightVelocity().toMetersPerSecond() << " m/s\n\n";
+    println("Measured State:");
+    println("  Left velocity: ", robot.getLeftVelocity().toMetersPerSecond(), " m/s");
+    println("  Right velocity: ", robot.getRightVelocity().toMetersPerSecond(), " m/s\n");
 
-    std::cout << "Odometry State:\n";
-    std::cout << "  X position: " << robot.getX() << " m\n";
-    std::cout << "  Y position: " << robot.getY() << " m\n";
-    std::cout << "  Heading: " << robot.getThetaDegrees() << "°\n";
+    println("Odometry State:");
+    println("  X position: ", robot.getX(), " m");
+    println("  Y position: ", robot.getY(), " m");
+    println("  Heading: ", robot.getThetaDegrees(), "°");
 
-    std::cout << "\n========================================\n";
-    std::cout << "✓ Drive control with odometry tracking\n";
-    std::cout << "  • Closed-loop position tracking\n";
-    std::cout << "  • Real-time state estimation\n";
-    std::cout << "  • Encoder-based odometry\n";
-    std::cout << "  • Complete state accessible\n";
-    std::cout << "\nState organization:\n";
-    std::cout << "  • Configuration: Hardware parameters\n";
-    std::cout << "  • Command: What we told it to do\n";
-    std::cout << "  • Measured: Sensor feedback\n";
-    std::cout << "  • Odometry: Calculated position\n";
-    std::cout << "========================================\n";
+    println("\n========================================");
+    println("✓ Drive control with odometry tracking");
+    println("  • Closed-loop position tracking");
+    println("  • Real-time state estimation");
+    println("  • Encoder-based odometry");
+    println("  • Complete state accessible");
+    println("\nState organization:");
+    println("  • Configuration: Hardware parameters");
+    println("  • Command: What we told it to do");
+    println("  • Measured: Sensor feedback");
+    println("  • Odometry: Calculated position");
+    println("========================================");
 
     return 0;
 }

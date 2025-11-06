@@ -21,8 +21,6 @@
 #include "../../include/units_utilities.h"
 #include "../../include/units_math.h"
 
-#include <iostream>
-#include <iomanip>
 #include <array>
 #include <cmath>
 
@@ -167,11 +165,11 @@ void printModuleStates(const std::array<SwerveModuleState, 4>& states) {
     const char* names[] = {"FL", "FR", "BL", "BR"};
 
     for (size_t i = 0; i < 4; i++) {
-        std::cout << "  " << names[i] << ": ";
-        std::cout << std::fixed << std::setprecision(3);
-        std::cout << std::setw(6) << states[i].speed.toMetersPerSecond() << " m/s @ ";
-        std::cout << std::setw(6) << states[i].angle.toDegrees() << "°";
-        std::cout << "\n";
+        print("  ", names[i], ": ");
+        print(, );
+        print(, states[i].speed.toMetersPerSecond(), " m/s @ ");
+        print(, states[i].angle.toDegrees(), "°");
+        println("");
     }
 }
 
@@ -180,129 +178,127 @@ void printModuleStates(const std::array<SwerveModuleState, 4>& states) {
 // ============================================================================
 
 void demonstrateBasicMotions() {
-    std::cout << "========================================\n";
-    std::cout << "  Basic Swerve Drive Motions\n";
-    std::cout << "========================================\n\n";
+    println("========================================");
+    println("  Basic Swerve Drive Motions");
+    println("========================================\n");
 
     // Create swerve drive with 0.6m x 0.6m frame
     SwerveDriveKinematics swerve(0.6, 0.6);
 
-    std::cout << "Robot: 60cm × 60cm square frame\n\n";
+    println("Robot: 60cm × 60cm square frame\n");
 
     // 1. Forward motion
-    std::cout << "1. Drive Forward (1 m/s):\n";
+    println("1. Drive Forward (1 m/s):");
     auto states = swerve.toModuleStates(mps(1.0), mps(0), radps(0));
     printModuleStates(states);
-    std::cout << "   → All modules point forward\n\n";
+    println("   → All modules point forward\n");
 
     // 2. Strafe right
-    std::cout << "2. Strafe Right (1 m/s):\n";
+    println("2. Strafe Right (1 m/s):");
     states = swerve.toModuleStates(mps(0), mps(1.0), radps(0));
     printModuleStates(states);
-    std::cout << "   → All modules point right (90°)\n\n";
+    println("   → All modules point right (90°)\n");
 
     // 3. Rotate in place
-    std::cout << "3. Rotate CCW (1 rad/s):\n";
+    println("3. Rotate CCW (1 rad/s):");
     states = swerve.toModuleStates(mps(0), mps(0), radps(1.0));
     printModuleStates(states);
-    std::cout << "   → Modules form tangent circle\n\n";
+    println("   → Modules form tangent circle\n");
 
     // 4. Diagonal motion
-    std::cout << "4. Drive Diagonal (vx=0.7, vy=0.7):\n";
+    println("4. Drive Diagonal (vx=0.7, vy=0.7):");
     states = swerve.toModuleStates(mps(0.7), mps(0.7), radps(0));
     printModuleStates(states);
-    std::cout << "   → All modules point 45°\n\n";
+    println("   → All modules point 45°\n");
 
     // 5. Complex motion
-    std::cout << "5. Complex Motion (vx=0.5, vy=0.3, ω=0.5):\n";
+    println("5. Complex Motion (vx=0.5, vy=0.3, ω=0.5):");
     states = swerve.toModuleStates(mps(0.5), mps(0.3), radps(0.5));
     printModuleStates(states);
-    std::cout << "   → Each module has unique speed and angle\n\n";
+    println("   → Each module has unique speed and angle\n");
 }
 
 void demonstrateModuleOptimization() {
-    std::cout << "========================================\n";
-    std::cout << "  Module Optimization\n";
-    std::cout << "========================================\n\n";
+    println("========================================");
+    println("  Module Optimization");
+    println("========================================\n");
 
-    std::cout << "Scenario: Front-left module currently at 10°\n";
-    std::cout << "Command requires 190° rotation\n\n";
+    println("Scenario: Front-left module currently at 10°");
+    println("Command requires 190° rotation\n");
 
     SwerveModuleState state(mps(2.0), rad(190.0 * constants::DEG_TO_RAD));
     Radians currentAngle = rad(10.0 * constants::DEG_TO_RAD);
 
-    std::cout << "Before optimization:\n";
-    std::cout << "  Target: " << state.speed.toMetersPerSecond() << " m/s @ "
-              << state.angle.toDegrees() << "°\n";
-    std::cout << "  Rotation needed: "
-              << ((state.angle - currentAngle).toDegrees()) << "°\n\n";
+    println("Before optimization:");
+    print("  Target: " ,  state.speed.toMetersPerSecond() , " m/s @ ");
+    print("  Rotation needed: "
+              ,  ((state.angle - currentAngle).toDegrees()) , "°\n\n");
 
     state.optimize(currentAngle);
 
-    std::cout << "After optimization:\n";
-    std::cout << "  Target: " << state.speed.toMetersPerSecond() << " m/s @ "
-              << state.angle.toDegrees() << "°\n";
-    std::cout << "  Rotation needed: "
-              << ((state.angle - currentAngle).normalizeSigned().toDegrees()) << "°\n\n";
+    println("After optimization:");
+    print("  Target: " ,  state.speed.toMetersPerSecond() , " m/s @ ");
+    print("  Rotation needed: "
+              ,  ((state.angle - currentAngle).normalizeSigned().toDegrees()) , "°\n\n");
 
-    std::cout << "Result: Reversed speed and rotated <90° instead!\n";
-    std::cout << "This is MUCH faster than rotating 180°\n\n";
+    println("Result: Reversed speed and rotated <90° instead!");
+    println("This is MUCH faster than rotating 180°\n");
 }
 
 void demonstrateSpeedNormalization() {
-    std::cout << "========================================\n";
-    std::cout << "  Wheel Speed Normalization\n";
-    std::cout << "========================================\n\n";
+    println("========================================");
+    println("  Wheel Speed Normalization");
+    println("========================================\n");
 
     SwerveDriveKinematics swerve(0.6, 0.6);
     MetersPerSecond maxSpeed = mps(4.0);
 
-    std::cout << "Max wheel speed: " << maxSpeed.toMetersPerSecond() << " m/s\n\n";
+    println("Max wheel speed: ", maxSpeed.toMetersPerSecond(), " m/s\n");
 
     // Request motion that exceeds max speed
-    std::cout << "Requesting: vx=3, vy=3, ω=2 rad/s\n\n";
+    println("Requesting: vx=3, vy=3, ω=2 rad/s\n");
 
     auto states = swerve.toModuleStates(mps(3.0), mps(3.0), radps(2.0));
 
-    std::cout << "Before normalization:\n";
+    println("Before normalization:");
     printModuleStates(states);
 
     double maxFound = 0;
     for (const auto& s : states) {
         maxFound = std::max(maxFound, std::abs(s.speed.toMetersPerSecond()));
     }
-    std::cout << "  Max speed: " << maxFound << " m/s (EXCEEDS LIMIT!)\n\n";
+    println("  Max speed: ", maxFound, " m/s (EXCEEDS LIMIT!)\n");
 
     swerve.normalizeWheelSpeeds(states, maxSpeed);
 
-    std::cout << "After normalization:\n";
+    println("After normalization:");
     printModuleStates(states);
 
     maxFound = 0;
     for (const auto& s : states) {
         maxFound = std::max(maxFound, std::abs(s.speed.toMetersPerSecond()));
     }
-    std::cout << "  Max speed: " << maxFound << " m/s ✓\n";
-    std::cout << "  Direction preserved, speeds scaled down\n\n";
+    println("  Max speed: ", maxFound, " m/s ✓");
+    println("  Direction preserved, speeds scaled down\n");
 }
 
 void demonstrateFieldCentric() {
-    std::cout << "========================================\n";
-    std::cout << "  Field-Centric Control\n";
-    std::cout << "========================================\n\n";
+    println("========================================");
+    println("  Field-Centric Control");
+    println("========================================\n");
 
     SwerveDriveKinematics swerve(0.6, 0.6);
 
     Radians robotHeading = rad(90.0 * constants::DEG_TO_RAD);  // Facing left
-    std::cout << "Robot heading: " << robotHeading.toDegrees() << "° (facing left)\n\n";
+    println("Robot heading: ", robotHeading.toDegrees(), "° (facing left)\n");
 
     // Driver wants to drive forward in field frame
     MetersPerSecond vx_field = mps(1.0);
     MetersPerSecond vy_field = mps(0);
 
-    std::cout << "Driver command: Forward in field frame\n";
-    std::cout << "Field velocities: vx=" << vx_field.toMetersPerSecond()
-              << ", vy=" << vy_field.toMetersPerSecond() << "\n\n";
+    println("Driver command: Forward in field frame");
+    print("Field velocities: vx=" ,  vx_field.toMetersPerSecond()
+              , ", vy=");
 
     // Transform to robot frame
     double cos_h = robotHeading.cos();
@@ -313,84 +309,84 @@ void demonstrateFieldCentric() {
     double vy_robot = -vx_field.toMetersPerSecond() * sin_h +
                        vy_field.toMetersPerSecond() * cos_h;
 
-    std::cout << "Transformed to robot frame:\n";
-    std::cout << "Robot velocities: vx=" << vx_robot << ", vy=" << vy_robot << "\n\n";
+    println("Transformed to robot frame:");
+    println("Robot velocities: vx=", vx_robot, ", vy=", vy_robot, "\n");
 
     auto states = swerve.toModuleStates(mps(vx_robot), mps(vy_robot), radps(0));
 
-    std::cout << "Module states:\n";
+    println("Module states:");
     printModuleStates(states);
-    std::cout << "\nThe robot will strafe to move forward in the field!\n";
-    std::cout << "Driver doesn't need to think about robot orientation\n\n";
+    println("\nThe robot will strafe to move forward in the field!");
+    println("Driver doesn't need to think about robot orientation\n");
 }
 
 // ============================================================================
 // Main Program
 // ============================================================================
 int main() {
-    std::cout << "\n";
-    std::cout << "╔════════════════════════════════════════╗\n";
-    std::cout << "║  Swerve Drive Kinematics              ║\n";
-    std::cout << "║  Advanced Holonomic Drive System      ║\n";
-    std::cout << "╚════════════════════════════════════════╝\n";
-    std::cout << "\n";
+    println("");
+    println("╔════════════════════════════════════════╗");
+    println("║  Swerve Drive Kinematics              ║");
+    println("║  Advanced Holonomic Drive System      ║");
+    println("╚════════════════════════════════════════╝");
+    println("");
 
     demonstrateBasicMotions();
     demonstrateModuleOptimization();
     demonstrateSpeedNormalization();
     demonstrateFieldCentric();
 
-    std::cout << "========================================\n";
-    std::cout << "  Key Concepts\n";
-    std::cout << "========================================\n\n";
+    println("========================================");
+    println("  Key Concepts");
+    println("========================================\n");
 
-    std::cout << "Swerve Drive Advantages:\n";
-    std::cout << "  + True omnidirectional movement\n";
-    std::cout << "  + Maximum maneuverability\n";
-    std::cout << "  + Field-centric control natural\n";
-    std::cout << "  + No pushing/scrubbing (unlike mecanum)\n";
-    std::cout << "  + Better traction than omniwheels\n\n";
+    println("Swerve Drive Advantages:");
+    println("  + True omnidirectional movement");
+    println("  + Maximum maneuverability");
+    println("  + Field-centric control natural");
+    println("  + No pushing/scrubbing (unlike mecanum)");
+    println("  + Better traction than omniwheels\n");
 
-    std::cout << "Swerve Drive Challenges:\n";
-    std::cout << "  - Complex mechanical design\n";
-    std::cout << "  - More motors (8 total for 4 modules)\n";
-    std::cout << "  - More expensive than other drives\n";
-    std::cout << "  - Requires precise module calibration\n";
-    std::cout << "  - More complex control algorithms\n\n";
+    println("Swerve Drive Challenges:");
+    println("  - Complex mechanical design");
+    println("  - More motors (8 total for 4 modules)");
+    println("  - More expensive than other drives");
+    println("  - Requires precise module calibration");
+    println("  - More complex control algorithms\n");
 
-    std::cout << "Critical Implementation Details:\n\n";
+    println("Critical Implementation Details:\n");
 
-    std::cout << "1. Module Optimization\n";
-    std::cout << "   • Always take shortest rotation path\n";
-    std::cout << "   • Reverse speed instead of rotating >90°\n";
-    std::cout << "   • Saves time and mechanical wear\n\n";
+    println("1. Module Optimization");
+    println("   • Always take shortest rotation path");
+    println("   • Reverse speed instead of rotating >90°");
+    println("   • Saves time and mechanical wear\n");
 
-    std::cout << "2. Wheel Speed Limiting\n";
-    std::cout << "   • Normalize when speeds exceed maximum\n";
-    std::cout << "   • Preserve motion direction\n";
-    std::cout << "   • Critical for controllability\n\n";
+    println("2. Wheel Speed Limiting");
+    println("   • Normalize when speeds exceed maximum");
+    println("   • Preserve motion direction");
+    println("   • Critical for controllability\n");
 
-    std::cout << "3. Field-Centric Control\n";
-    std::cout << "   • Transform commands from field to robot frame\n";
-    std::cout << "   • Requires accurate heading measurement (IMU)\n";
-    std::cout << "   • Much more intuitive for drivers\n\n";
+    println("3. Field-Centric Control");
+    println("   • Transform commands from field to robot frame");
+    println("   • Requires accurate heading measurement (IMU)");
+    println("   • Much more intuitive for drivers\n");
 
-    std::cout << "4. Module Positioning\n";
-    std::cout << "   • Symmetric placement reduces coupling\n";
-    std::cout << "   • Larger wheelbase = more stable rotation\n";
-    std::cout << "   • Center of rotation can be adjusted\n\n";
+    println("4. Module Positioning");
+    println("   • Symmetric placement reduces coupling");
+    println("   • Larger wheelbase = more stable rotation");
+    println("   • Center of rotation can be adjusted\n");
 
-    std::cout << "Real-World Applications:\n";
-    std::cout << "  • FRC robots (Team 254, 1323, etc.)\n";
-    std::cout << "  • Warehouse AMRs\n";
-    std::cout << "  • Inspection robots\n";
-    std::cout << "  • Any application requiring maximum maneuverability\n\n";
+    println("Real-World Applications:");
+    println("  • FRC robots (Team 254, 1323, etc.)");
+    println("  • Warehouse AMRs");
+    println("  • Inspection robots");
+    println("  • Any application requiring maximum maneuverability\n");
 
-    std::cout << "Popular Teams Using Swerve:\n";
-    std::cout << "  • Team 254 (Cheesy Poofs)\n";
-    std::cout << "  • Team 1323 (Madtown Robotics)\n";
-    std::cout << "  • Team 2910 (Jack in the Bot)\n";
-    std::cout << "  • Many more in recent FRC seasons!\n\n";
+    println("Popular Teams Using Swerve:");
+    println("  • Team 254 (Cheesy Poofs)");
+    println("  • Team 1323 (Madtown Robotics)");
+    println("  • Team 2910 (Jack in the Bot)");
+    println("  • Many more in recent FRC seasons!\n");
 
     return 0;
 }

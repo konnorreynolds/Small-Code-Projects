@@ -11,136 +11,132 @@
 // - Why this is better than using raw numbers
 // ============================================================================
 
-#include "../../include/units_core.h"
-#include "../../include/units_physics.h"
-#include <iostream>
+#include "../../include/RobotLib.h"
 
 using namespace units;
+using namespace robotlib::output;
 
 int main() {
-    std::cout << "\n";
-    std::cout << "╔════════════════════════════════════════╗\n";
-    std::cout << "║  👋 Hello Units!                       ║\n";
-    std::cout << "║  Your First Type-Safe Program          ║\n";
-    std::cout << "╚════════════════════════════════════════╝\n";
-    std::cout << "\n";
+    println("");
+    println("╔════════════════════════════════════════╗");
+    println("║  👋 Hello Units!                       ║");
+    println("║  Your First Type-Safe Program          ║");
+    println("╚════════════════════════════════════════╝");
+    println("");
 
     // ========================================
     // STEP 1: Create a distance
     // ========================================
-    std::cout << "STEP 1: Creating a distance\n";
-    std::cout << "==========================\n\n";
+    println("STEP 1: Creating a distance");
+    println("==========================\n");
 
     auto distance = m(5.0);  // Create 5 meters
 
-    std::cout << "Created: 5 meters\n";
-    std::cout << "  In meters: " << distance.toMeters() << " m\n";
-    std::cout << "  In feet: " << distance.toFeet() << " ft\n";
-    std::cout << "  In centimeters: " << distance.toCentimeters() << " cm\n\n";
+    println("Created: 5 meters");
+    println("  In meters: ", distance.toMeters(), " m");
+    println("  In feet: ", distance.toFeet(), " ft");
+    println("  In centimeters: ", distance.toCentimeters(), " cm\n");
 
-    std::cout << "💡 Same value, different units! No manual conversion needed.\n\n";
+    println("💡 Same value, different units! No manual conversion needed.\n");
 
     // ========================================
     // STEP 2: Create a time
     // ========================================
-    std::cout << "STEP 2: Creating a time\n";
-    std::cout << "======================\n\n";
+    println("STEP 2: Creating a time");
+    println("======================\n");
 
     auto time = s(2.0);  // Create 2 seconds
 
-    std::cout << "Created: 2 seconds\n";
-    std::cout << "  In seconds: " << time.toSeconds() << " s\n";
-    std::cout << "  In milliseconds: " << time.toMilliseconds() << " ms\n\n";
+    println("Created: 2 seconds");
+    println("  In seconds: ", time.toSeconds(), " s");
+    println("  In milliseconds: ", time.toMilliseconds(), " ms\n");
 
     // ========================================
     // STEP 3: Calculate speed automatically!
     // ========================================
-    std::cout << "STEP 3: Calculate speed (distance ÷ time)\n";
-    std::cout << "=========================================\n\n";
+    println("STEP 3: Calculate speed (distance ÷ time)");
+    println("=========================================\n");
 
     auto speed = distance / time;  // Automatically becomes m/s!
 
-    std::cout << "Speed = " << distance.toMeters() << " m ÷ "
-              << time.toSeconds() << " s\n";
-    std::cout << "      = " << speed.toMetersPerSecond() << " m/s\n\n";
+    print("Speed = ", distance.toMeters(), " m ÷ ", time.toSeconds(), " s\n");
+    println("      = ", speed.toMetersPerSecond(), " m/s\n");
 
-    std::cout << "Same speed in different units:\n";
-    std::cout << "  " << speed.toMetersPerSecond() << " m/s\n";
-    std::cout << "  " << speed.toKilometersPerHour() << " km/h\n";
-    std::cout << "  " << speed.toFeetPerSecond() << " ft/s\n\n";
+    println("Same speed in different units:");
+    println("  ", speed.toMetersPerSecond(), " m/s");
+    println("  ", speed.toKilometersPerHour(), " km/h");
+    println("  ", speed.toFeetPerSecond(), " ft/s\n");
 
-    std::cout << "💡 The library knows that distance/time = speed!\n\n";
+    println("💡 The library knows that distance/time = speed!\n");
 
     // ========================================
     // STEP 4: Add distances together
     // ========================================
-    std::cout << "STEP 4: Adding distances\n";
-    std::cout << "=======================\n\n";
+    println("STEP 4: Adding distances");
+    println("=======================\n");
 
     auto distance1 = m(5.0);   // 5 meters
     auto distance2 = m(3.0);   // 3 meters
     auto total = distance1 + distance2;
 
-    std::cout << distance1.toMeters() << " m + "
-              << distance2.toMeters() << " m = "
-              << total.toMeters() << " m\n\n";
+    print(distance1.toMeters() , " m + ");
 
-    std::cout << "💡 You can only add things with the same unit type!\n\n";
+    println("💡 You can only add things with the same unit type!\n");
 
     // ========================================
     // STEP 5: Type safety prevents mistakes!
     // ========================================
-    std::cout << "STEP 5: How units prevent bugs\n";
-    std::cout << "==============================\n\n";
+    println("STEP 5: How units prevent bugs");
+    println("==============================\n");
 
-    std::cout << "✅ Things you CAN do:\n";
-    std::cout << "   m(5) + m(3)           →  Add distances together\n";
-    std::cout << "   m(10) / s(2)          →  Divide distance by time\n";
-    std::cout << "   m(5) * 2              →  Multiply distance by number\n";
-    std::cout << "   m(5) > m(3)           →  Compare distances\n\n";
+    println("✅ Things you CAN do:");
+    println("   m(5) + m(3)           →  Add distances together");
+    println("   m(10) / s(2)          →  Divide distance by time");
+    println("   m(5) * 2              →  Multiply distance by number");
+    println("   m(5) > m(3)           →  Compare distances\n");
 
-    std::cout << "❌ Things you CAN'T do (won't compile!):\n";
-    std::cout << "   m(5) + s(2)           →  Can't add distance + time\n";
-    std::cout << "   m(5) + kg(10)         →  Can't add distance + mass\n";
-    std::cout << "   m(5) == 5             →  Can't compare distance to raw number\n\n";
+    println("❌ Things you CAN'T do (won't compile!):");
+    println("   m(5) + s(2)           →  Can't add distance + time");
+    println("   m(5) + kg(10)         →  Can't add distance + mass");
+    println("   m(5) == 5             →  Can't compare distance to raw number\n");
 
-    std::cout << "💡 The compiler catches these mistakes for you!\n";
-    std::cout << "   No more 'oops, I used feet instead of meters' bugs.\n\n";
+    println("💡 The compiler catches these mistakes for you!");
+    println("   No more 'oops, I used feet instead of meters' bugs.\n");
 
     // ========================================
     // STEP 6: Working with angles
     // ========================================
-    std::cout << "STEP 6: Working with angles\n";
-    std::cout << "==========================\n\n";
+    println("STEP 6: Working with angles");
+    println("==========================\n");
 
     auto angle = deg(90);  // 90 degrees
 
-    std::cout << "Created: 90 degrees\n";
-    std::cout << "  In degrees: " << angle.toDegrees() << "°\n";
-    std::cout << "  In radians: " << angle.toRadians() << " rad\n\n";
+    println("Created: 90 degrees");
+    println("  In degrees: ", angle.toDegrees(), "°");
+    println("  In radians: ", angle.toRadians(), " rad\n");
 
-    std::cout << "💡 Perfect for robot arm joints and wheel rotations!\n\n";
+    println("💡 Perfect for robot arm joints and wheel rotations!\n");
 
     // ========================================
     // Summary
     // ========================================
-    std::cout << "╔════════════════════════════════════════╗\n";
-    std::cout << "║  🎉 Congratulations!                   ║\n";
-    std::cout << "╚════════════════════════════════════════╝\n\n";
+    println("╔════════════════════════════════════════╗");
+    println("║  🎉 Congratulations!                   ║");
+    println("╚════════════════════════════════════════╝\n");
 
-    std::cout << "You learned:\n";
-    std::cout << "  ✓ Create units: m(5), s(2), deg(90)\n";
-    std::cout << "  ✓ Convert units: .toMeters(), .toFeet()\n";
-    std::cout << "  ✓ Do math: distance / time = speed\n";
-    std::cout << "  ✓ Type safety prevents bugs!\n\n";
+    println("You learned:");
+    println("  ✓ Create units: m(5), s(2), deg(90)");
+    println("  ✓ Convert units: .toMeters(), .toFeet()");
+    println("  ✓ Do math: distance / time = speed");
+    println("  ✓ Type safety prevents bugs!\n");
 
-    std::cout << "What's next?\n";
-    std::cout << "  → Try '01_basics/simple_motor.cpp' to control a motor\n";
-    std::cout << "  → Try '01_basics/simple_servo.cpp' to control a servo\n\n";
+    println("What's next?");
+    println("  → Try '01_basics/simple_motor.cpp' to control a motor");
+    println("  → Try '01_basics/simple_servo.cpp' to control a servo\n");
 
-    std::cout << "Why use type-safe units?\n";
-    std::cout << "  ❌ Old way: double distance = 5;  // Is this meters or feet?\n";
-    std::cout << "  ✅ New way: auto distance = m(5); // Clearly 5 meters!\n\n";
+    println("Why use type-safe units?");
+    println("  ❌ Old way: double distance = 5;  // Is this meters or feet?");
+    println("  ✅ New way: auto distance = m(5); // Clearly 5 meters!\n");
 
     return 0;
 }

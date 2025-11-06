@@ -20,9 +20,7 @@
 #include "../../include/units_robotics.h"
 #include "../../include/units_utilities.h"
 
-#include <iostream>
 #include <vector>
-#include <iomanip>
 #include <cmath>
 #include <random>
 
@@ -313,9 +311,9 @@ public:
 // Main Program
 // ============================================================================
 int main() {
-    std::cout << "========================================\n";
-    std::cout << "  IMU Sensor Fusion Example\n";
-    std::cout << "========================================\n\n";
+    println("========================================");
+    println("  IMU Sensor Fusion Example");
+    println("========================================\n");
 
     // Setup
     const double dt = 0.02;  // 50 Hz update rate
@@ -329,19 +327,19 @@ int main() {
     ComplementaryFilterOrientation compFilter(0.98);
     KalmanFilterOrientation kalmanFilter;
 
-    std::cout << "Simulation Parameters:\n";
-    std::cout << "  Sample rate: " << 1.0/dt << " Hz\n";
-    std::cout << "  Duration: " << duration << " seconds\n";
-    std::cout << "  Accelerometer noise: 0.05 g\n";
-    std::cout << "  Gyroscope noise: 0.01 rad/s\n";
-    std::cout << "  Gyroscope bias: 0.002 rad/s\n\n";
+    println("Simulation Parameters:");
+    println("  Sample rate: ", 1.0/dt, " Hz");
+    println("  Duration: ", duration, " seconds");
+    println("  Accelerometer noise: 0.05 g");
+    println("  Gyroscope noise: 0.01 rad/s");
+    println("  Gyroscope bias: 0.002 rad/s\n");
 
-    std::cout << "Running sensor fusion comparison...\n\n";
+    println("Running sensor fusion comparison...\n");
 
-    std::cout << std::fixed << std::setprecision(2);
-    std::cout << "Time | True | Accel | Gyro | Comp.Filt | Kalman | Errors (°)\n";
-    std::cout << "(s)  | (°)  |  (°)  | (°)  |    (°)    |  (°)   | Acl|Gyr|Cmp|Kal\n";
-    std::cout << "-----+------+-------+------+-----------+--------+----+---+---+---\n";
+    print(, );
+    println("Time | True | Accel | Gyro | Comp.Filt | Kalman | Errors (°)");
+    println("(s)  | (°)  |  (°)  | (°)  |    (°)    |  (°)   | Acl|Gyr|Cmp|Kal");
+    println("-----+------+-------+------+-----------+--------+----+---+---+---");
 
     // Statistics
     double accelErrorSum = 0, gyroErrorSum = 0, compErrorSum = 0, kalmanErrorSum = 0;
@@ -375,16 +373,16 @@ int main() {
             double compError = std::abs(compAngleDeg - trueAngleDeg);
             double kalmanError = std::abs(kalmanAngleDeg - trueAngleDeg);
 
-            std::cout << std::setw(4) << t << " | ";
-            std::cout << std::setw(4) << trueAngleDeg << " | ";
-            std::cout << std::setw(5) << accelAngleDeg << " | ";
-            std::cout << std::setw(4) << gyroAngleDeg << " | ";
-            std::cout << std::setw(9) << compAngleDeg << " | ";
-            std::cout << std::setw(6) << kalmanAngleDeg << " | ";
-            std::cout << std::setw(3) << std::setprecision(1) << accelError << "|";
-            std::cout << std::setw(3) << gyroError << "|";
-            std::cout << std::setw(3) << compError << "|";
-            std::cout << std::setw(3) << kalmanError << "\n";
+            print(, t, " | ");
+            print(, trueAngleDeg, " | ");
+            print(, accelAngleDeg, " | ");
+            print(, gyroAngleDeg, " | ");
+            print(, compAngleDeg, " | ");
+            print(, kalmanAngleDeg, " | ");
+            print(, accelError, "|");
+            print(, gyroError, "|");
+            print(, compError, "|");
+            println(, kalmanError, "");
         }
 
         // Accumulate errors for statistics
@@ -396,59 +394,59 @@ int main() {
     }
 
     // Print statistics
-    std::cout << "\n========================================\n";
-    std::cout << "  Performance Statistics\n";
-    std::cout << "========================================\n\n";
+    println("\n========================================");
+    println("  Performance Statistics");
+    println("========================================\n");
 
-    std::cout << std::fixed << std::setprecision(3);
-    std::cout << "Mean Absolute Error:\n";
-    std::cout << "  Accelerometer only: " << std::setw(6) << accelErrorSum / sampleCount << "°\n";
-    std::cout << "  Gyroscope only:     " << std::setw(6) << gyroErrorSum / sampleCount << "°\n";
-    std::cout << "  Complementary filt: " << std::setw(6) << compErrorSum / sampleCount << "°\n";
-    std::cout << "  Kalman filter:      " << std::setw(6) << kalmanErrorSum / sampleCount << "°\n\n";
+    print(, );
+    println("Mean Absolute Error:");
+    println("  Accelerometer only: ", accelErrorSum / sampleCount, "°");
+    println("  Gyroscope only:     ", gyroErrorSum / sampleCount, "°");
+    println("  Complementary filt: ", compErrorSum / sampleCount, "°");
+    println("  Kalman filter:      ", kalmanErrorSum / sampleCount, "°\n");
 
-    std::cout << "Estimated gyro bias (Kalman): "
-              << std::setprecision(5) << kalmanFilter.getEstimatedBias()
-              << " rad/s (true: 0.002)\n\n";
+    print("Estimated gyro bias (Kalman): "
+              , kalmanFilter.getEstimatedBias()
+              , " rad/s (true: 0.002)\n\n");
 
     // Summary
-    std::cout << "========================================\n";
-    std::cout << "  Key Insights\n";
-    std::cout << "========================================\n\n";
+    println("========================================");
+    println("  Key Insights");
+    println("========================================\n");
 
-    std::cout << "Accelerometer-only:\n";
-    std::cout << "  ✓ No drift over time\n";
-    std::cout << "  ✗ Very noisy\n";
-    std::cout << "  ✗ Affected by linear acceleration\n";
-    std::cout << "  Use case: Static tilt measurement\n\n";
+    println("Accelerometer-only:");
+    println("  ✓ No drift over time");
+    println("  ✗ Very noisy");
+    println("  ✗ Affected by linear acceleration");
+    println("  Use case: Static tilt measurement\n");
 
-    std::cout << "Gyroscope-only:\n";
-    std::cout << "  ✓ Smooth, low noise\n";
-    std::cout << "  ✗ Drifts over time due to bias\n";
-    std::cout << "  ✗ Integration amplifies errors\n";
-    std::cout << "  Use case: Short-term orientation tracking\n\n";
+    println("Gyroscope-only:");
+    println("  ✓ Smooth, low noise");
+    println("  ✗ Drifts over time due to bias");
+    println("  ✗ Integration amplifies errors");
+    println("  Use case: Short-term orientation tracking\n");
 
-    std::cout << "Complementary Filter:\n";
-    std::cout << "  ✓ Simple to implement\n";
-    std::cout << "  ✓ Low computational cost\n";
-    std::cout << "  ✓ Combines best of both sensors\n";
-    std::cout << "  ✓ No drift, reduced noise\n";
-    std::cout << "  Use case: Most embedded applications\n\n";
+    println("Complementary Filter:");
+    println("  ✓ Simple to implement");
+    println("  ✓ Low computational cost");
+    println("  ✓ Combines best of both sensors");
+    println("  ✓ No drift, reduced noise");
+    println("  Use case: Most embedded applications\n");
 
-    std::cout << "Kalman Filter:\n";
-    std::cout << "  ✓ Optimal fusion (statistically)\n";
-    std::cout << "  ✓ Estimates sensor bias\n";
-    std::cout << "  ✓ Best accuracy\n";
-    std::cout << "  ~ More complex implementation\n";
-    std::cout << "  ~ Higher computational cost\n";
-    std::cout << "  Use case: High-precision applications\n\n";
+    println("Kalman Filter:");
+    println("  ✓ Optimal fusion (statistically)");
+    println("  ✓ Estimates sensor bias");
+    println("  ✓ Best accuracy");
+    println("  ~ More complex implementation");
+    println("  ~ Higher computational cost");
+    println("  Use case: High-precision applications\n");
 
-    std::cout << "Recommendations:\n";
-    std::cout << "• For hobby robots: Use complementary filter (α ≈ 0.98)\n";
-    std::cout << "• For drones/aircraft: Use Kalman or extended Kalman filter\n";
-    std::cout << "• Always calibrate sensors before use\n";
-    std::cout << "• Add magnetometer for absolute heading (prevents yaw drift)\n";
-    std::cout << "• Consider madgwick/mahony filters for full 3D orientation\n\n";
+    println("Recommendations:");
+    println("• For hobby robots: Use complementary filter (α ≈ 0.98)");
+    println("• For drones/aircraft: Use Kalman or extended Kalman filter");
+    println("• Always calibrate sensors before use");
+    println("• Add magnetometer for absolute heading (prevents yaw drift)");
+    println("• Consider madgwick/mahony filters for full 3D orientation\n");
 
     return 0;
 }

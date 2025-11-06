@@ -11,17 +11,16 @@
 // - Robotic arms with feedback
 // ============================================================================
 
-#include "../../include/robotlib_api.h"
-#include <iostream>
-#include <iomanip>
+#include "../../include/RobotLib.h"
 #include <cmath>
 
 using namespace robotlib;
+using namespace robotlib::output;
 
 int main() {
-    std::cout << "========================================\n";
-    std::cout << "  Servo with Position Feedback\n";
-    std::cout << "========================================\n\n";
+    println("========================================");
+    println("  Servo with Position Feedback");
+    println("========================================\n");
 
     // Create servo with PID control for accurate positioning
     Arm servo = Arm()
@@ -29,18 +28,18 @@ int main() {
         .withLimits(deg(0), deg(180))    // Physical limits
         .setSpeed(1.0);                   // Full speed
 
-    std::cout << "Servo configured:\n";
-    std::cout << "  PID: kP=" << servo.getKP() << ", kI=" << servo.getKI() << ", kD=" << servo.getKD() << "\n";
-    std::cout << "  Limits: " << servo.getMinAngle().toDegrees()
-              << "° to " << servo.getMaxAngle().toDegrees() << "°\n";
-    std::cout << "  Feedback: Enabled (position sensor)\n\n";
+    println("Servo configured:");
+    println("  PID: kP=", servo.getKP(), ", kI=", servo.getKI(), ", kD=", servo.getKD(), "");
+    print("  Limits: " ,  servo.getMinAngle().toDegrees()
+              , "° to ");
+    println("  Feedback: Enabled (position sensor)\n");
 
     // Example 1: Move to target with feedback
-    std::cout << "Example 1: Move to 90° with feedback\n";
+    println("Example 1: Move to 90° with feedback");
     servo.moveTo(deg(90));
 
-    std::cout << "\nTime(s) | Current(°) | Target(°) | Error(°) | Duty(%) | Status\n";
-    std::cout << "--------|------------|-----------|----------|---------|----------\n";
+    println("\nTime(s) | Current(°) | Target(°) | Error(°) | Duty(%) | Status");
+    println("--------|------------|-----------|----------|---------|----------");
 
     // Simulate servo movement with position feedback
     Radians sim_position = rad(0);
@@ -57,25 +56,25 @@ int main() {
         servo.update(0.05, sim_position);
 
         if (step % 5 == 0) {  // Print every 250ms
-            std::cout << std::setw(7) << std::fixed << std::setprecision(2) << t << " | ";
-            std::cout << std::setw(10) << std::setprecision(1) << sim_position.toDegrees() << " | ";
-            std::cout << std::setw(9) << servo.getTarget().toDegrees() << " | ";
-            std::cout << std::setw(8) << servo.getError() * 57.3 << " | ";
-            std::cout << std::setw(7) << (servo.getDutyCycle() * 100.0) << " | ";
-            std::cout << (servo.isAtTarget(2.0) ? "At target" : "Moving") << "\n";
+            print(, , t, " | ");
+            print(, sim_position.toDegrees(), " | ");
+            print(, servo.getTarget().toDegrees(), " | ");
+            print(, servo.getError() * 57.3, " | ");
+            print(, (servo.getDutyCycle() * 100.0), " | ");
+            println((servo.isAtTarget(2.0) ? "At target" : "Moving"), "");
         }
     }
 
-    std::cout << "\n";
+    println("");
 
     // Example 2: Tracking smooth trajectory
-    std::cout << "Example 2: Track smooth sine wave trajectory\n\n";
+    println("Example 2: Track smooth sine wave trajectory\n");
 
     servo.moveTo(deg(90));  // Start at center
     sim_position = Radians::fromRadians(M_PI / 2);
 
-    std::cout << "Time(s) | Target(°) | Actual(°) | Error(°)\n";
-    std::cout << "--------|-----------|-----------|----------\n";
+    println("Time(s) | Target(°) | Actual(°) | Error(°)");
+    println("--------|-----------|-----------|----------");
 
     for (int step = 0; step <= 60; step++) {
         double t = step * 0.05;
@@ -91,17 +90,17 @@ int main() {
         servo.update(0.05, sim_position);
 
         if (step % 10 == 0) {
-            std::cout << std::setw(7) << std::fixed << std::setprecision(2) << t << " | ";
-            std::cout << std::setw(9) << std::setprecision(1) << servo.getTarget().toDegrees() << " | ";
-            std::cout << std::setw(9) << sim_position.toDegrees() << " | ";
-            std::cout << std::setw(8) << std::abs(servo.getError() * 57.3) << "\n";
+            print(, , t, " | ");
+            print(, servo.getTarget().toDegrees(), " | ");
+            print(, sim_position.toDegrees(), " | ");
+            println(, std::abs(servo.getError() * 57.3), "");
         }
     }
 
-    std::cout << "\n";
+    println("");
 
     // Example 3: Multi-servo coordinated movement (robot arm)
-    std::cout << "Example 3: 3-DOF Robot Arm with Feedback\n\n";
+    println("Example 3: 3-DOF Robot Arm with Feedback\n");
 
     Arm shoulder = Arm().withPID(1.5, 0.1, 0.05).withLimits(deg(0), deg(180));
     Arm elbow = Arm().withPID(1.5, 0.1, 0.05).withLimits(deg(0), deg(180));
@@ -117,9 +116,9 @@ int main() {
     elbow.moveTo(deg(120));
     wrist.moveTo(deg(45));
 
-    std::cout << "Moving to reach position...\n";
-    std::cout << "Step | Shoulder | Elbow | Wrist | All At Target?\n";
-    std::cout << "-----|----------|-------|-------|----------------\n";
+    println("Moving to reach position...");
+    println("Step | Shoulder | Elbow | Wrist | All At Target?");
+    println("-----|----------|-------|-------|----------------");
 
     for (int step = 0; step < 30; step++) {
         // Update all servos with feedback
@@ -137,26 +136,26 @@ int main() {
         if (step % 5 == 0) {
             bool all_at_target = shoulder.isAtTarget() && elbow.isAtTarget() && wrist.isAtTarget();
 
-            std::cout << std::setw(4) << step << " | ";
-            std::cout << std::setw(8) << std::fixed << std::setprecision(1)
-                      << shoulder_pos.toDegrees() << " | ";
-            std::cout << std::setw(5) << elbow_pos.toDegrees() << " | ";
-            std::cout << std::setw(5) << wrist_pos.toDegrees() << " | ";
-            std::cout << (all_at_target ? "YES" : "No") << "\n";
+            print(, step, " | ");
+            print(,  
+                      , shoulder_pos.toDegrees() , " | ");
+            print(, elbow_pos.toDegrees(), " | ");
+            print(, wrist_pos.toDegrees(), " | ");
+            println((all_at_target ? "YES" : "No"), "");
         }
     }
 
-    std::cout << "\n========================================\n";
-    std::cout << "✓ Servo control with position feedback\n";
-    std::cout << "  • Closed-loop PID control\n";
-    std::cout << "  • Accurate positioning\n";
-    std::cout << "  • Real-time error correction\n";
-    std::cout << "  • Smooth trajectory tracking\n";
-    std::cout << "\nHardware requirements:\n";
-    std::cout << "  • Position sensor (encoder, potentiometer)\n";
-    std::cout << "  • Regular position updates to controller\n";
-    std::cout << "  • Fast control loop (10-100Hz recommended)\n";
-    std::cout << "========================================\n";
+    println("\n========================================");
+    println("✓ Servo control with position feedback");
+    println("  • Closed-loop PID control");
+    println("  • Accurate positioning");
+    println("  • Real-time error correction");
+    println("  • Smooth trajectory tracking");
+    println("\nHardware requirements:");
+    println("  • Position sensor (encoder, potentiometer)");
+    println("  • Regular position updates to controller");
+    println("  • Fast control loop (10-100Hz recommended)");
+    println("========================================");
 
     return 0;
 }

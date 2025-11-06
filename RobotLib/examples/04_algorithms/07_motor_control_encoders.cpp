@@ -19,8 +19,6 @@
 #include "../../include/units_utilities.h"
 #include "../../include/units_math.h"
 
-#include <iostream>
-#include <iomanip>
 #include <cmath>
 #include <deque>
 
@@ -316,9 +314,9 @@ public:
 // ============================================================================
 
 void demonstrateVelocityControl() {
-    std::cout << "========================================\n";
-    std::cout << "  Velocity Control with PID\n";
-    std::cout << "========================================\n\n";
+    println("========================================");
+    println("  Velocity Control with PID");
+    println("========================================\n");
 
     MotorSpecs specs;
     Encoder encoder(specs.countsPerRevolution, specs.wheelDiameter);
@@ -329,16 +327,16 @@ void demonstrateVelocityControl() {
     controller.setVelocityPID(0.05, 0.5, 0.002);
     controller.setFeedforward(0.5, 12.0 / specs.freeSpeed.toRPM(), 0.01);
 
-    std::cout << "Target: 2000 RPM step input\n";
-    std::cout << "PID Gains: kP=0.05, kI=0.5, kD=0.002\n\n";
+    println("Target: 2000 RPM step input");
+    println("PID Gains: kP=0.05, kI=0.5, kD=0.002\n");
 
     double dt = 0.02;  // 20ms (50 Hz control loop)
     double currentTime = 0.0;
     RPM target = RPM::fromRPM(2000);
 
-    std::cout << std::fixed << std::setprecision(2);
-    std::cout << "Time(s) | Target | Measured | Error | Voltage | FF    | FB    |\n";
-    std::cout << "--------|--------|----------|-------|---------|-------|-------|\n";
+    print(, );
+    println("Time(s) | Target | Measured | Error | Voltage | FF    | FB    |");
+    println("--------|--------|----------|-------|---------|-------|-------|");
 
     for (int i = 0; i < 150; i++) {
         currentTime = i * dt;
@@ -351,32 +349,32 @@ void demonstrateVelocityControl() {
 
         // Print every 10 iterations (0.2s)
         if (i % 10 == 0) {
-            std::cout << std::setw(6) << currentTime << "  | ";
-            std::cout << std::setw(6) << target.toRPM() << " | ";
-            std::cout << std::setw(8) << output.measuredVelocity.toRPM() << " | ";
-            std::cout << std::setw(5) << output.velocityError.toRPM() << " | ";
-            std::cout << std::setw(7) << output.voltage << " | ";
-            std::cout << std::setw(5) << output.feedforward << " | ";
-            std::cout << std::setw(5) << output.feedback << " |\n";
+            print(, currentTime, "  | ");
+            print(, target.toRPM(), " | ");
+            print(, output.measuredVelocity.toRPM(), " | ");
+            print(, output.velocityError.toRPM(), " | ");
+            print(, output.voltage, " | ");
+            print(, output.feedforward, " | ");
+            println(, output.feedback, " |");
         }
     }
 
-    std::cout << "\nKey Observations:\n";
-    std::cout << "• Feedforward provides ~90% of control effort\n";
-    std::cout << "• Feedback (PID) corrects remaining error\n";
-    std::cout << "• Steady-state error < 10 RPM with integral term\n";
-    std::cout << "• Fast response (~0.2s settling time)\n\n";
+    println("\nKey Observations:");
+    println("• Feedforward provides ~90% of control effort");
+    println("• Feedback (PID) corrects remaining error");
+    println("• Steady-state error < 10 RPM with integral term");
+    println("• Fast response (~0.2s settling time)\n");
 }
 
 void demonstrateFeedforwardBenefit() {
-    std::cout << "========================================\n";
-    std::cout << "  Feedforward vs Feedback Only\n";
-    std::cout << "========================================\n\n";
+    println("========================================");
+    println("  Feedforward vs Feedback Only");
+    println("========================================\n");
 
     MotorSpecs specs;
 
     // Test 1: Feedback only
-    std::cout << "Test 1: Feedback Only (PID without feedforward)\n";
+    println("Test 1: Feedback Only (PID without feedforward)");
     {
         Encoder encoder(specs.countsPerRevolution, specs.wheelDiameter);
         MotorSimulator motor(specs, encoder);
@@ -399,12 +397,12 @@ void demonstrateFeedforwardBenefit() {
             }
         }
 
-        std::cout << "  Steady-state error: " << settlingError << " RPM (POOR)\n";
-        std::cout << "  → PI needed to eliminate error → slow response\n\n";
+        println("  Steady-state error: ", settlingError, " RPM (POOR)");
+        println("  → PI needed to eliminate error → slow response\n");
     }
 
     // Test 2: Feedforward + Feedback
-    std::cout << "Test 2: Feedforward + Feedback (Combined)\n";
+    println("Test 2: Feedforward + Feedback (Combined)");
     {
         Encoder encoder(specs.countsPerRevolution, specs.wheelDiameter);
         MotorSimulator motor(specs, encoder);
@@ -426,21 +424,21 @@ void demonstrateFeedforwardBenefit() {
             }
         }
 
-        std::cout << "  Steady-state error: " << settlingError << " RPM (EXCELLENT)\n";
-        std::cout << "  → FF provides base control, FB corrects errors\n\n";
+        println("  Steady-state error: ", settlingError, " RPM (EXCELLENT)");
+        println("  → FF provides base control, FB corrects errors\n");
     }
 
-    std::cout << "Conclusion:\n";
-    std::cout << "Feedforward dramatically improves performance!\n";
-    std::cout << "• Faster response\n";
-    std::cout << "• Lower steady-state error\n";
-    std::cout << "• Less reliance on integral term\n\n";
+    println("Conclusion:");
+    println("Feedforward dramatically improves performance!");
+    println("• Faster response");
+    println("• Lower steady-state error");
+    println("• Less reliance on integral term\n");
 }
 
 void demonstrateLoadRejection() {
-    std::cout << "========================================\n";
-    std::cout << "  Load Disturbance Rejection\n";
-    std::cout << "========================================\n\n";
+    println("========================================");
+    println("  Load Disturbance Rejection");
+    println("========================================\n");
 
     MotorSpecs specs;
     Encoder encoder(specs.countsPerRevolution, specs.wheelDiameter);
@@ -454,9 +452,9 @@ void demonstrateLoadRejection() {
     double currentTime = 0.0;
     RPM target = RPM::fromRPM(2000);
 
-    std::cout << "Scenario: Apply load at t=1.0s\n\n";
-    std::cout << "Time(s) | Target | Measured | Error | Load  | Status\n";
-    std::cout << "--------|--------|----------|-------|-------|----------------\n";
+    println("Scenario: Apply load at t=1.0s\n");
+    println("Time(s) | Target | Measured | Error | Load  | Status");
+    println("--------|--------|----------|-------|-------|----------------");
 
     for (int i = 0; i < 200; i++) {
         currentTime = i * dt;
@@ -472,33 +470,33 @@ void demonstrateLoadRejection() {
         motor.update(output.voltage, dt);
 
         if (i % 10 == 0) {
-            std::cout << std::setw(6) << currentTime << "  | ";
-            std::cout << std::setw(6) << target.toRPM() << " | ";
-            std::cout << std::setw(8) << output.measuredVelocity.toRPM() << " | ";
-            std::cout << std::setw(5) << output.velocityError.toRPM() << " | ";
-            std::cout << std::setw(5) << (currentTime >= 1.0 && currentTime < 2.0 ? "YES" : "NO") << " | ";
+            print(, currentTime, "  | ");
+            print(, target.toRPM(), " | ");
+            print(, output.measuredVelocity.toRPM(), " | ");
+            print(, output.velocityError.toRPM(), " | ");
+            print(, (currentTime >= 1.0 && currentTime < 2.0 ? "YES" : "NO"), " | ");
 
             if (currentTime >= 1.0 && currentTime < 2.0) {
-                std::cout << "Under load";
+                print("Under load");
             } else if (currentTime >= 2.0 && currentTime < 2.5) {
-                std::cout << "Recovering";
+                print("Recovering");
             } else {
-                std::cout << "Normal";
+                print("Normal");
             }
-            std::cout << "\n";
+            println("");
         }
     }
 
-    std::cout << "\nKey Points:\n";
-    std::cout << "• Integral term compensates for steady-state load\n";
-    std::cout << "• System returns to target velocity under load\n";
-    std::cout << "• This is why we need the 'I' in PID!\n\n";
+    println("\nKey Points:");
+    println("• Integral term compensates for steady-state load");
+    println("• System returns to target velocity under load");
+    println("• This is why we need the 'I' in PID!\n");
 }
 
 void demonstrateAccelerationLimiting() {
-    std::cout << "========================================\n";
-    std::cout << "  Acceleration Limiting\n";
-    std::cout << "========================================\n\n";
+    println("========================================");
+    println("  Acceleration Limiting");
+    println("========================================\n");
 
     MotorSpecs specs;
     Encoder encoder(specs.countsPerRevolution, specs.wheelDiameter);
@@ -511,10 +509,10 @@ void demonstrateAccelerationLimiting() {
     double dt = 0.02;
     double currentTime = 0.0;
 
-    std::cout << "Command: Instant 0 → 3000 RPM step\n";
-    std::cout << "Accel limit: " << specs.maxAccelRPMperSec << " RPM/s\n\n";
-    std::cout << "Time(s) | Command | Limited | Measured | Accel (RPM/s)\n";
-    std::cout << "--------|---------|---------|----------|---------------\n";
+    println("Command: Instant 0 → 3000 RPM step");
+    println("Accel limit: ", specs.maxAccelRPMperSec, " RPM/s\n");
+    println("Time(s) | Command | Limited | Measured | Accel (RPM/s)");
+    println("--------|---------|---------|----------|---------------");
 
     RPM lastTarget = RPM::fromRPM(0);
 
@@ -531,105 +529,105 @@ void demonstrateAccelerationLimiting() {
         lastTarget = command;
 
         if (i % 5 == 0) {
-            std::cout << std::setw(6) << currentTime << "  | ";
-            std::cout << std::setw(7) << command.toRPM() << " | ";
-            std::cout << std::setw(7) << "~" << static_cast<int>(output.measuredVelocity.toRPM()) << " | ";
-            std::cout << std::setw(8) << output.measuredVelocity.toRPM() << " | ";
-            std::cout << std::setw(14) << (currentTime < 0.5 ? specs.maxAccelRPMperSec : 0.0) << "\n";
+            print(, currentTime, "  | ");
+            print(, command.toRPM(), " | ");
+            print(, "~", static_cast<int>(output.measuredVelocity.toRPM()), " | ");
+            print(, output.measuredVelocity.toRPM(), " | ");
+            println(, (currentTime < 0.5 ? specs.maxAccelRPMperSec : 0.0), "");
         }
     }
 
-    std::cout << "\nBenefits:\n";
-    std::cout << "• Prevents wheel slip from aggressive acceleration\n";
-    std::cout << "• Reduces mechanical stress on drivetrain\n";
-    std::cout << "• Smoother motion for passengers/cargo\n";
-    std::cout << "• Prevents current spikes (protects electronics)\n\n";
+    println("\nBenefits:");
+    println("• Prevents wheel slip from aggressive acceleration");
+    println("• Reduces mechanical stress on drivetrain");
+    println("• Smoother motion for passengers/cargo");
+    println("• Prevents current spikes (protects electronics)\n");
 }
 
 // ============================================================================
 // Main Program
 // ============================================================================
 int main() {
-    std::cout << "\n";
-    std::cout << "╔════════════════════════════════════════╗\n";
-    std::cout << "║  Advanced Motor Control               ║\n";
-    std::cout << "║  Encoder Feedback & Velocity Control  ║\n";
-    std::cout << "╚════════════════════════════════════════╝\n";
-    std::cout << "\n";
+    println("");
+    println("╔════════════════════════════════════════╗");
+    println("║  Advanced Motor Control               ║");
+    println("║  Encoder Feedback & Velocity Control  ║");
+    println("╚════════════════════════════════════════╝");
+    println("");
 
     demonstrateVelocityControl();
     demonstrateFeedforwardBenefit();
     demonstrateLoadRejection();
     demonstrateAccelerationLimiting();
 
-    std::cout << "========================================\n";
-    std::cout << "  Control System Architecture\n";
-    std::cout << "========================================\n\n";
+    println("========================================");
+    println("  Control System Architecture");
+    println("========================================\n");
 
-    std::cout << "Components:\n\n";
+    println("Components:\n");
 
-    std::cout << "1. ENCODER\n";
-    std::cout << "   • Measures motor position/velocity\n";
-    std::cout << "   • Filtered to reduce noise\n";
-    std::cout << "   • Higher resolution = better control\n\n";
+    println("1. ENCODER");
+    println("   • Measures motor position/velocity");
+    println("   • Filtered to reduce noise");
+    println("   • Higher resolution = better control\n");
 
-    std::cout << "2. FEEDFORWARD CONTROL\n";
-    std::cout << "   • Models expected system behavior\n";
-    std::cout << "   • Provides majority of control effort\n";
-    std::cout << "   • Components:\n";
-    std::cout << "     - kS: Static friction compensation\n";
-    std::cout << "     - kV: Velocity feedforward (V = kV * ω)\n";
-    std::cout << "     - kA: Acceleration feedforward\n\n";
+    println("2. FEEDFORWARD CONTROL");
+    println("   • Models expected system behavior");
+    println("   • Provides majority of control effort");
+    println("   • Components:");
+    println("     - kS: Static friction compensation");
+    println("     - kV: Velocity feedforward (V = kV * ω)");
+    println("     - kA: Acceleration feedforward\n");
 
-    std::cout << "3. FEEDBACK CONTROL (PID)\n";
-    std::cout << "   • Corrects for model errors\n";
-    std::cout << "   • Rejects disturbances (load, friction)\n";
-    std::cout << "   • Typically provides <10% of effort\n\n";
+    println("3. FEEDBACK CONTROL (PID)");
+    println("   • Corrects for model errors");
+    println("   • Rejects disturbances (load, friction)");
+    println("   • Typically provides <10% of effort\n");
 
-    std::cout << "4. ACCELERATION LIMITING\n";
-    std::cout << "   • Prevents sudden velocity changes\n";
-    std::cout << "   • Protects mechanical components\n";
-    std::cout << "   • Improves control stability\n\n";
+    println("4. ACCELERATION LIMITING");
+    println("   • Prevents sudden velocity changes");
+    println("   • Protects mechanical components");
+    println("   • Improves control stability\n");
 
-    std::cout << "========================================\n";
-    std::cout << "  Tuning Procedure\n";
-    std::cout << "========================================\n\n";
+    println("========================================");
+    println("  Tuning Procedure");
+    println("========================================\n");
 
-    std::cout << "Step 1: Measure kV (Velocity Feedforward)\n";
-    std::cout << "   • Run motor at full voltage\n";
-    std::cout << "   • Measure steady-state velocity\n";
-    std::cout << "   • kV = Voltage / Velocity\n\n";
+    println("Step 1: Measure kV (Velocity Feedforward)");
+    println("   • Run motor at full voltage");
+    println("   • Measure steady-state velocity");
+    println("   • kV = Voltage / Velocity\n");
 
-    std::cout << "Step 2: Measure kS (Static Friction)\n";
-    std::cout << "   • Find minimum voltage to start motion\n";
-    std::cout << "   • Typically 0.3-0.7V for FRC motors\n\n";
+    println("Step 2: Measure kS (Static Friction)");
+    println("   • Find minimum voltage to start motion");
+    println("   • Typically 0.3-0.7V for FRC motors\n");
 
-    std::cout << "Step 3: Tune Feedback (PID)\n";
-    std::cout << "   • Start with P-only: kP = 0.1\n";
-    std::cout << "   • Add I if steady-state error: kI = kP/10\n";
-    std::cout << "   • Add D if oscillating: kD = kP/100\n\n";
+    println("Step 3: Tune Feedback (PID)");
+    println("   • Start with P-only: kP = 0.1");
+    println("   • Add I if steady-state error: kI = kP/10");
+    println("   • Add D if oscillating: kD = kP/100\n");
 
-    std::cout << "Step 4: Add kA (Acceleration FF)\n";
-    std::cout << "   • Improves tracking during acceleration\n";
-    std::cout << "   • Start with 0.01, adjust up if needed\n\n";
+    println("Step 4: Add kA (Acceleration FF)");
+    println("   • Improves tracking during acceleration");
+    println("   • Start with 0.01, adjust up if needed\n");
 
-    std::cout << "========================================\n";
-    std::cout << "  Real-World Applications\n";
-    std::cout << "========================================\n\n";
+    println("========================================");
+    println("  Real-World Applications");
+    println("========================================\n");
 
-    std::cout << "• FRC/VEX competition robots\n";
-    std::cout << "• Precision CNC machines\n";
-    std::cout << "• Electric vehicles (traction control)\n";
-    std::cout << "• Drones (motor speed control)\n";
-    std::cout << "• Industrial automation\n";
-    std::cout << "• 3D printer motion control\n\n";
+    println("• FRC/VEX competition robots");
+    println("• Precision CNC machines");
+    println("• Electric vehicles (traction control)");
+    println("• Drones (motor speed control)");
+    println("• Industrial automation");
+    println("• 3D printer motion control\n");
 
-    std::cout << "Why This Matters:\n";
-    std::cout << "Professional motor control = Consistent performance\n";
-    std::cout << "• Predictable acceleration\n";
-    std::cout << "• Robust to load changes\n";
-    std::cout << "• Smooth motion (no jerking)\n";
-    std::cout << "• Minimal tuning required\n\n";
+    println("Why This Matters:");
+    println("Professional motor control = Consistent performance");
+    println("• Predictable acceleration");
+    println("• Robust to load changes");
+    println("• Smooth motion (no jerking)");
+    println("• Minimal tuning required\n");
 
     return 0;
 }

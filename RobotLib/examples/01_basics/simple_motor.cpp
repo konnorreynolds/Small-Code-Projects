@@ -11,23 +11,24 @@
 // - How to ramp speed up/down
 // ============================================================================
 
-#include "../../include/robotlib_api.h"
-#include <iostream>
-#include <iomanip>
+#include "../../include/RobotLib.h"
 
 using namespace robotlib;
+using namespace robotlib::output;
 
 int main() {
-    std::cout << "\n";
-    std::cout << "========================================\n";
-    std::cout << "  Simple Motor Control\n";
-    std::cout << "  (No Encoders Required!)\n";
-    std::cout << "========================================\n\n";
+    println();
+    println("========================================");
+    println("  Simple Motor Control");
+    println("  (No Encoders Required!)");
+    println("========================================");
+    println();
 
     // ========================================
     // STEP 1: Create the motor
     // ========================================
-    std::cout << "STEP 1: Creating motor controller...\n\n";
+    println("STEP 1: Creating motor controller...");
+    println();
 
     Arm motor = Arm();  // Create a motor controller
 
@@ -38,13 +39,15 @@ int main() {
     // - Motor driver → DC motor
     // - Power supply → Motor driver VCC (6-12V for most motors)
 
-    std::cout << "✓ Motor created!\n";
-    std::cout << "  Ready to control\n\n";
+    println("✓ Motor created!");
+    println("  Ready to control");
+    println();
 
     // ========================================
     // STEP 2: Spin the motor forward
     // ========================================
-    std::cout << "STEP 2: Spin motor forward at 50% power\n\n";
+    println("STEP 2: Spin motor forward at 50% power");
+    println();
 
     motor.setDutyCycle(0.5);  // 0.5 = 50% power forward
 
@@ -56,14 +59,16 @@ int main() {
     // ⏱️ IN YOUR REAL CODE, ADD:
     // delay(2000);  // Let motor run for 2 seconds
 
-    std::cout << "  Power level: " << (motor.getDutyCycle() * 100.0) << "%\n";
-    std::cout << "  Direction: Forward\n";
-    std::cout << "  💡 In real hardware, let this run for 2 seconds\n\n";
+    print("  Power level: ", motor.getDutyCycle() * 100.0, "%\n");
+    println("  Direction: Forward");
+    println("  💡 In real hardware, let this run for 2 seconds");
+    println();
 
     // ========================================
     // STEP 3: Spin the motor backward
     // ========================================
-    std::cout << "STEP 3: Spin motor backward at 30% power\n\n";
+    println("STEP 3: Spin motor backward at 30% power");
+    println();
 
     motor.setDutyCycle(-0.3);  // Negative = reverse direction
 
@@ -75,14 +80,16 @@ int main() {
     // ⏱️ IN YOUR REAL CODE, ADD:
     // delay(1000);  // Let motor run for 1 second
 
-    std::cout << "  Power level: " << (motor.getDutyCycle() * -100.0) << "%\n";
-    std::cout << "  Direction: Backward\n";
-    std::cout << "  💡 In real hardware, let this run for 1 second\n\n";
+    print("  Power level: ", motor.getDutyCycle() * -100.0, "%\n");
+    println("  Direction: Backward");
+    println("  💡 In real hardware, let this run for 1 second");
+    println();
 
     // ========================================
     // STEP 4: Stop the motor
     // ========================================
-    std::cout << "STEP 4: Stop the motor\n\n";
+    println("STEP 4: Stop the motor");
+    println();
 
     motor.stop();  // Stop the motor
 
@@ -91,15 +98,17 @@ int main() {
     // The motor stops spinning (coasts to a stop)
     // For instant stop (brake), you'd short both motor terminals
 
-    std::cout << "  Power level: " << (motor.getDutyCycle() * 100.0) << "%\n";
-    std::cout << "  Motor is now stopped\n\n";
+    print("  Power level: ", motor.getDutyCycle() * 100.0, "%\n");
+    println("  Motor is now stopped");
+    println();
 
     // ========================================
     // STEP 5: Smoothly ramp up speed
     // ========================================
-    std::cout << "STEP 5: Smoothly ramp up from 0% to 100%\n\n";
-    std::cout << "  Speed  | Power\n";
-    std::cout << "  -------|-------\n";
+    println("STEP 5: Smoothly ramp up from 0% to 100%");
+    println();
+    println("  Speed  | Power");
+    println("  -------|-------");
 
     // Gradually increase from 0 to 100% in 25% steps
     for (int speed = 0; speed <= 100; speed += 25) {
@@ -113,45 +122,53 @@ int main() {
         // ⏱️ IN YOUR REAL CODE, ADD:
         // delay(500);  // Wait 0.5s between speed changes
 
-        std::cout << "  " << std::setw(5) << speed << "% | "
-                  << std::setw(5) << std::fixed << std::setprecision(1)
-                  << (motor.getDutyCycle() * 100.0) << "%\n";
+        print("  ", speed, "% | ", motor.getDutyCycle() * 100.0, "%\n");
     }
 
-    std::cout << "\n  💡 In real hardware, add a small delay between steps\n";
-    std::cout << "     This prevents sudden jumps that could damage motor/gears\n\n";
+    println();
+    println("  💡 In real hardware, add a small delay between steps");
+    println("     This prevents sudden jumps that could damage motor/gears");
+    println();
 
     // ========================================
     // Summary
     // ========================================
-    std::cout << "========================================\n";
-    std::cout << "✓ You learned:\n";
-    std::cout << "  1. Create a motor: Arm motor = Arm()\n";
-    std::cout << "  2. Spin forward: motor.setDutyCycle(0.5)\n";
-    std::cout << "  3. Spin backward: motor.setDutyCycle(-0.5)\n";
-    std::cout << "  4. Stop: motor.stop()\n";
-    std::cout << "  5. Ramp speed: Loop and change gradually\n\n";
+    println("========================================");
+    println("✓ You learned:");
+    println("  1. Create a motor: Arm motor = Arm()");
+    println("  2. Spin forward: motor.setDutyCycle(0.5)");
+    println("  3. Spin backward: motor.setDutyCycle(-0.5)");
+    println("  4. Stop: motor.stop()");
+    println("  5. Ramp speed: Loop and change gradually");
+    println();
 
-    std::cout << "========================================\n";
-    std::cout << "🔧 COMPLETE ARDUINO IMPLEMENTATION:\n";
-    std::cout << "========================================\n\n";
-    std::cout << "const int PWM_PIN = 9;    // Motor speed\n";
-    std::cout << "const int DIR_PIN = 8;    // Motor direction\n\n";
-    std::cout << "void setup() {\n";
-    std::cout << "  pinMode(PWM_PIN, OUTPUT);\n";
-    std::cout << "  pinMode(DIR_PIN, OUTPUT);\n";
-    std::cout << "}\n\n";
-    std::cout << "void loop() {\n";
-    std::cout << "  // Get duty cycle from RobotLib\n";
-    std::cout << "  double duty = motor.getDutyCycle();\n\n";
-    std::cout << "  // Set direction based on sign\n";
-    std::cout << "  digitalWrite(DIR_PIN, duty >= 0 ? HIGH : LOW);\n\n";
-    std::cout << "  // Set speed (PWM is 0-255)\n";
-    std::cout << "  analogWrite(PWM_PIN, abs(duty) * 255);\n";
-    std::cout << "}\n\n";
+    println("========================================");
+    println("🔧 COMPLETE ARDUINO IMPLEMENTATION:");
+    println("========================================");
+    println();
+    println("const int PWM_PIN = 9;    // Motor speed");
+    println("const int DIR_PIN = 8;    // Motor direction");
+    println();
+    println("void setup() {");
+    println("  pinMode(PWM_PIN, OUTPUT);");
+    println("  pinMode(DIR_PIN, OUTPUT);");
+    println("}");
+    println();
+    println("void loop() {");
+    println("  // Get duty cycle from RobotLib");
+    println("  double duty = motor.getDutyCycle();");
+    println();
+    println("  // Set direction based on sign");
+    println("  digitalWrite(DIR_PIN, duty >= 0 ? HIGH : LOW);");
+    println();
+    println("  // Set speed (PWM is 0-255)");
+    println("  analogWrite(PWM_PIN, abs(duty) * 255);");
+    println("}");
+    println();
 
-    std::cout << "Next step: Try 'simple_servo.cpp' for servo control!\n";
-    std::cout << "========================================\n\n";
+    println("Next step: Try 'simple_servo.cpp' for servo control!");
+    println("========================================");
+    println();
 
     return 0;
 }

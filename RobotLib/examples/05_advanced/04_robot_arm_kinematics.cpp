@@ -18,9 +18,7 @@
 #include "../../include/units_robotics.h"
 #include "../../include/units_utilities.h"
 
-#include <iostream>
 #include <vector>
-#include <iomanip>
 #include <cmath>
 
 using namespace units;
@@ -70,9 +68,7 @@ struct JointState {
         : joint1(j1), joint2(j2) {}
 
     void print() const {
-        std::cout << "J1: " << std::setw(7) << std::fixed << std::setprecision(2)
-                  << joint1.toDegrees() << "°, J2: " << std::setw(7)
-                  << joint2.toDegrees() << "°";
+        print("J1: " , joint1.toDegrees() , "°, J2: ");
     }
 };
 
@@ -92,8 +88,7 @@ struct EndEffectorPos {
     }
 
     void print() const {
-        std::cout << "(" << std::setw(6) << std::fixed << std::setprecision(3)
-                  << x << ", " << std::setw(6) << y << ")";
+        print("(" , x , ", ");
     }
 };
 
@@ -202,10 +197,10 @@ public:
         double area;
 
         void print() const {
-            std::cout << "Workspace Analysis:\n";
-            std::cout << "  Max reach: " << maxReach << " m\n";
-            std::cout << "  Min reach: " << minReach << " m\n";
-            std::cout << "  Workspace area: " << area << " m²\n";
+            println("Workspace Analysis:");
+            println("  Max reach: ", maxReach, " m");
+            println("  Min reach: ", minReach, " m");
+            println("  Workspace area: ", area, " m²");
         }
     };
 
@@ -247,11 +242,10 @@ public:
         }
 
         void print() const {
-            std::cout << "Jacobian:\n";
-            std::cout << "  [" << std::setw(8) << std::fixed << std::setprecision(4)
-                      << j11 << " " << std::setw(8) << j12 << "]\n";
-            std::cout << "  [" << std::setw(8) << j21 << " " << std::setw(8) << j22 << "]\n";
-            std::cout << "  Determinant: " << determinant() << "\n";
+            println("Jacobian:");
+            print("  [" , j11 , " ");
+            println("  [", j21, " ", j22, "]");
+            println("  Determinant: ", determinant(), "");
         }
     };
 
@@ -288,14 +282,14 @@ public:
         std::vector<double> times;
 
         void print() const {
-            std::cout << "\nTrajectory (" << waypoints.size() << " waypoints):\n";
-            std::cout << "Time(s) | Joint 1 | Joint 2\n";
-            std::cout << "--------|---------|--------\n";
+            println("\nTrajectory (", waypoints.size(), " waypoints):");
+            println("Time(s) | Joint 1 | Joint 2");
+            println("--------|---------|--------");
             for (size_t i = 0; i < waypoints.size(); i++) {
-                std::cout << std::setw(7) << std::fixed << std::setprecision(3)
-                          << times[i] << " | ";
-                std::cout << std::setw(7) << waypoints[i].joint1.toDegrees() << "° | ";
-                std::cout << std::setw(7) << waypoints[i].joint2.toDegrees() << "°\n";
+                print(,  
+                          , times[i] , " | ");
+                print(, waypoints[i].joint1.toDegrees(), "° | ");
+                println(, waypoints[i].joint2.toDegrees(), "°");
             }
         }
     };
@@ -355,27 +349,27 @@ public:
 // Main Program
 // ============================================================================
 int main() {
-    std::cout << "========================================\n";
-    std::cout << "  2-DOF Robot Arm Kinematics\n";
-    std::cout << "========================================\n\n";
+    println("========================================");
+    println("  2-DOF Robot Arm Kinematics");
+    println("========================================\n");
 
     // Create robot arm
     ArmConfig config;
     RobotArm arm(config);
 
-    std::cout << "Robot Configuration:\n";
-    std::cout << "  Link 1: " << config.link1Length.toCentimeters() << " cm\n";
-    std::cout << "  Link 2: " << config.link2Length.toCentimeters() << " cm\n";
-    std::cout << "  Joint 1 limits: " << config.joint1Min.toDegrees()
-              << "° to " << config.joint1Max.toDegrees() << "°\n";
-    std::cout << "  Joint 2 limits: " << config.joint2Min.toDegrees()
-              << "° to " << config.joint2Max.toDegrees() << "°\n\n";
+    println("Robot Configuration:");
+    println("  Link 1: ", config.link1Length.toCentimeters(), " cm");
+    println("  Link 2: ", config.link2Length.toCentimeters(), " cm");
+    print("  Joint 1 limits: " ,  config.joint1Min.toDegrees()
+              , "° to ");
+    print("  Joint 2 limits: " ,  config.joint2Min.toDegrees()
+              , "° to ");
 
     // ========================================================================
     // Test 1: Forward Kinematics
     // ========================================================================
-    std::cout << "Test 1: Forward Kinematics\n";
-    std::cout << "===========================\n";
+    println("Test 1: Forward Kinematics");
+    println("===========================");
 
     std::vector<JointState> testConfigs = {
         JointState(rad(0), rad(0)),
@@ -386,18 +380,18 @@ int main() {
 
     for (const auto& joints : testConfigs) {
         auto pos = arm.forwardKinematics(joints);
-        std::cout << "  ";
+        print("  ");
         joints.print();
-        std::cout << " → ";
+        print(" → ");
         pos.print();
-        std::cout << " m\n";
+        println(" m");
     }
 
     // ========================================================================
     // Test 2: Inverse Kinematics
     // ========================================================================
-    std::cout << "\n\nTest 2: Inverse Kinematics\n";
-    std::cout << "===========================\n";
+    println("\n\nTest 2: Inverse Kinematics");
+    println("===========================");
 
     std::vector<EndEffectorPos> testTargets = {
         EndEffectorPos(0.4, 0.2),
@@ -407,52 +401,52 @@ int main() {
     };
 
     for (const auto& target : testTargets) {
-        std::cout << "Target: ";
+        print("Target: ");
         target.print();
-        std::cout << " m\n";
+        println(" m");
 
         auto ikElbowUp = arm.inverseKinematics(target, RobotArm::IKSolution::ELBOW_UP);
         auto ikElbowDown = arm.inverseKinematics(target, RobotArm::IKSolution::ELBOW_DOWN);
 
         if (ikElbowUp.success) {
-            std::cout << "  Elbow-up:   ";
+            print("  Elbow-up:   ");
             ikElbowUp.joints.print();
 
             // Verify with FK
             auto verify = arm.forwardKinematics(ikElbowUp.joints);
             double error = target.distanceTo(verify);
-            std::cout << "  (error: " << std::setprecision(6) << error * 1000 << " mm)\n";
+            println("  (error: ", error * 1000, " mm)");
         } else {
-            std::cout << "  Elbow-up:   " << ikElbowUp.errorMessage << "\n";
+            println("  Elbow-up:   ", ikElbowUp.errorMessage, "");
         }
 
         if (ikElbowDown.success) {
-            std::cout << "  Elbow-down: ";
+            print("  Elbow-down: ");
             ikElbowDown.joints.print();
 
             auto verify = arm.forwardKinematics(ikElbowDown.joints);
             double error = target.distanceTo(verify);
-            std::cout << "  (error: " << std::setprecision(6) << error * 1000 << " mm)\n";
+            println("  (error: ", error * 1000, " mm)");
         } else {
-            std::cout << "  Elbow-down: " << ikElbowDown.errorMessage << "\n";
+            println("  Elbow-down: ", ikElbowDown.errorMessage, "");
         }
 
-        std::cout << "\n";
+        println("");
     }
 
     // ========================================================================
     // Test 3: Workspace Analysis
     // ========================================================================
-    std::cout << "\nTest 3: Workspace Analysis\n";
-    std::cout << "===========================\n";
+    println("\nTest 3: Workspace Analysis");
+    println("===========================");
     auto workspace = arm.calculateWorkspace();
     workspace.print();
 
     // ========================================================================
     // Test 4: Singularity Detection
     // ========================================================================
-    std::cout << "\n\nTest 4: Singularity Detection\n";
-    std::cout << "==============================\n";
+    println("\n\nTest 4: Singularity Detection");
+    println("==============================");
 
     std::vector<JointState> singularityTests = {
         JointState(rad(0.785), rad(0)),      // Extended
@@ -462,26 +456,26 @@ int main() {
     };
 
     for (const auto& joints : singularityTests) {
-        std::cout << "  ";
+        print("  ");
         joints.print();
 
         if (arm.isNearSingularity(joints)) {
-            std::cout << " → SINGULAR (limited dexterity)\n";
+            println(" → SINGULAR (limited dexterity)");
         } else {
-            std::cout << " → OK\n";
+            println(" → OK");
         }
     }
 
     // ========================================================================
     // Test 5: Jacobian Analysis
     // ========================================================================
-    std::cout << "\n\nTest 5: Jacobian Analysis\n";
-    std::cout << "==========================\n";
+    println("\n\nTest 5: Jacobian Analysis");
+    println("==========================");
 
     JointState testJoint(rad(0.785), rad(1.047));
-    std::cout << "Configuration: ";
+    print("Configuration: ");
     testJoint.print();
-    std::cout << "\n\n";
+    println("\n");
 
     auto jacobian = arm.calculateJacobian(testJoint);
     jacobian.print();
@@ -489,17 +483,17 @@ int main() {
     // ========================================================================
     // Test 6: Trajectory Planning
     // ========================================================================
-    std::cout << "\n\nTest 6: Trajectory Planning\n";
-    std::cout << "============================\n";
+    println("\n\nTest 6: Trajectory Planning");
+    println("============================");
 
     JointState trajStart(rad(0), rad(0));
     JointState trajGoal(rad(1.571), rad(-0.785));
 
-    std::cout << "Planning trajectory from ";
+    print("Planning trajectory from ");
     trajStart.print();
-    std::cout << " to ";
+    print(" to ");
     trajGoal.print();
-    std::cout << "\n";
+    println("");
 
     auto trajectory = TrajectoryPlanner::planJointTrajectory(
         trajStart, trajGoal, 2.0, 0.5  // 2 seconds, sample every 0.5s
@@ -510,25 +504,25 @@ int main() {
     // ========================================================================
     // Summary
     // ========================================================================
-    std::cout << "\n\n========================================\n";
-    std::cout << "  Summary\n";
-    std::cout << "========================================\n\n";
+    println("\n\n========================================");
+    println("  Summary");
+    println("========================================\n");
 
-    std::cout << "This example demonstrated:\n";
-    std::cout << "✓ Forward kinematics (FK)\n";
-    std::cout << "✓ Inverse kinematics (IK) with multiple solutions\n";
-    std::cout << "✓ Workspace analysis and reachability\n";
-    std::cout << "✓ Singularity detection\n";
-    std::cout << "✓ Jacobian calculation\n";
-    std::cout << "✓ Trajectory planning in joint and Cartesian space\n";
-    std::cout << "✓ Type-safe units throughout\n\n";
+    println("This example demonstrated:");
+    println("✓ Forward kinematics (FK)");
+    println("✓ Inverse kinematics (IK) with multiple solutions");
+    println("✓ Workspace analysis and reachability");
+    println("✓ Singularity detection");
+    println("✓ Jacobian calculation");
+    println("✓ Trajectory planning in joint and Cartesian space");
+    println("✓ Type-safe units throughout\n");
 
-    std::cout << "Key Concepts:\n";
-    std::cout << "• FK transforms joint angles to end-effector position\n";
-    std::cout << "• IK is the inverse problem (often multiple solutions)\n";
-    std::cout << "• Singularities occur at workspace boundaries\n";
-    std::cout << "• Jacobian relates joint velocities to end-effector velocities\n";
-    std::cout << "• Trajectory planning ensures smooth, collision-free motion\n\n";
+    println("Key Concepts:");
+    println("• FK transforms joint angles to end-effector position");
+    println("• IK is the inverse problem (often multiple solutions)");
+    println("• Singularities occur at workspace boundaries");
+    println("• Jacobian relates joint velocities to end-effector velocities");
+    println("• Trajectory planning ensures smooth, collision-free motion\n");
 
     return 0;
 }

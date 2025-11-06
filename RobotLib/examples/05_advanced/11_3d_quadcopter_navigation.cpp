@@ -21,8 +21,6 @@
 #include "../../include/units_estimation.h"
 #include "../../include/units_planning.h"
 
-#include <iostream>
-#include <iomanip>
 
 using namespace units;
 using namespace units::spatial;
@@ -33,47 +31,43 @@ using namespace units::planning;
 // Demonstrate 3D Transformations and Quaternions
 // ============================================================================
 void demonstrate3DTransformations() {
-    std::cout << "========================================\n";
-    std::cout << "  3D Transformations & Quaternions\n";
-    std::cout << "========================================\n\n";
+    println("========================================");
+    println("  3D Transformations & Quaternions");
+    println("========================================\n");
 
     // Create 3D vectors
     Vec3D point(1, 0, 0);
-    std::cout << "Original point: (" << point.x << ", " << point.y << ", "
-              << point.z << ")\n\n";
+    print("Original point: (" ,  point.x , ", ");
 
     // Create rotation using quaternions (90° around Z-axis)
     Quaternion rot_z = rotationZ(constants::PI / 2.0);
     Vec3D rotated = rot_z.rotate(point);
 
-    std::cout << "After 90° rotation around Z-axis:\n";
-    std::cout << "  (" << std::fixed << std::setprecision(3)
-              << rotated.x << ", " << rotated.y << ", " << rotated.z << ")\n";
-    std::cout << "  → Point rotated to +Y direction\n\n";
+    println("After 90° rotation around Z-axis:");
+    print("  (" ,   rotated.x , ", ");
+    println("  → Point rotated to +Y direction\n");
 
     // Create rotation from Euler angles
     double roll = 0.0, pitch = 0.0, yaw = constants::PI / 4.0;  // 45° yaw
     Quaternion rot_euler = Quaternion::fromEuler(roll, pitch, yaw);
 
-    std::cout << "Rotation from Euler angles (45° yaw):\n";
-    std::cout << "  Quaternion: w=" << rot_euler.w << ", x=" << rot_euler.x
-              << ", y=" << rot_euler.y << ", z=" << rot_euler.z << "\n\n";
+    println("Rotation from Euler angles (45° yaw):");
+    print("  Quaternion: w=" ,  rot_euler.w , ", x=");
 
     // Demonstrate SLERP (smooth interpolation)
     Quaternion start_rot = rotationZ(0);
     Quaternion end_rot = rotationZ(constants::PI / 2.0);
 
-    std::cout << "SLERP interpolation (0° to 90° around Z):\n";
+    println("SLERP interpolation (0° to 90° around Z):");
     for (double t = 0.0; t <= 1.0; t += 0.25) {
         Quaternion interp = start_rot.slerp(end_rot, t);
         double angle = interp.getAngle();
-        std::cout << "  t=" << t << ": angle = "
-                  << (angle * constants::RAD_TO_DEG) << "°\n";
+        print("  t=" ,  t , ": angle = ");
     }
-    std::cout << "\n";
+    println("");
 
     // SE(3) transformations
-    std::cout << "SE(3) Pose Transformations:\n";
+    println("SE(3) Pose Transformations:");
     Vec3D drone_position(5, 3, 2);
     Quaternion drone_orientation = rotationZ(constants::PI / 4.0);
     Pose3D drone_pose(drone_position, drone_orientation);
@@ -81,29 +75,26 @@ void demonstrate3DTransformations() {
     Vec3D camera_offset(0.2, 0, -0.1);  // Camera 20cm forward, 10cm down
     Vec3D camera_global = drone_pose.transformPoint(camera_offset);
 
-    std::cout << "  Drone at: (" << drone_position.x << ", "
-              << drone_position.y << ", " << drone_position.z << ")\n";
-    std::cout << "  Camera (in drone frame): (" << camera_offset.x << ", "
-              << camera_offset.y << ", " << camera_offset.z << ")\n";
-    std::cout << "  Camera (global frame): (" << camera_global.x << ", "
-              << camera_global.y << ", " << camera_global.z << ")\n\n";
+    print("  Drone at: (" ,  drone_position.x , ", ");
+    print("  Camera (in drone frame): (" ,  camera_offset.x , ", ");
+    print("  Camera (global frame): (" ,  camera_global.x , ", ");
 }
 
 // ============================================================================
 // Demonstrate Extended Kalman Filter for Drone Localization
 // ============================================================================
 void demonstrateEKF() {
-    std::cout << "========================================\n";
-    std::cout << "  Extended Kalman Filter\n";
-    std::cout << "  Drone Localization\n";
-    std::cout << "========================================\n\n";
+    println("========================================");
+    println("  Extended Kalman Filter");
+    println("  Drone Localization");
+    println("========================================\n");
 
     // Create EKF for 2D position and velocity tracking
     EKF2DPositionVelocity ekf(0.01, 0.5);  // Low process noise, higher measurement noise
 
-    std::cout << "Simulating drone flight with noisy GPS measurements...\n\n";
-    std::cout << "Time(s) | True Pos | GPS Meas | EKF Est  | Error\n";
-    std::cout << "--------|----------|----------|----------|-------\n";
+    println("Simulating drone flight with noisy GPS measurements...\n");
+    println("Time(s) | True Pos | GPS Meas | EKF Est  | Error");
+    println("--------|----------|----------|----------|-------");
 
     double dt = 0.1;  // 10 Hz update rate
     std::random_device rd;
@@ -141,37 +132,34 @@ void demonstrateEKF() {
 
         // Print every 0.5 seconds
         if (static_cast<int>(t / 0.5) != static_cast<int>((t - dt) / 0.5)) {
-            std::cout << std::fixed << std::setprecision(1);
-            std::cout << std::setw(7) << t << " | ";
-            std::cout << "(" << std::setw(4) << true_x << ","
-                      << std::setw(4) << true_y << ") | ";
-            std::cout << "(" << std::setw(4) << gps_x << ","
-                      << std::setw(4) << gps_y << ") | ";
-            std::cout << "(" << std::setw(4) << est_x << ","
-                      << std::setw(4) << est_y << ") | ";
-            std::cout << std::setprecision(2) << std::setw(5) << error << "\n";
+            print(, );
+            print(, t, " | ");
+            print("(" , true_x , ",");
+            print("(" , gps_x , ",");
+            print("(" , est_x , ",");
+            println(, error, "");
         }
     }
 
-    std::cout << "\nKey Observations:\n";
-    std::cout << "• EKF smooths noisy GPS measurements\n";
-    std::cout << "• Velocity estimates help predict position\n";
-    std::cout << "• Error decreases as filter converges\n\n";
+    println("\nKey Observations:");
+    println("• EKF smooths noisy GPS measurements");
+    println("• Velocity estimates help predict position");
+    println("• Error decreases as filter converges\n");
 }
 
 // ============================================================================
 // Demonstrate Path Planning
 // ============================================================================
 void demonstratePathPlanning() {
-    std::cout << "========================================\n";
-    std::cout << "  A* Path Planning\n";
-    std::cout << "========================================\n\n";
+    println("========================================");
+    println("  A* Path Planning");
+    println("========================================\n");
 
     // Create 20x20 grid
     AStarPlanner planner(20, 20);
 
     // Add obstacles (building)
-    std::cout << "Environment: 20x20 grid with building obstacle\n\n";
+    println("Environment: 20x20 grid with building obstacle\n");
     for (int x = 8; x <= 12; x++) {
         for (int y = 8; y <= 12; y++) {
             planner.setObstacle(x, y);
@@ -182,19 +170,17 @@ void demonstratePathPlanning() {
     GridCell start(2, 2);
     GridCell goal(18, 18);
 
-    std::cout << "Planning from (" << start.x << ", " << start.y
-              << ") to (" << goal.x << ", " << goal.y << ")\n\n";
+    print("Planning from (" ,  start.x , ", ");
 
     auto path = planner.plan(start, goal, true);  // Allow diagonal
 
     if (path.empty()) {
-        std::cout << "No path found!\n\n";
+        println("No path found!\n");
         return;
     }
 
-    std::cout << "Path found with " << path.size() << " waypoints\n";
-    std::cout << "Path length: " << std::fixed << std::setprecision(2)
-              << planner.getPathLength(path) << " grid cells\n\n";
+    println("Path found with ", path.size(), " waypoints");
+    print("Path length: " ,   planner.getPathLength(path) , " grid cells\n\n");
 
     // Visualize path (simple ASCII)
     std::vector<std::vector<char>> grid(20, std::vector<char>(20, '.'));
@@ -215,24 +201,24 @@ void demonstratePathPlanning() {
     grid[start.y][start.x] = 'S';
     grid[goal.y][goal.x] = 'G';
 
-    std::cout << "Map (S=start, G=goal, *=path, #=obstacle):\n";
+    println("Map (S=start, G=goal, *=path, #=obstacle):");
     for (int y = 0; y < 20; y++) {
         for (int x = 0; x < 20; x++) {
-            std::cout << grid[y][x] << " ";
+            print(grid[y][x], " ");
         }
-        std::cout << "\n";
+        println("");
     }
-    std::cout << "\n";
+    println("");
 }
 
 // ============================================================================
 // Demonstrate Dubins Paths
 // ============================================================================
 void demonstrateDubinsPaths() {
-    std::cout << "========================================\n";
-    std::cout << "  Dubins Paths\n";
-    std::cout << "  Smooth Trajectories for Drones\n";
-    std::cout << "========================================\n\n";
+    println("========================================");
+    println("  Dubins Paths");
+    println("  Smooth Trajectories for Drones");
+    println("========================================\n");
 
     // Start and goal configurations
     DubinsPath::Config start(0, 0, 0);  // Origin, heading east
@@ -240,120 +226,112 @@ void demonstrateDubinsPaths() {
 
     double turning_radius = 2.0;  // Minimum turn radius for drone
 
-    std::cout << "Start: (" << start.x << ", " << start.y
-              << ") heading " << (start.theta * constants::RAD_TO_DEG) << "°\n";
-    std::cout << "Goal:  (" << goal.x << ", " << goal.y
-              << ") heading " << (goal.theta * constants::RAD_TO_DEG) << "°\n";
-    std::cout << "Turning radius: " << turning_radius << " m\n\n";
+    print("Start: (" ,  start.x , ", ");
+    print("Goal:  (" ,  goal.x , ", ");
+    println("Turning radius: ", turning_radius, " m\n");
 
     // Find shortest Dubins path
     auto path = DubinsPath::shortestPath(start, goal, turning_radius);
 
-    std::cout << "Shortest path found:\n";
-    std::cout << "  Type: ";
+    println("Shortest path found:");
+    print("  Type: ");
     for (int i = 0; i < 3; i++) {
         switch (path.types[i]) {
             case DubinsPath::SegmentType::LEFT:
-                std::cout << "L";
+                print("L");
                 break;
             case DubinsPath::SegmentType::RIGHT:
-                std::cout << "R";
+                print("R");
                 break;
             case DubinsPath::SegmentType::STRAIGHT:
-                std::cout << "S";
+                print("S");
                 break;
         }
     }
-    std::cout << "\n";
+    println("");
 
-    std::cout << "  Segment lengths: "
-              << path.lengths[0] << " m, "
-              << path.lengths[1] << " m, "
-              << path.lengths[2] << " m\n";
-    std::cout << "  Total length: " << path.total_length << " m\n\n";
+    print("  Segment lengths: "
+              ,  path.lengths[0] , " m, ");
+    println("  Total length: ", path.total_length, " m\n");
 
     // Sample points along path
     auto points = DubinsPath::sample(start, path, turning_radius, 0.5);
 
-    std::cout << "Sampled waypoints (every 0.5m):\n";
+    println("Sampled waypoints (every 0.5m):");
     for (size_t i = 0; i < std::min(points.size(), size_t(10)); i++) {
-        std::cout << "  " << std::setw(2) << i << ": ("
-                  << std::fixed << std::setprecision(2)
-                  << std::setw(5) << points[i].x << ", "
-                  << std::setw(5) << points[i].y << ") heading "
-                  << std::setw(5) << (points[i].theta * constants::RAD_TO_DEG) << "°\n";
+        print("  " , i , ": (");
     }
     if (points.size() > 10) {
-        std::cout << "  ... and " << (points.size() - 10) << " more waypoints\n";
+        println("  ... and ", (points.size() - 10), " more waypoints");
     }
-    std::cout << "\n";
+    println("");
 }
 
 // ============================================================================
 // Main Program - Complete Autonomous Navigation Pipeline
 // ============================================================================
 int main() {
-    std::cout << "\n";
-    std::cout << "╔════════════════════════════════════════╗\n";
-    std::cout << "║  Advanced Robotics Features           ║\n";
-    std::cout << "║  3D, EKF, Path Planning                ║\n";
-    std::cout << "╚════════════════════════════════════════╝\n";
-    std::cout << "\n";
+    println("");
+    println("╔════════════════════════════════════════╗");
+    println("║  Advanced Robotics Features           ║");
+    println("║  3D, EKF, Path Planning                ║");
+    println("╚════════════════════════════════════════╝");
+    println("");
 
     demonstrate3DTransformations();
     demonstrateEKF();
     demonstratePathPlanning();
     demonstrateDubinsPaths();
 
-    std::cout << "========================================\n";
-    std::cout << "  Complete Navigation Pipeline\n";
-    std::cout << "========================================\n\n";
+    println("========================================");
+    println("  Complete Navigation Pipeline");
+    println("========================================\n");
 
-    std::cout << "These features work together for autonomous navigation:\n\n";
+    println("These features work together for autonomous navigation:\n");
 
-    std::cout << "1. Path Planning (A* or Dubins)\n";
-    std::cout << "   • Find collision-free path\n";
-    std::cout << "   • Generate waypoints\n";
-    std::cout << "   • Consider robot constraints\n\n";
+    println("1. Path Planning (A* or Dubins)");
+    println("   • Find collision-free path");
+    println("   • Generate waypoints");
+    println("   • Consider robot constraints\n");
 
-    std::cout << "2. State Estimation (EKF)\n";
-    std::cout << "   • Fuse GPS + IMU + vision\n";
-    std::cout << "   • Track position and velocity\n";
-    std::cout << "   • Handle sensor noise\n\n";
+    println("2. State Estimation (EKF)");
+    println("   • Fuse GPS + IMU + vision");
+    println("   • Track position and velocity");
+    println("   • Handle sensor noise\n");
 
-    std::cout << "3. 3D Transformations (Quaternions)\n";
-    std::cout << "   • Track drone orientation\n";
-    std::cout << "   • Transform sensor data\n";
-    std::cout << "   • Smooth rotation interpolation\n\n";
+    println("3. 3D Transformations (Quaternions)");
+    println("   • Track drone orientation");
+    println("   • Transform sensor data");
+    println("   • Smooth rotation interpolation\n");
 
-    std::cout << "4. Path Following\n";
-    std::cout << "   • Convert waypoints to control\n";
-    std::cout << "   • Maintain desired trajectory\n";
-    std::cout << "   • Handle disturbances\n\n";
+    println("4. Path Following");
+    println("   • Convert waypoints to control");
+    println("   • Maintain desired trajectory");
+    println("   • Handle disturbances\n");
 
-    std::cout << "========================================\n";
-    std::cout << "  Real-World Applications\n";
-    std::cout << "========================================\n\n";
+    println("========================================");
+    println("  Real-World Applications");
+    println("========================================\n");
 
-    std::cout << "Drones and UAVs:\n";
-    std::cout << "  • Package delivery\n";
-    std::cout << "  • Aerial photography\n";
-    std::cout << "  • Search and rescue\n";
-    std::cout << "  • Agricultural monitoring\n\n";
+    println("Drones and UAVs:");
+    println("  • Package delivery");
+    println("  • Aerial photography");
+    println("  • Search and rescue");
+    println("  • Agricultural monitoring\n");
 
-    std::cout << "Ground Robots:\n";
-    std::cout << "  • Warehouse automation\n";
-    std::cout << "  • Autonomous vehicles\n";
-    std::cout << "  • Lawn mowers and vacuums\n";
-    std::cout << "  • Security patrols\n\n";
+    println("Ground Robots:");
+    println("  • Warehouse automation");
+    println("  • Autonomous vehicles");
+    println("  • Lawn mowers and vacuums");
+    println("  • Security patrols\n");
 
-    std::cout << "Manipulators:\n";
-    std::cout << "  • 3D pick-and-place\n";
-    std::cout << "  • Welding robots\n";
-    std::cout << "  • Surgical robots\n";
-    std::cout << "  • Assembly lines\n\n";
+    println("Manipulators:");
+    println("  • 3D pick-and-place");
+    println("  • Welding robots");
+    println("  • Surgical robots");
+    println("  • Assembly lines\n");
 
-    std::cout << "========================================\n\n";
+    println("========================================\n");
 
     return 0;
 }

@@ -19,8 +19,6 @@
 #include "../../include/units_robotics.h"
 #include "../../include/units_control.h"
 
-#include <iostream>
-#include <iomanip>
 #include <vector>
 #include <cmath>
 
@@ -59,13 +57,13 @@ public:
 // ============================================================================
 
 void demonstrateMPCBasics() {
-    std::cout << "========================================\n";
-    std::cout << "  MPC Basics - Point-to-Point Motion\n";
-    std::cout << "========================================\n\n";
+    println("========================================");
+    println("  MPC Basics - Point-to-Point Motion");
+    println("========================================\n");
 
-    std::cout << "Moving from position 0 to position 5 with constraints:\n";
-    std::cout << "  Max velocity: 2.0 m/s\n";
-    std::cout << "  Max acceleration: 1.0 m/s²\n\n";
+    println("Moving from position 0 to position 5 with constraints:");
+    println("  Max velocity: 2.0 m/s");
+    println("  Max acceleration: 1.0 m/s²\n");
 
     // Create MPC controller for double integrator (position + velocity)
     MPCDoubleIntegrator mpc(0.1);  // 0.1s time step
@@ -77,9 +75,9 @@ void demonstrateMPCBasics() {
     // Target state: [position=5, velocity=0]
     std::array<double, 2> target = {{5.0, 0.0}};
 
-    std::cout << std::fixed << std::setprecision(3);
-    std::cout << "Time(s) | Position(m) | Velocity(m/s) | Accel(m/s²) | Status\n";
-    std::cout << "--------|-------------|---------------|-------------|--------\n";
+    print(, );
+    println("Time(s) | Position(m) | Velocity(m/s) | Accel(m/s²) | Status");
+    println("--------|-------------|---------------|-------------|--------");
 
     double t = 0.0;
     double dt = 0.1;
@@ -95,43 +93,43 @@ void demonstrateMPCBasics() {
 
         // Print every 10 steps
         if (step % 10 == 0) {
-            std::cout << std::setw(7) << t << " | ";
-            std::cout << std::setw(11) << state[0] << " | ";
-            std::cout << std::setw(13) << state[1] << " | ";
-            std::cout << std::setw(11) << acceleration << " | ";
+            print(, t, " | ");
+            print(, state[0], " | ");
+            print(, state[1], " | ");
+            print(, acceleration, " | ");
 
             double error = std::abs(state[0] - target[0]);
             if (error < 0.01) {
-                std::cout << "At target";
+                print("At target");
             } else if (std::abs(state[1]) > 1.9) {
-                std::cout << "Max velocity";
+                print("Max velocity");
             } else {
-                std::cout << "Moving";
+                print("Moving");
             }
-            std::cout << "\n";
+            println("");
         }
 
         // Stop if reached target
         if (std::abs(state[0] - target[0]) < 0.01 && std::abs(state[1]) < 0.01) {
-            std::cout << "\nReached target at t = " << t << " seconds!\n";
+            println("\nReached target at t = ", t, " seconds!");
             break;
         }
 
         t += dt;
     }
 
-    std::cout << "\n";
+    println("");
 }
 
 void demonstrateTrajectoryTracking() {
-    std::cout << "========================================\n";
-    std::cout << "  MPC Trajectory Tracking\n";
-    std::cout << "========================================\n\n";
+    println("========================================");
+    println("  MPC Trajectory Tracking");
+    println("========================================\n");
 
-    std::cout << "Tracking sinusoidal trajectory:\n";
-    std::cout << "  y(t) = 3*sin(0.5*t)\n";
-    std::cout << "  Amplitude: 3 meters\n";
-    std::cout << "  Frequency: 0.5 Hz\n\n";
+    println("Tracking sinusoidal trajectory:");
+    println("  y(t) = 3*sin(0.5*t)");
+    println("  Amplitude: 3 meters");
+    println("  Frequency: 0.5 Hz\n");
 
     // Create trajectory
     SinusoidalTrajectory trajectory(3.0, 0.5);
@@ -143,9 +141,9 @@ void demonstrateTrajectoryTracking() {
     // Initial state
     std::array<double, 2> state = {{0.0, 0.0}};
 
-    std::cout << std::fixed << std::setprecision(3);
-    std::cout << "Time(s) | Reference | Actual | Error  | Velocity | Control\n";
-    std::cout << "--------|-----------|--------|--------|----------|--------\n";
+    print(, );
+    println("Time(s) | Reference | Actual | Error  | Velocity | Control");
+    println("--------|-----------|--------|--------|----------|--------");
 
     double t = 0.0;
     double dt = 0.1;
@@ -173,30 +171,30 @@ void demonstrateTrajectoryTracking() {
 
         // Print every 10 steps
         if (step % 10 == 0) {
-            std::cout << std::setw(7) << t << " | ";
-            std::cout << std::setw(9) << ref_pos << " | ";
-            std::cout << std::setw(6) << state[0] << " | ";
-            std::cout << std::setw(6) << error << " | ";
-            std::cout << std::setw(8) << state[1] << " | ";
-            std::cout << std::setw(7) << acceleration << "\n";
+            print(, t, " | ");
+            print(, ref_pos, " | ");
+            print(, state[0], " | ");
+            print(, error, " | ");
+            print(, state[1], " | ");
+            println(, acceleration, "");
         }
 
         t += dt;
     }
 
     double mae = total_error / count;
-    std::cout << "\nMean Absolute Error: " << mae << " meters\n";
-    std::cout << "Tracking performance: " << (mae < 0.1 ? "Excellent" : mae < 0.5 ? "Good" : "Fair") << "\n\n";
+    println("\nMean Absolute Error: ", mae, " meters");
+    println("Tracking performance: ", (mae < 0.1 ? "Excellent" : mae < 0.5 ? "Good" : "Fair"), "\n");
 }
 
 void compareMPCvsPID() {
-    std::cout << "========================================\n";
-    std::cout << "  MPC vs PID Comparison\n";
-    std::cout << "========================================\n\n";
+    println("========================================");
+    println("  MPC vs PID Comparison");
+    println("========================================\n");
 
-    std::cout << "Scenario: Move from 0 to 10m with velocity limit\n";
-    std::cout << "  Max velocity: 2.0 m/s\n";
-    std::cout << "  Max acceleration: 1.5 m/s²\n\n";
+    println("Scenario: Move from 0 to 10m with velocity limit");
+    println("  Max velocity: 2.0 m/s");
+    println("  Max acceleration: 1.5 m/s²\n");
 
     // Setup MPC
     MPCDoubleIntegrator mpc(0.1);
@@ -213,9 +211,9 @@ void compareMPCvsPID() {
     std::array<double, 2> pid_state = {{0.0, 0.0}};
     std::array<double, 2> target = {{10.0, 0.0}};
 
-    std::cout << std::fixed << std::setprecision(3);
-    std::cout << "Time(s) | MPC Pos | MPC Vel | PID Pos | PID Vel | Winner\n";
-    std::cout << "--------|---------|---------|---------|---------|-------\n";
+    print(, );
+    println("Time(s) | MPC Pos | MPC Vel | PID Pos | PID Vel | Winner");
+    println("--------|---------|---------|---------|---------|-------");
 
     double t = 0.0;
     double dt = 0.1;
@@ -235,11 +233,11 @@ void compareMPCvsPID() {
 
         // Print every 10 steps
         if (step % 10 == 0) {
-            std::cout << std::setw(7) << t << " | ";
-            std::cout << std::setw(7) << mpc_state[0] << " | ";
-            std::cout << std::setw(7) << mpc_state[1] << " | ";
-            std::cout << std::setw(7) << pid_state[0] << " | ";
-            std::cout << std::setw(7) << pid_state[1] << " | ";
+            print(, t, " | ");
+            print(, mpc_state[0], " | ");
+            print(, mpc_state[1], " | ");
+            print(, pid_state[0], " | ");
+            print(, pid_state[1], " | ");
 
             // Determine winner (better tracking, respects constraints)
             bool mpc_at_target = std::abs(mpc_state[0] - 10.0) < 0.1;
@@ -247,37 +245,37 @@ void compareMPCvsPID() {
             bool pid_violates = std::abs(pid_state[1]) > 2.0;
 
             if (mpc_at_target && !pid_at_target) {
-                std::cout << "MPC";
+                print("MPC");
             } else if (pid_violates) {
-                std::cout << "MPC (safe)";
+                print("MPC (safe)");
             } else if (pid_at_target && !mpc_at_target) {
-                std::cout << "PID";
+                print("PID");
             } else {
-                std::cout << "Tie";
+                print("Tie");
             }
-            std::cout << "\n";
+            println("");
         }
 
         t += dt;
     }
 
-    std::cout << "\nKey Observations:\n";
-    std::cout << "  • MPC respects velocity constraints\n";
-    std::cout << "  • MPC provides smoother motion profile\n";
-    std::cout << "  • MPC considers future trajectory\n";
-    std::cout << "  • PID may violate constraints\n";
-    std::cout << "  • MPC is more computationally intensive\n\n";
+    println("\nKey Observations:");
+    println("  • MPC respects velocity constraints");
+    println("  • MPC provides smoother motion profile");
+    println("  • MPC considers future trajectory");
+    println("  • PID may violate constraints");
+    println("  • MPC is more computationally intensive\n");
 }
 
 void demonstrateConstraintHandling() {
-    std::cout << "========================================\n";
-    std::cout << "  MPC Constraint Handling\n";
-    std::cout << "========================================\n\n";
+    println("========================================");
+    println("  MPC Constraint Handling");
+    println("========================================\n");
 
-    std::cout << "Testing with tight constraints:\n";
-    std::cout << "  Target: Move 5 meters\n";
-    std::cout << "  Constraint 1: Max velocity = 0.5 m/s (tight!)\n";
-    std::cout << "  Constraint 2: Max acceleration = 0.2 m/s²\n\n";
+    println("Testing with tight constraints:");
+    println("  Target: Move 5 meters");
+    println("  Constraint 1: Max velocity = 0.5 m/s (tight!)");
+    println("  Constraint 2: Max acceleration = 0.2 m/s²\n");
 
     MPCDoubleIntegrator mpc(0.1);
     mpc.setLimits(0.5, 0.2);  // Very tight constraints
@@ -285,9 +283,9 @@ void demonstrateConstraintHandling() {
     std::array<double, 2> state = {{0.0, 0.0}};
     std::array<double, 2> target = {{5.0, 0.0}};
 
-    std::cout << std::fixed << std::setprecision(4);
-    std::cout << "Time(s) | Position | Velocity | Accel | Vel Limit% | Acc Limit%\n";
-    std::cout << "--------|----------|----------|-------|------------|-----------\n";
+    print(, );
+    println("Time(s) | Position | Velocity | Accel | Vel Limit% | Acc Limit%");
+    println("--------|----------|----------|-------|------------|-----------");
 
     double t = 0.0;
     double dt = 0.1;
@@ -305,111 +303,111 @@ void demonstrateConstraintHandling() {
             double vel_usage = (std::abs(state[1]) / max_vel) * 100.0;
             double acc_usage = (std::abs(acceleration) / max_acc) * 100.0;
 
-            std::cout << std::setw(7) << t << " | ";
-            std::cout << std::setw(8) << state[0] << " | ";
-            std::cout << std::setw(8) << state[1] << " | ";
-            std::cout << std::setw(5) << acceleration << " | ";
-            std::cout << std::setw(10) << vel_usage << " | ";
-            std::cout << std::setw(10) << acc_usage << "\n";
+            print(, t, " | ");
+            print(, state[0], " | ");
+            print(, state[1], " | ");
+            print(, acceleration, " | ");
+            print(, vel_usage, " | ");
+            println(, acc_usage, "");
         }
 
         if (std::abs(state[0] - target[0]) < 0.01 && std::abs(state[1]) < 0.01) {
-            std::cout << "\nReached target at t = " << t << " seconds\n";
-            std::cout << "MPC successfully handled tight constraints!\n";
+            println("\nReached target at t = ", t, " seconds");
+            println("MPC successfully handled tight constraints!");
             break;
         }
 
         t += dt;
     }
 
-    std::cout << "\n";
+    println("");
 }
 
 // ============================================================================
 // Main Program
 // ============================================================================
 int main() {
-    std::cout << "\n";
-    std::cout << "╔════════════════════════════════════════╗\n";
-    std::cout << "║  Model Predictive Control (MPC)       ║\n";
-    std::cout << "║  Optimal Control with Constraints      ║\n";
-    std::cout << "╚════════════════════════════════════════╝\n";
-    std::cout << "\n";
+    println("");
+    println("╔════════════════════════════════════════╗");
+    println("║  Model Predictive Control (MPC)       ║");
+    println("║  Optimal Control with Constraints      ║");
+    println("╚════════════════════════════════════════╝");
+    println("");
 
     demonstrateMPCBasics();
     demonstrateTrajectoryTracking();
     compareMPCvsPID();
     demonstrateConstraintHandling();
 
-    std::cout << "========================================\n";
-    std::cout << "  Key Takeaways\n";
-    std::cout << "========================================\n\n";
+    println("========================================");
+    println("  Key Takeaways");
+    println("========================================\n");
 
-    std::cout << "What is MPC?\n";
-    std::cout << "  • Model Predictive Control optimizes control actions\n";
-    std::cout << "  • Predicts future behavior over a horizon\n";
-    std::cout << "  • Handles constraints naturally\n";
-    std::cout << "  • Receding horizon approach (solves repeatedly)\n\n";
+    println("What is MPC?");
+    println("  • Model Predictive Control optimizes control actions");
+    println("  • Predicts future behavior over a horizon");
+    println("  • Handles constraints naturally");
+    println("  • Receding horizon approach (solves repeatedly)\n");
 
-    std::cout << "When to Use MPC:\n";
-    std::cout << "  ✓ Constraints are critical (safety, actuator limits)\n";
-    std::cout << "  ✓ Multi-step ahead planning is valuable\n";
-    std::cout << "  ✓ Smooth trajectories are important\n";
-    std::cout << "  ✓ System model is reasonably accurate\n";
-    std::cout << "  ✓ Sufficient computation available\n\n";
+    println("When to Use MPC:");
+    println("  ✓ Constraints are critical (safety, actuator limits)");
+    println("  ✓ Multi-step ahead planning is valuable");
+    println("  ✓ Smooth trajectories are important");
+    println("  ✓ System model is reasonably accurate");
+    println("  ✓ Sufficient computation available\n");
 
-    std::cout << "When to Use PID Instead:\n";
-    std::cout << "  ✓ Simple regulation problems\n";
-    std::cout << "  ✓ Very limited computation\n";
-    std::cout << "  ✓ No hard constraints\n";
-    std::cout << "  ✓ Fast response critical\n\n";
+    println("When to Use PID Instead:");
+    println("  ✓ Simple regulation problems");
+    println("  ✓ Very limited computation");
+    println("  ✓ No hard constraints");
+    println("  ✓ Fast response critical\n");
 
-    std::cout << "MPC Advantages:\n";
-    std::cout << "  1. Constraint Handling\n";
-    std::cout << "     • Velocity, acceleration, position limits\n";
-    std::cout << "     • Automatically respects all constraints\n\n";
+    println("MPC Advantages:");
+    println("  1. Constraint Handling");
+    println("     • Velocity, acceleration, position limits");
+    println("     • Automatically respects all constraints\n");
 
-    std::cout << "  2. Optimal Performance\n";
-    std::cout << "     • Minimizes specified cost function\n";
-    std::cout << "     • Balances multiple objectives (tracking, control effort)\n\n";
+    println("  2. Optimal Performance");
+    println("     • Minimizes specified cost function");
+    println("     • Balances multiple objectives (tracking, control effort)\n");
 
-    std::cout << "  3. Predictive Planning\n";
-    std::cout << "     • Looks ahead to avoid problems\n";
-    std::cout << "     • Smoother motion profiles\n\n";
+    println("  3. Predictive Planning");
+    println("     • Looks ahead to avoid problems");
+    println("     • Smoother motion profiles\n");
 
-    std::cout << "  4. Multi-Variable Control\n";
-    std::cout << "     • Naturally handles MIMO systems\n";
-    std::cout << "     • Considers coupling between variables\n\n";
+    println("  4. Multi-Variable Control");
+    println("     • Naturally handles MIMO systems");
+    println("     • Considers coupling between variables\n");
 
-    std::cout << "MPC Disadvantages:\n";
-    std::cout << "  • Requires system model\n";
-    std::cout << "  • Computationally intensive\n";
-    std::cout << "  • Tuning complexity (horizon, weights)\n";
-    std::cout << "  • May need warm-starting for real-time\n\n";
+    println("MPC Disadvantages:");
+    println("  • Requires system model");
+    println("  • Computationally intensive");
+    println("  • Tuning complexity (horizon, weights)");
+    println("  • May need warm-starting for real-time\n");
 
-    std::cout << "Implementation Tips:\n";
-    std::cout << "  1. Start with simple models (linear)\n";
-    std::cout << "  2. Choose horizon length carefully\n";
-    std::cout << "     • Too short: Poor performance\n";
-    std::cout << "     • Too long: Excessive computation\n";
-    std::cout << "  3. Tune weights (Q, R matrices)\n";
-    std::cout << "     • Q: State error penalty\n";
-    std::cout << "     • R: Control effort penalty\n";
-    std::cout << "  4. Use warm-starting (previous solution)\n";
-    std::cout << "  5. Consider real-time constraints\n\n";
+    println("Implementation Tips:");
+    println("  1. Start with simple models (linear)");
+    println("  2. Choose horizon length carefully");
+    println("     • Too short: Poor performance");
+    println("     • Too long: Excessive computation");
+    println("  3. Tune weights (Q, R matrices)");
+    println("     • Q: State error penalty");
+    println("     • R: Control effort penalty");
+    println("  4. Use warm-starting (previous solution)");
+    println("  5. Consider real-time constraints\n");
 
-    std::cout << "Real-World Applications:\n";
-    std::cout << "  • Autonomous vehicle trajectory planning\n";
-    std::cout << "  • Robot arm motion control\n";
-    std::cout << "  • Drone stabilization and navigation\n";
-    std::cout << "  • Industrial process control\n";
-    std::cout << "  • Chemical plant optimization\n";
-    std::cout << "  • Power system management\n\n";
+    println("Real-World Applications:");
+    println("  • Autonomous vehicle trajectory planning");
+    println("  • Robot arm motion control");
+    println("  • Drone stabilization and navigation");
+    println("  • Industrial process control");
+    println("  • Chemical plant optimization");
+    println("  • Power system management\n");
 
-    std::cout << "Further Reading:\n";
-    std::cout << "  • \"Model Predictive Control\" by Camacho & Bordons\n";
-    std::cout << "  • \"Predictive Control\" by Maciejowski\n";
-    std::cout << "  • IEEE TAC, Automatica journals\n\n";
+    println("Further Reading:");
+    println("  • \"Model Predictive Control\" by Camacho & Bordons");
+    println("  • \"Predictive Control\" by Maciejowski");
+    println("  • IEEE TAC, Automatica journals\n");
 
     return 0;
 }

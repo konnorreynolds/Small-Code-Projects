@@ -20,9 +20,7 @@
 #include "../../include/units_robotics.h"
 #include "../../include/units_utilities.h"
 
-#include <iostream>
 #include <vector>
-#include <iomanip>
 #include <array>
 
 using namespace units;
@@ -342,9 +340,9 @@ public:
 // Main Program
 // ============================================================================
 int main() {
-    std::cout << "========================================\n";
-    std::cout << "  Line Following Robot Example\n";
-    std::cout << "========================================\n\n";
+    println("========================================");
+    println("  Line Following Robot Example");
+    println("========================================\n");
 
     // Create robot with default configuration
     RobotConfig config;
@@ -352,27 +350,25 @@ int main() {
     LineFollowingSimulation sim;
 
     // Calibration phase
-    std::cout << "Calibration Phase:\n";
-    std::cout << "------------------\n";
+    println("Calibration Phase:");
+    println("------------------");
     std::array<double, 5> whiteReadings = {0.1, 0.1, 0.1, 0.1, 0.1};
     std::array<double, 5> blackReadings = {0.9, 0.9, 0.9, 0.9, 0.9};
     robot.calibrateOnWhite(whiteReadings);
     robot.calibrateOnBlack(blackReadings);
-    std::cout << "✓ Calibrated on white surface\n";
-    std::cout << "✓ Calibrated on black surface\n\n";
+    println("✓ Calibrated on white surface");
+    println("✓ Calibrated on black surface\n");
 
     // Simulation parameters
     const double dt = 0.02;  // 20ms update rate (50 Hz)
     const double duration = 5.0;  // 5 second simulation
 
-    std::cout << "Running simulation (" << duration << " seconds)...\n";
-    std::cout << "Robot config: wheelbase=" << config.wheelbase.toCentimeters() << "cm, "
-              << "wheels=" << config.wheelDiameter.toCentimeters() << "cm, "
-              << "speed=" << config.baseSpeed.toMetersPerSecond() << "m/s\n\n";
+    println("Running simulation (", duration, " seconds)...");
+    print("Robot config: wheelbase=" ,  config.wheelbase.toCentimeters() , "cm, ");
 
-    std::cout << std::fixed << std::setprecision(3);
-    std::cout << "Time(s) | Sensors [L->R] | LinePos | Steer | Left RPM | Right RPM | Position\n";
-    std::cout << "--------|----------------|---------|-------|----------|-----------|----------\n";
+    print(, );
+    println("Time(s) | Sensors [L->R] | LinePos | Steer | Left RPM | Right RPM | Position");
+    println("--------|----------------|---------|-------|----------|-----------|----------");
 
     // Run simulation
     for (double t = 0; t <= duration; t += dt) {
@@ -388,46 +384,45 @@ int main() {
 
         // Print status every 0.1 seconds
         if (static_cast<int>(t / 0.1) != static_cast<int>((t - dt) / 0.1)) {
-            std::cout << std::setw(6) << t << "  | ";
+            print(, t, "  | ");
 
             // Print sensor array
             for (double val : robot.getSensors().getValues()) {
-                std::cout << (val > 0.5 ? "█" : "·");
+                print((val > 0.5 ? "█" : "·"));
             }
-            std::cout << " | ";
+            print(" | ");
 
-            std::cout << std::setw(7) << commands.linePosition << " | ";
-            std::cout << std::setw(5) << commands.steering << " | ";
-            std::cout << std::setw(8) << commands.leftMotor.toRPM() << " | ";
-            std::cout << std::setw(9) << commands.rightMotor.toRPM() << " | ";
-            std::cout << "(" << std::setw(5) << sim.getX() << ", "
-                     << std::setw(5) << sim.getY() << ")";
+            print(, commands.linePosition, " | ");
+            print(, commands.steering, " | ");
+            print(, commands.leftMotor.toRPM(), " | ");
+            print(, commands.rightMotor.toRPM(), " | ");
+            print("(" , sim.getX() , ", ");
 
             if (commands.lineLost) {
-                std::cout << " [LOST]";
+                print(" [LOST]");
             }
 
-            std::cout << "\n";
+            println("");
         }
     }
 
-    std::cout << "\n========================================\n";
-    std::cout << "  Demonstration Complete!\n";
-    std::cout << "========================================\n\n";
+    println("\n========================================");
+    println("  Demonstration Complete!");
+    println("========================================\n");
 
-    std::cout << "Key Learnings:\n";
-    std::cout << "1. Sensor Filtering: Moving average reduces noise\n";
-    std::cout << "2. Weighted Position: Center of mass algorithm finds line\n";
-    std::cout << "3. PID Control: Smooth corrections without oscillation\n";
-    std::cout << "4. Speed Adaptation: Slow down for sharp turns\n";
-    std::cout << "5. Type Safety: All units verified at compile-time\n\n";
+    println("Key Learnings:");
+    println("1. Sensor Filtering: Moving average reduces noise");
+    println("2. Weighted Position: Center of mass algorithm finds line");
+    println("3. PID Control: Smooth corrections without oscillation");
+    println("4. Speed Adaptation: Slow down for sharp turns");
+    println("5. Type Safety: All units verified at compile-time\n");
 
-    std::cout << "Tuning Tips:\n";
-    std::cout << "• Increase kP for faster response to line position\n";
-    std::cout << "• Increase kD to reduce oscillation/overshoot\n";
-    std::cout << "• kI usually not needed for line following\n";
-    std::cout << "• Reduce base speed if robot oscillates\n";
-    std::cout << "• Increase filter size if sensors are very noisy\n\n";
+    println("Tuning Tips:");
+    println("• Increase kP for faster response to line position");
+    println("• Increase kD to reduce oscillation/overshoot");
+    println("• kI usually not needed for line following");
+    println("• Reduce base speed if robot oscillates");
+    println("• Increase filter size if sensors are very noisy\n");
 
     return 0;
 }
