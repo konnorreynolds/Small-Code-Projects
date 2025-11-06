@@ -907,8 +907,54 @@ public:
 // ============================================================================
 // FILTER IMPLEMENTATIONS
 // ============================================================================
+// WHY FILTERS:
+//   Sensors are noisy! Raw sensor data jumps around due to:
+//   - Electrical noise
+//   - Vibrations
+//   - Quantization errors
+//   - Environmental interference
+//
+//   Filters smooth out noise to get more accurate measurements
+// ============================================================================
 
-// Low-Pass Filter
+// ============================================================================
+// LOW-PASS FILTER (Exponentially Weighted Moving Average)
+// ============================================================================
+// WHAT: Smooths rapid changes, passes through slow changes
+//
+// WHY "LOW-PASS":
+//   - LOW frequencies (slow changes) → PASS through
+//   - HIGH frequencies (fast noise) → BLOCKED/smoothed
+//
+// EXAMPLE:
+//   Temperature slowly rising: passes through ✓
+//   Electrical noise spikes: blocked ✗
+//
+// MATH:
+//   output_new = α × output_old + (1-α) × input_new
+//
+//   where α ∈ [0, 1] is the smoothing factor
+//
+// PARAMETER α (alpha):
+//   α = 0.0: No filtering (output = input, all noise)
+//   α = 0.5: Medium filtering (50% old, 50% new)
+//   α = 0.9: Heavy filtering (90% old, 10% new, very smooth)
+//   α = 1.0: Infinite filtering (output never changes!)
+//
+// PROPERTIES:
+//   - Simple (one line of code)
+//   - Fast (constant time)
+//   - Low memory (one value)
+//   - Introduces lag (higher α = more lag)
+//
+// TIME CONSTANT:
+//   τ = -Δt / ln(α)
+//   where Δt = sample period
+//
+//   This tells you how "fast" the filter responds
+//   Larger τ = slower response, smoother output
+//
+// ============================================================================
 class LowPassFilter {
 private:
     double alpha_;
@@ -919,6 +965,34 @@ public:
     explicit LowPassFilter(double alpha = 0.9)
         : alpha_(numerical::clamp(alpha, 0.0, 1.0)), output_(0), initialized_(false) {}
 
+    // ========================================================================
+    // UPDATE - Apply low-pass filter to new measurement
+    // ========================================================================
+    // ALGORITHM:
+    //   First call: output = input (initialize with first measurement)
+    //   Later calls: output = α×old + (1-α)×new
+    //
+    // BREAKDOWN:
+    //   1. Take α% of previous output (memory)
+    //   2. Take (1-α)% of new input (new information)
+    //   3. Sum them together
+    //
+    // EXAMPLE (α=0.9):
+    //   Previous output: 10.0
+    //   New input: 14.0 (noisy spike!)
+    //
+    //   Calculation:
+    //   output = 0.9×10.0 + 0.1×14.0
+    //         = 9.0 + 1.4
+    //         = 10.4
+    //
+    //   Instead of jumping to 14.0, we gently move to 10.4
+    //   This rejects the noise spike!
+    //
+    // WHY THIS WORKS:
+    //   If input is noise (short spike), α keeps output stable
+    //   If input is real trend (consistent), it gradually appears
+    //
     double update(double input) {
         if (!initialized_) {
             output_ = input;
@@ -933,7 +1007,43 @@ public:
     void reset() { output_ = 0; initialized_ = false; }
     void setAlpha(double alpha) { alpha_ = numerical::clamp(alpha, 0.0, 1.0); }
 
-    // Calculate alpha from cutoff frequency and sample rate
+    // ========================================================================
+    // CALCULATE ALPHA FROM CUTOFF FREQUENCY
+    // ========================================================================
+    // WHAT: Convert desired cutoff frequency to alpha parameter
+    //
+    // CUTOFF FREQUENCY (fc):
+    //   Frequency where filter starts significantly attenuating
+    //   Example: fc=10Hz means frequencies above 10Hz are reduced
+    //
+    // MATH:
+    //   τ = 1 / (2π × fc)      [time constant from cutoff]
+    //   Δt = 1 / sample_rate   [sample period]
+    //   α = Δt / (τ + Δt)      [alpha from time constant]
+    //
+    // DERIVATION:
+    //   From continuous-time RC filter: H(s) = 1 / (1 + sτ)
+    //   Cutoff frequency: fc = 1 / (2πτ)
+    //   Therefore: τ = 1 / (2πfc) = RC
+    //
+    //   Discrete approximation using Euler method:
+    //   α = Δt / (τ + Δt)
+    //
+    // WHY Δt/(τ+Δt)?
+    //   This is the "discrete-time equivalent" of the continuous filter
+    //   Derived from bilinear transform (Tustin's method)
+    //
+    // EXAMPLE:
+    //   Want to filter out noise above 5Hz
+    //   Sample rate: 100Hz (Δt = 0.01s)
+    //
+    //   τ = 1 / (2π × 5) = 1 / 31.4 = 0.0318 seconds
+    //   α = 0.01 / (0.0318 + 0.01) = 0.01 / 0.0418 = 0.239
+    //
+    //   Use α ≈ 0.24 for this filter
+    //
+    // NOTE: Returns α that should be used (not 1-α!)
+    //
     static double alphaFromCutoff(double cutoff_hz, double sample_rate) {
         double rc = 1.0 / (constants::TWO_PI * cutoff_hz);
         double dt = 1.0 / sample_rate;
@@ -980,7 +1090,73 @@ public:
     void reset() { estimate_ = 0; error_covariance_ = 1.0; initialized_ = false; }
 };
 
-// Complementary Filter
+// ============================================================================
+// COMPLEMENTARY FILTER (Sensor Fusion)
+// ============================================================================
+// WHAT: Combines two sensors that have complementary strengths/weaknesses
+//
+// WHY NEEDED: IMUs (Inertial Measurement Units) have two sensors:
+//
+//   1. GYROSCOPE:
+//      ✓ Good: Accurate short-term, no noise, fast response
+//      ✗ Bad: Drifts over time (integration error accumulates)
+//
+//   2. ACCELEROMETER:
+//      ✓ Good: Accurate long-term (gravity is constant)
+//      ✗ Bad: Noisy, affected by vibrations and linear acceleration
+//
+// PROBLEM:
+//   - Trust only gyro → angle drifts away over time
+//   - Trust only accel → angle jumps around from noise
+//
+// SOLUTION: COMPLEMENTARY FILTER!
+//   - Use gyro for short-term changes (high-frequency)
+//   - Use accel to correct long-term drift (low-frequency)
+//
+// MATH:
+//   angle = α × angle_gyro + (1-α) × angle_accel
+//
+//   where:
+//   angle_gyro = previous_angle + gyro_rate × dt  (integration)
+//   angle_accel = atan2(ay, az)  (measured from gravity)
+//   α ≈ 0.98 (typically 0.95-0.99)
+//
+// WHY "COMPLEMENTARY":
+//   α acts as high-pass filter for gyro (passes high freq)
+//   (1-α) acts as low-pass filter for accel (passes low freq)
+//   Together they cover all frequencies with no gaps!
+//
+// FREQUENCY BREAKDOWN:
+//   α = 0.98 means:
+//   - 98% trust in gyro (short-term accurate)
+//   - 2% trust in accel (long-term correction)
+//
+//   Over time:
+//   - Fast changes (1 second): 98% gyro dominates
+//   - Slow drift (1 minute): 2% accel correction adds up
+//
+// VISUAL:
+//   Gyro:  ___/‾‾‾\___ (fast response, but drifts)
+//   Accel: ~~~∿~~~∿~~~ (slow average, but noisy)
+//   Result: ___/‾‾‾\___ (fast AND stable!)
+//
+// COMPARISON TO ALTERNATIVES:
+//   - Kalman Filter: More optimal but requires tuning noise covariances
+//   - Complementary: Simpler, one parameter, good enough for most robots
+//
+// TYPICAL VALUES:
+//   α = 0.98: Standard (2% correction per step)
+//   α = 0.95: More accel trust (for less gyro drift)
+//   α = 0.99: More gyro trust (for noisy environment)
+//
+// TIME CONSTANT:
+//   τ ≈ dt / (1 - α)
+//
+//   Example: α=0.98, dt=0.01s
+//   τ = 0.01 / 0.02 = 0.5 seconds
+//   (Takes ~0.5s to correct 63% of drift error)
+//
+// ============================================================================
 class ComplementaryFilter {
 private:
     double alpha_;
@@ -991,16 +1167,67 @@ public:
     explicit ComplementaryFilter(double alpha = 0.98)
         : alpha_(numerical::clamp(alpha, 0.0, 1.0)), estimate_(0), initialized_(false) {}
 
-    // Combine gyro (high-freq) and accelerometer (low-freq) for angle estimation
+    // ========================================================================
+    // UPDATE ANGLE - Fuse gyro and accelerometer
+    // ========================================================================
+    // INPUTS:
+    //   gyro_rate: Angular velocity from gyroscope (rad/s)
+    //   accel_angle: Angle calculated from accelerometer (radians)
+    //   dt: Time since last update (seconds)
+    //
+    // ALGORITHM:
+    //
+    // STEP 1: INTEGRATE GYRO (high-frequency accurate)
+    //   θ_gyro = θ_prev + ω × dt
+    //
+    //   This uses the gyro's angular rate to predict new angle
+    //   Very accurate short-term, but small errors accumulate (drift)
+    //
+    // STEP 2: MEASURE FROM ACCEL (low-frequency accurate)
+    //   θ_accel = atan2(ay, az)
+    //
+    //   Accelerometer measures gravity direction
+    //   Accurate long-term, but noisy short-term
+    //
+    // STEP 3: FUSE BOTH
+    //   θ_fused = α × θ_gyro + (1-α) × θ_accel
+    //
+    //   Combine both: mostly trust gyro, slightly correct with accel
+    //
+    // EXAMPLE (α=0.98):
+    //   Previous estimate: 45°
+    //   Gyro rate: 10°/s, dt=0.01s
+    //   Accel angle: 46° (slightly different due to noise or drift)
+    //
+    //   STEP 1: Gyro integration
+    //     θ_gyro = 45° + 10°/s × 0.01s = 45.1°
+    //
+    //   STEP 2: Already have accel measurement
+    //     θ_accel = 46°
+    //
+    //   STEP 3: Fusion
+    //     θ_fused = 0.98 × 45.1° + 0.02 × 46°
+    //             = 44.198° + 0.92°
+    //             = 45.118°
+    //
+    //   Result: Mostly follows gyro (45.1°) but slightly pulled
+    //           toward accel (46°) to prevent long-term drift
+    //
+    // WHY THIS WORKS:
+    //   - Gyro provides smooth, fast response
+    //   - Small accel correction prevents drift accumulation
+    //   - Over many iterations, drift gets corrected
+    //
     Radians updateAngle(const RadiansPerSecond& gyro_rate,
                         const Radians& accel_angle, double dt) {
         if (!initialized_) {
             estimate_ = accel_angle.toRadians();
             initialized_ = true;
         } else {
-            // Integrate gyro rate
+            // STEP 1: Integrate gyro rate (dead reckoning)
             double gyro_angle = estimate_ + gyro_rate.toRadiansPerSecond() * dt;
-            // Combine with accelerometer measurement
+
+            // STEP 2 & 3: Fuse with accelerometer measurement
             estimate_ = alpha_ * gyro_angle + (1.0 - alpha_) * accel_angle.toRadians();
         }
         return Radians::fromRadians(estimate_);
@@ -1011,7 +1238,59 @@ public:
     void setAlpha(double alpha) { alpha_ = numerical::clamp(alpha, 0.0, 1.0); }
 };
 
-// Moving Average Filter
+// ============================================================================
+// MOVING AVERAGE FILTER
+// ============================================================================
+// WHAT: Average of the last N measurements
+//
+// MATH:
+//   output = (x₁ + x₂ + ... + xₙ) / N
+//
+//   where x₁...xₙ are the N most recent measurements
+//
+// HOW IT WORKS:
+//   Keeps a "sliding window" of the last N values
+//   As new value comes in, oldest value drops out
+//
+// VISUAL (WindowSize = 5):
+//   Time 1: [3] → average = 3
+//   Time 2: [3, 5] → average = 4
+//   Time 3: [3, 5, 7] → average = 5
+//   Time 4: [3, 5, 7, 2] → average = 4.25
+//   Time 5: [3, 5, 7, 2, 6] → average = 4.6  (window full)
+//   Time 6: [5, 7, 2, 6, 8] → average = 5.6  (3 dropped out)
+//            ^drop  ^new
+//
+// VS LOW-PASS FILTER:
+//   Moving Average: All samples weighted equally
+//   Low-Pass: Recent samples weighted more
+//
+// PROS:
+//   - Predictable behavior
+//   - No tuning parameter (just window size)
+//   - Good for periodic noise
+//
+// CONS:
+//   - Requires memory for N samples
+//   - Old measurements still affect output
+//   - Delay = WindowSize / (2 × sample_rate)
+//
+// EFFICIENCY:
+//   This implementation uses a "circular buffer" for O(1) updates:
+//   1. Keep running sum
+//   2. Subtract oldest value from sum
+//   3. Add new value to sum
+//   4. Return sum / count
+//
+//   Without this trick, would need to recalculate sum each time O(N)!
+//
+// TEMPLATE PARAMETER:
+//   WindowSize: Number of samples to average
+//   - Larger window = smoother but more lag
+//   - Smaller window = less lag but more noise
+//   - Typical: 5-20 samples
+//
+// ============================================================================
 template<size_t WindowSize>
 class MovingAverageFilter {
 private:
@@ -1025,6 +1304,53 @@ public:
         buffer_.fill(0);
     }
 
+    // ========================================================================
+    // UPDATE - Add new measurement and return filtered value
+    // ========================================================================
+    // ALGORITHM:
+    //
+    // PHASE 1: Filling up (count < WindowSize)
+    //   Just add new values until buffer is full
+    //   Average = sum / count (grows from 1 to WindowSize)
+    //
+    // PHASE 2: Sliding window (count == WindowSize)
+    //   1. Remove oldest value from sum: sum -= buffer[index]
+    //   2. Store new value in its place: buffer[index] = value
+    //   3. Add new value to sum: sum += value
+    //   4. Move index forward (circular): index = (index+1) % WindowSize
+    //   5. Return average: sum / WindowSize
+    //
+    // CIRCULAR BUFFER:
+    //   index points to the OLDEST value (next to be replaced)
+    //   Using modulo % makes buffer "wrap around"
+    //
+    // EXAMPLE (WindowSize=3):
+    //   Buffer: [?, ?, ?]  index=0, sum=0
+    //
+    //   update(5):
+    //     Buffer: [5, ?, ?]  index=0, sum=5, count=1 → returns 5
+    //
+    //   update(7):
+    //     Buffer: [5, 7, ?]  index=0, sum=12, count=2 → returns 6
+    //
+    //   update(3):
+    //     Buffer: [5, 7, 3]  index=0, sum=15, count=3 → returns 5
+    //                                  (buffer now full!)
+    //
+    //   update(9):
+    //     sum -= buffer[0];    // sum = 15 - 5 = 10
+    //     buffer[0] = 9;       // Buffer: [9, 7, 3]
+    //     sum += 9;            // sum = 10 + 9 = 19
+    //     index = 1;           // Move to next position
+    //     returns 19/3 = 6.33
+    //
+    //   update(2):
+    //     sum -= buffer[1];    // sum = 19 - 7 = 12
+    //     buffer[1] = 2;       // Buffer: [9, 2, 3]
+    //     sum += 2;            // sum = 12 + 2 = 14
+    //     index = 2;           // Move to next position
+    //     returns 14/3 = 4.67
+    //
     double update(double value) {
         if (count_ < WindowSize) {
             buffer_[count_] = value;
