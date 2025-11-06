@@ -595,37 +595,154 @@ namespace traits {
 // ============================================================================
 // UNIT OPERATIONS (Physics relationships)
 // ============================================================================
-// Why operator overloads:
-// - Natural mathematical syntax
-// - Compile-time type checking
-// - Automatic unit conversion
-// - Zero runtime overhead
+// These operator overloads implement fundamental physics laws as C++ operators.
+//
+// WHY OPERATOR OVERLOADS:
+//   1. Natural syntax: velocity = distance / time (looks like math!)
+//   2. Compile-time checking: Can't accidentally divide distance by mass
+//   3. Automatic unit handling: No manual conversion needed
+//   4. Zero runtime overhead: Resolved at compile time
+//
+// DIMENSIONAL ANALYSIS:
+//   Physics equations must be dimensionally consistent:
+//   - [Distance] / [Time] = [Velocity] ✓
+//   - [Distance] / [Mass] = ??? ✗ (nonsensical!)
+//   The compiler enforces these rules automatically.
+//
+// ============================================================================
 
-// Distance / Time = Velocity
+// ============================================================================
+// DISTANCE / TIME = VELOCITY
+// ============================================================================
+// PHYSICS LAW: velocity = distance / time
+//
+// EQUATION: v = d / t
+//   Units: [m/s] = [m] / [s]
+//
+// EXAMPLE:
+//   distance = 100 meters
+//   time = 10 seconds
+//   velocity = 100m / 10s = 10 m/s
+//
+// IN CODE:
+//   Meters d(100);
+//   Seconds t(10);
+//   auto v = d / t;  // Automatically creates MetersPerSecond(10)
+//
+// WHY THIS WORKS:
+//   Template parameters DR and TR carry the ratio information
+//   Result is Velocity<DR, TR> with correct units
+//   Division is just d.value / t.value (numbers)
+//   Units are tracked at compile time (zero overhead!)
+//
 template<typename DR, typename TR>
 inline constexpr Velocity<DR, TR> operator/(const Distance<DR>& d, const Time<TR>& t) {
     return Velocity<DR, TR>(numerical::safeDivide(d.value, t.value));
 }
 
-// Velocity * Time = Distance
+// ============================================================================
+// VELOCITY × TIME = DISTANCE
+// ============================================================================
+// PHYSICS LAW: distance = velocity × time
+//
+// EQUATION: d = v × t
+//   Units: [m] = [m/s] × [s]
+//
+// EXAMPLE:
+//   velocity = 20 m/s (car speed)
+//   time = 5 seconds
+//   distance = 20 m/s × 5s = 100 meters
+//
+// KINEMATIC USE:
+//   If robot travels at constant 0.5 m/s for 10 seconds:
+//   distance = 0.5 m/s × 10s = 5 meters
+//
+// UNIT CANCELLATION:
+//   [m/s] × [s] = [m × s] / [s] = [m] ✓
+//
 template<typename DR, typename TR>
 inline constexpr Distance<DR> operator*(const Velocity<DR, TR>& v, const Time<TR>& t) {
     return Distance<DR>(v.value * t.value);
 }
 
-// Velocity / Time = Acceleration
+// ============================================================================
+// VELOCITY / TIME = ACCELERATION
+// ============================================================================
+// PHYSICS LAW: acceleration = change in velocity / time
+//
+// EQUATION: a = Δv / t
+//   Units: [m/s²] = [m/s] / [s]
+//
+// EXAMPLE:
+//   Car accelerates from 0 to 30 m/s in 5 seconds
+//   acceleration = 30 m/s / 5s = 6 m/s²
+//
+// MEANING:
+//   Velocity increases by 6 m/s every second
+//   After 1s: 6 m/s
+//   After 2s: 12 m/s
+//   After 3s: 18 m/s
+//   etc.
+//
+// UNIT DERIVATION:
+//   [m/s] / [s] = [m] / [s × s] = [m/s²] ✓
+//
 template<typename DR, typename TR>
 inline constexpr Acceleration<DR, TR> operator/(const Velocity<DR, TR>& v, const Time<TR>& t) {
     return Acceleration<DR, TR>(numerical::safeDivide(v.value, t.value));
 }
 
-// Acceleration * Time = Velocity
+// ============================================================================
+// ACCELERATION × TIME = VELOCITY
+// ============================================================================
+// PHYSICS LAW: velocity = acceleration × time (from rest)
+//
+// EQUATION: v = a × t (assuming v₀ = 0)
+//   Units: [m/s] = [m/s²] × [s]
+//
+// KINEMATIC EQUATION: v = v₀ + a×t
+//   This operator assumes v₀ = 0
+//
+// EXAMPLE:
+//   acceleration = 2 m/s² (constant)
+//   time = 5 seconds
+//   final velocity = 2 m/s² × 5s = 10 m/s
+//
+// UNIT CANCELLATION:
+//   [m/s²] × [s] = [m × s] / [s² × s] = [m/s] ✓
+//
 template<typename DR, typename TR>
 inline constexpr Velocity<DR, TR> operator*(const Acceleration<DR, TR>& a, const Time<TR>& t) {
     return Velocity<DR, TR>(a.value * t.value);
 }
 
-// Mass * Acceleration = Force (F = ma)
+// ============================================================================
+// MASS × ACCELERATION = FORCE (Newton's Second Law)
+// ============================================================================
+// PHYSICS LAW: F = ma (Newton's Second Law of Motion)
+//
+// EQUATION: F = m × a
+//   Units: [N] = [kg] × [m/s²]
+//   (1 Newton = 1 kg·m/s²)
+//
+// MEANING:
+//   Force needed to accelerate a mass
+//   Heavier objects need more force for same acceleration
+//
+// EXAMPLES:
+//   1. Push a 10 kg box with 2 m/s² acceleration:
+//      F = 10 kg × 2 m/s² = 20 N
+//
+//   2. Robot (5 kg) accelerates at 0.5 m/s²:
+//      F = 5 kg × 0.5 m/s² = 2.5 N (motor force needed)
+//
+//   3. Rocket (1000 kg) at 10 m/s²:
+//      F = 1000 kg × 10 m/s² = 10,000 N (thrust required)
+//
+// INVERSE (a = F/m):
+//   Same force on lighter object → higher acceleration
+//   Same force on heavier object → lower acceleration
+//
 template<typename MR, typename DR, typename TR>
 inline constexpr Newtons operator*(const Mass<MR>& m, const Acceleration<DR, TR>& a) {
     return Newtons::fromNewtons(m.toKilograms() * a.toMetersPerSecondSquared());
@@ -664,25 +781,143 @@ inline constexpr Watts operator*(const Torque<TorqueR>& torque,
     return Watts::fromWatts(torque.toNewtonMeters() * omega.toRadiansPerSecond());
 }
 
-// Voltage * Current = Power (P = VI)
+// ============================================================================
+// VOLTAGE × CURRENT = POWER
+// ============================================================================
+// ELECTRICAL LAW: P = V × I
+//
+// EQUATION: P = V × I
+//   Units: [W] = [V] × [A]
+//   (1 Watt = 1 Volt × 1 Ampere)
+//
+// MEANING:
+//   Electrical power consumed or delivered
+//   Power = energy per unit time
+//
+// EXAMPLES:
+//   1. Motor running at 12V drawing 2A:
+//      P = 12V × 2A = 24W (motor consumes 24 watts)
+//
+//   2. LED at 3V drawing 20mA (0.02A):
+//      P = 3V × 0.02A = 0.06W (LED consumes 60 milliwatts)
+//
+//   3. Battery (12V) delivering 10A:
+//      P = 12V × 10A = 120W (battery provides 120 watts)
+//
+// PRACTICAL USE:
+//   - Calculate battery life: energy = power × time
+//   - Check if motor is overheating: high power = high heat
+//   - Size power supply: must provide enough watts
+//
 template<typename VR, typename CR>
 inline constexpr Watts operator*(const Voltage<VR>& v, const Current<CR>& i) {
     return Watts::fromWatts(v.toVolts() * i.toAmperes());
 }
 
-// Voltage / Current = Resistance (Ohm's law: V = IR)
+// ============================================================================
+// VOLTAGE / CURRENT = RESISTANCE (Ohm's Law)
+// ============================================================================
+// ELECTRICAL LAW: V = I × R → R = V / I
+//
+// EQUATION: R = V / I
+//   Units: [Ω] = [V] / [A]
+//   (1 Ohm = 1 Volt / 1 Ampere)
+//
+// MEANING:
+//   Resistance opposes current flow
+//   Higher resistance → less current for same voltage
+//
+// EXAMPLES:
+//   1. Circuit at 12V drawing 3A:
+//      R = 12V / 3A = 4Ω (total resistance)
+//
+//   2. LED at 3V with 20mA (0.02A):
+//      R = 3V / 0.02A = 150Ω (current-limiting resistor needed)
+//
+//   3. Motor at 6V drawing 0.5A:
+//      R = 6V / 0.5A = 12Ω (motor's resistance)
+//
+// OHM'S LAW TRIANGLE:
+//        V
+//       ---
+//      | ÷ |
+//      |---|
+//      I | R
+//
+//   V = I × R  (cover V, see I×R)
+//   I = V / R  (cover I, see V/R)
+//   R = V / I  (cover R, see V/I)
+//
 template<typename VR, typename CR>
 inline constexpr Ohms operator/(const Voltage<VR>& v, const Current<CR>& i) {
     return Ohms::fromOhms(numerical::safeDivide(v.toVolts(), i.toAmperes()));
 }
 
-// Current * Resistance = Voltage
+// ============================================================================
+// CURRENT × RESISTANCE = VOLTAGE (Ohm's Law)
+// ============================================================================
+// ELECTRICAL LAW: V = I × R
+//
+// EQUATION: V = I × R
+//   Units: [V] = [A] × [Ω]
+//
+// MEANING:
+//   Voltage drop across a resistor
+//   More current or higher resistance → bigger voltage drop
+//
+// EXAMPLES:
+//   1. 2A through 10Ω resistor:
+//      V = 2A × 10Ω = 20V (voltage drop)
+//
+//   2. 0.5A through 100Ω resistor:
+//      V = 0.5A × 100Ω = 50V
+//
+//   3. LED circuit: Want 20mA through 150Ω resistor:
+//      V = 0.02A × 150Ω = 3V (voltage drop across resistor)
+//      If battery is 5V, LED gets 5V - 3V = 2V ✓
+//
+// USE CASE (Motor voltage drop):
+//   Motor draws 5A, wire has 0.1Ω resistance
+//   V_drop = 5A × 0.1Ω = 0.5V lost in wire!
+//   If battery is 12V, motor only gets 11.5V
+//
 template<typename CR, typename RR>
 inline constexpr Volts operator*(const Current<CR>& i, const Resistance<RR>& r) {
     return Volts::fromVolts(i.toAmperes() * r.toOhms());
 }
 
-// Voltage / Resistance = Current
+// ============================================================================
+// VOLTAGE / RESISTANCE = CURRENT (Ohm's Law)
+// ============================================================================
+// ELECTRICAL LAW: V = I × R → I = V / R
+//
+// EQUATION: I = V / R
+//   Units: [A] = [V] / [Ω]
+//
+// MEANING:
+//   Current flow for given voltage and resistance
+//   Higher voltage → more current
+//   Higher resistance → less current
+//
+// EXAMPLES:
+//   1. 12V battery with 4Ω load:
+//      I = 12V / 4Ω = 3A (current draw)
+//
+//   2. 5V across 1000Ω resistor:
+//      I = 5V / 1000Ω = 0.005A = 5mA (small current)
+//
+//   3. Short circuit! 12V with 0.1Ω wire:
+//      I = 12V / 0.1Ω = 120A (DANGER! Wire will melt!)
+//
+// PRACTICAL USE:
+//   - Calculate current draw: Will circuit breaker trip?
+//   - Size resistor: R = V / I_desired
+//   - Check motor current: Is it within safe limits?
+//
+// WARNING:
+//   Very low resistance → very high current!
+//   Always include current limiting (fuses, resistors)
+//
 template<typename VR, typename RR>
 inline constexpr Amperes operator/(const Voltage<VR>& v, const Resistance<RR>& r) {
     return Amperes::fromAmperes(numerical::safeDivide(v.toVolts(), r.toOhms()));

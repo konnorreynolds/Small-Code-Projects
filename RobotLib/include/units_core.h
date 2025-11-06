@@ -44,73 +44,262 @@ namespace units {
 // ============================================================================
 // MATHEMATICAL CONSTANTS
 // ============================================================================
+// These constants are used throughout the library for conversions and
+// calculations. High precision values prevent accumulation of rounding errors.
+// ============================================================================
 namespace constants {
-    // Mathematical constants (high precision)
+    // ========================================================================
+    // PI (π) ≈ 3.14159...
+    // ========================================================================
+    // WHAT: The ratio of a circle's circumference to its diameter
+    // WHY: Used for circular motion, angle conversions, and trigonometry
+    // FORMULA: C = 2πr (circumference), A = πr² (area)
+    // EXAMPLE: A wheel with radius 0.5m has circumference = 2π(0.5) = 3.14m
     constexpr double PI = 3.14159265358979323846264338327950288;
+
+    // 2π = Full circle in radians (360 degrees)
+    // WHY: One complete rotation = 2π radians
+    // EXAMPLE: Motor spinning at 60 RPM = 60 × 2π rad/min = 377 rad/min
     constexpr double TWO_PI = 2.0 * PI;
+
+    // π/2 = Quarter circle (90 degrees)
+    // WHY: Common angle for perpendicular directions
+    // EXAMPLE: Robot turning 90° right rotates π/2 radians
     constexpr double HALF_PI = 0.5 * PI;
+
+    // ========================================================================
+    // E (Euler's number) ≈ 2.71828...
+    // ========================================================================
+    // WHAT: Base of natural logarithms
+    // WHY: Used in exponential growth/decay, filters, and control systems
+    // FORMULA: y = e^(kt) for exponential growth
+    // EXAMPLE: Battery discharge, sensor filters, PID controllers
     constexpr double E = 2.71828182845904523536028747135266250;
+
+    // ========================================================================
+    // √2 ≈ 1.41421...
+    // ========================================================================
+    // WHAT: Square root of 2
+    // WHY: Diagonal distance, signal normalization
+    // EXAMPLE: Moving diagonally 1m in X and 1m in Y = √2 m total distance
     constexpr double SQRT2 = 1.41421356237309504880168872420969808;
+
+    // ========================================================================
+    // √3 ≈ 1.73205...
+    // ========================================================================
+    // WHAT: Square root of 3
+    // WHY: Used in 120° symmetry (3-phase systems, triangle calculations)
+    // EXAMPLE: Omnidirectional robots with 3 wheels at 120° apart
     constexpr double SQRT3 = 1.73205080756887729352744634150587237;
 
-    // Conversion factors (exact where possible)
-    constexpr double DEG_TO_RAD = PI / 180.0;
-    constexpr double RAD_TO_DEG = 180.0 / PI;
-    constexpr double FEET_TO_METERS = 0.3048;  // Exact by definition
-    constexpr double INCHES_TO_METERS = 0.0254;  // Exact by definition
+    // ========================================================================
+    // ANGLE CONVERSION FACTORS
+    // ========================================================================
 
-    // Physical constants
-    constexpr double GRAVITY_EARTH = 9.80665;  // m/s² (standard gravity)
-    constexpr double SPEED_OF_LIGHT = 299792458.0;  // m/s (exact)
+    // DEGREES → RADIANS
+    // MATH: radians = degrees × (π / 180)
+    // WHY: A full circle is 360° or 2π radians
+    //      Therefore: 1° = 2π/360 = π/180 radians
+    // EXAMPLE: 90° × (π/180) = π/2 ≈ 1.5708 radians
+    constexpr double DEG_TO_RAD = PI / 180.0;
+
+    // RADIANS → DEGREES
+    // MATH: degrees = radians × (180 / π)
+    // WHY: Inverse of above conversion
+    // EXAMPLE: π radians × (180/π) = 180°
+    constexpr double RAD_TO_DEG = 180.0 / PI;
+
+    // ========================================================================
+    // DISTANCE CONVERSION FACTORS (Exact by international definition)
+    // ========================================================================
+
+    // FEET → METERS
+    // EXACT DEFINITION: 1 foot = exactly 0.3048 meters (since 1959)
+    // HISTORY: Defined to match imperial and metric systems
+    // EXAMPLE: 10 feet × 0.3048 = 3.048 meters
+    constexpr double FEET_TO_METERS = 0.3048;
+
+    // INCHES → METERS
+    // EXACT DEFINITION: 1 inch = exactly 2.54 cm = 0.0254 meters (since 1959)
+    // DERIVATION: 1 foot = 12 inches, so 1 inch = 0.3048/12 = 0.0254 m
+    // EXAMPLE: 6 inches × 0.0254 = 0.1524 meters
+    constexpr double INCHES_TO_METERS = 0.0254;
+
+    // ========================================================================
+    // PHYSICAL CONSTANTS
+    // ========================================================================
+
+    // STANDARD GRAVITY (g)
+    // EXACT DEFINITION: 9.80665 m/s² (defined standard, not measured)
+    // WHY: Used for weight calculations, accelerometer calibration
+    // FORMULA: Weight = mass × g (Newtons = kg × m/s²)
+    // EXAMPLE: 10 kg mass weighs 10 × 9.80665 = 98.0665 N on Earth
+    // NOTE: Actual gravity varies by location (9.78 to 9.83 m/s²)
+    constexpr double GRAVITY_EARTH = 9.80665;
+
+    // SPEED OF LIGHT (c)
+    // EXACT DEFINITION: 299,792,458 m/s (defines the meter since 1983)
+    // WHY: Used in relativity, time-of-flight sensors, GPS calculations
+    // EXAMPLE: Light travels ~30 cm in 1 nanosecond
+    constexpr double SPEED_OF_LIGHT = 299792458.0;
 }
 
 // ============================================================================
 // NUMERICAL UTILITIES
 // ============================================================================
-// Why: These utilities prevent common numerical errors and provide consistent
-// behavior across the library. They're all inline/constexpr for zero overhead.
+// These utilities prevent common numerical errors in floating-point math.
+// All are inline/constexpr for zero runtime overhead.
+//
+// WHY NEEDED: Floating-point numbers have precision limits that cause issues:
+// - 0.1 + 0.2 ≠ 0.3 exactly in binary floating point
+// - Division by zero is undefined (crashes or returns NaN/Inf)
+// - Direct comparison with == is unreliable for computed values
 // ============================================================================
 namespace numerical {
 
-    // Get machine epsilon for type
+    // ========================================================================
+    // MACHINE EPSILON - Smallest distinguishable difference
+    // ========================================================================
+    // WHAT: The smallest number ε where 1.0 + ε ≠ 1.0 in floating point
+    // WHY: Used to determine if numbers are "close enough" to be equal
+    // VALUE: For double, ε ≈ 2.22 × 10⁻¹⁶
+    // EXAMPLE: Can't distinguish 1.0 from 1.0 + 1×10⁻¹⁷
     template<typename T>
     inline constexpr T epsilon() {
         return std::numeric_limits<T>::epsilon();
     }
 
-    // Safe floating-point comparison
-    // Why: Direct == comparison of floats is unreliable due to rounding
+    // ========================================================================
+    // APPROXIMATE EQUALITY - Safe floating-point comparison
+    // ========================================================================
+    // PROBLEM: 0.1 + 0.2 == 0.3 returns FALSE in floating point!
+    //          Actual value: 0.30000000000000004...
+    //
+    // SOLUTION: Check if |a - b| < tolerance
+    //
+    // ALGORITHM:
+    //   if (a - b < tolerance AND b - a < tolerance)
+    //       then a ≈ b (approximately equal)
+    //
+    // WHY TWO CHECKS: Avoids calling std::abs() for constexpr compatibility
+    //   (a - b) < tolerance  checks if a is not much bigger than b
+    //   (b - a) < tolerance  checks if b is not much bigger than a
+    //   Both true means |a - b| < tolerance
+    //
+    // TOLERANCE: Default is 100 × machine epsilon (very strict)
+    //
+    // EXAMPLE:
+    //   double a = 0.1 + 0.2;              // 0.30000000000000004
+    //   double b = 0.3;                    // 0.29999999999999999
+    //   a == b → FALSE (wrong!)
+    //   approxEqual(a, b) → TRUE (correct!)
     template<typename T>
     inline constexpr bool approxEqual(T a, T b, T tolerance = epsilon<T>() * 100) {
-        return (a - b) < tolerance && (b - a) < tolerance;  // Avoids std::abs in constexpr
+        return (a - b) < tolerance && (b - a) < tolerance;
     }
 
-    // Check if effectively zero
+    // ========================================================================
+    // IS ZERO - Check if number is effectively zero
+    // ========================================================================
+    // PROBLEM: After many calculations, 0.0 might become 1×10⁻¹⁵
+    //
+    // ALGORITHM:
+    //   if (value < tolerance AND -value < tolerance)
+    //       then value ≈ 0
+    //
+    // WHY: Same as approxEqual(value, 0) but faster
+    //
+    // EXAMPLE:
+    //   double x = 1.0 - 1.0;              // Might be 1×10⁻¹⁶, not exactly 0
+    //   x == 0.0 → Might be FALSE
+    //   isZero(x) → TRUE
     template<typename T>
     inline constexpr bool isZero(T value, T tolerance = epsilon<T>() * 100) {
         return value < tolerance && -value < tolerance;
     }
 
-    // Safe division with zero check
-    // Why: Prevents undefined behavior from division by zero
+    // ========================================================================
+    // SAFE DIVISION - Prevent divide-by-zero crashes
+    // ========================================================================
+    // PROBLEM: Division by zero is undefined
+    //   - Can crash program
+    //   - Returns NaN (Not a Number) or Inf (Infinity)
+    //   - Propagates errors through calculations
+    //
+    // SOLUTION: Check denominator before dividing
+    //
+    // ALGORITHM:
+    //   if (denominator ≈ 0)
+    //       return defaultValue (usually 0)
+    //   else
+    //       return numerator / denominator
+    //
+    // EXAMPLE:
+    //   safeDivide(10.0, 0.0, 0.0) → 0.0 (safe)
+    //   10.0 / 0.0 → Inf or crash (unsafe)
+    //
+    // USE CASE: Robot velocity = distance / time
+    //   If time = 0, safeDivide returns 0 instead of crashing
     template<typename T>
     inline constexpr T safeDivide(T numerator, T denominator, T defaultValue = T(0)) {
         return isZero(denominator) ? defaultValue : numerator / denominator;
     }
 
-    // Constexpr min/max/clamp for C++11 compatibility
+    // ========================================================================
+    // MIN - Return smaller of two values
+    // ========================================================================
+    // ALGORITHM: if (a < b) return a; else return b;
+    // EXAMPLE: min(5, 3) → 3
     template<typename T>
     inline constexpr T min(T a, T b) { return a < b ? a : b; }
 
+    // ========================================================================
+    // MAX - Return larger of two values
+    // ========================================================================
+    // ALGORITHM: if (a > b) return a; else return b;
+    // EXAMPLE: max(5, 3) → 5
     template<typename T>
     inline constexpr T max(T a, T b) { return a > b ? a : b; }
 
+    // ========================================================================
+    // CLAMP - Constrain value to range [low, high]
+    // ========================================================================
+    // ALGORITHM:
+    //   if (value < low) return low;
+    //   else if (value > high) return high;
+    //   else return value;
+    //
+    // VISUAL:
+    //        low        high
+    //    ----[==========]----
+    //    ^              ^   ^
+    //    |              |   |
+    //   too low        OK  too high
+    //
+    // EXAMPLE: clamp(15, 0, 10) → 10 (limited to max)
+    //          clamp(-5, 0, 10) → 0  (limited to min)
+    //          clamp(7, 0, 10) → 7   (within range)
+    //
+    // USE CASE: Motor PWM must be in range [0, 255]
+    //   pwm = clamp(calculated_pwm, 0, 255)
     template<typename T>
     inline constexpr T clamp(T value, T low, T high) {
         return value < low ? low : (value > high ? high : value);
     }
 
-    // Constexpr abs for all C++ versions
+    // ========================================================================
+    // ABSOLUTE VALUE - Remove sign, get magnitude
+    // ========================================================================
+    // ALGORITHM: if (value < 0) return -value; else return value;
+    //
+    // MATH: |x| = { x if x ≥ 0
+    //             {-x if x < 0
+    //
+    // EXAMPLE: abs(-5) → 5
+    //          abs(3) → 3
+    //          abs(0) → 0
+    //
+    // USE CASE: Distance is always positive: distance = abs(final - initial)
     template<typename T>
     inline constexpr T abs(T value) { return value < T(0) ? -value : value; }
 }
@@ -141,13 +330,43 @@ namespace traits {
 }
 
 // ============================================================================
-// BASE UNIT CLASS (CRTP)
+// BASE UNIT CLASS (CRTP - Curiously Recurring Template Pattern)
 // ============================================================================
-// Why use CRTP (Curiously Recurring Template Pattern)?
-// 1. Avoids virtual function overhead (important for embedded)
-// 2. Enables compile-time polymorphism
-// 3. Allows shared implementation without runtime cost
-// 4. Each unit type gets its own instantiation (no type confusion)
+// WHAT IS CRTP?
+//   A design pattern where a class X inherits from a template Base<X>
+//   Example: class Distance : public UnitBase<Distance>
+//
+// WHY USE CRTP INSTEAD OF NORMAL INHERITANCE?
+//
+// 1. ZERO RUNTIME OVERHEAD
+//    Normal inheritance: Uses virtual functions (vtable pointer, runtime lookup)
+//    CRTP: All resolved at compile time (no vtable, no runtime cost)
+//    Critical for embedded systems with limited memory!
+//
+// 2. TYPE SAFETY
+//    Prevents mixing incompatible units:
+//    ✓ Distance + Distance = Distance  (allowed)
+//    ✗ Distance + Time = ???           (compile error!)
+//
+// 3. COMPILE-TIME POLYMORPHISM
+//    Operations return the correct derived type automatically
+//    Distance + Distance returns Distance, not UnitBase
+//
+// 4. SHARED IMPLEMENTATION
+//    Common operations (addition, comparison, etc.) defined once
+//    All unit types get these operations for free
+//
+// EXAMPLE:
+//   Meters m1(5.0);
+//   Meters m2(3.0);
+//   Meters m3 = m1 + m2;  // Returns Meters, not UnitBase!
+//
+// RATIO PARAMETER:
+//   Stores unit scale at compile time using std::ratio
+//   Examples:
+//   - std::ratio<1,1>     = 1/1 = 1.0      (meters)
+//   - std::ratio<1,1000>  = 1/1000 = 0.001 (millimeters)
+//   - std::ratio<1000,1>  = 1000/1 = 1000  (kilometers)
 // ============================================================================
 template<typename Derived, typename Ratio = std::ratio<1, 1>>
 class UnitBase {
@@ -157,31 +376,75 @@ public:
 
     value_type value;
 
-    // Constructors
+    // ========================================================================
+    // CONSTRUCTORS
+    // ========================================================================
     constexpr UnitBase() : value(0) {}
     constexpr explicit UnitBase(value_type v) : value(v) {}
 
-    // Arithmetic operations return Derived type (CRTP magic)
+    // ========================================================================
+    // ARITHMETIC OPERATIONS - Dimensional Analysis
+    // ========================================================================
+    // These operations follow the laws of dimensional analysis (physics units)
+    //
+    // KEY PRINCIPLE: Units must match for addition/subtraction
+    //   ✓ 5 meters + 3 meters = 8 meters
+    //   ✗ 5 meters + 3 seconds = ??? (compile error!)
+    //
+    // NOTE: All operations return Derived type (CRTP magic)
+    //   This ensures Distance + Distance returns Distance, not UnitBase
+    // ========================================================================
+
+    // ADDITION: Same units can be added
+    // MATH: [Distance] + [Distance] = [Distance]
+    // EXAMPLE: 5m + 3m = 8m
+    // ALGORITHM: Simply add the numeric values (units already match)
     constexpr Derived operator+(const Derived& other) const {
         return Derived(value + other.value);
     }
 
+    // SUBTRACTION: Same units can be subtracted
+    // MATH: [Distance] - [Distance] = [Distance]
+    // EXAMPLE: 10m - 4m = 6m
+    // ALGORITHM: Simply subtract the numeric values
     constexpr Derived operator-(const Derived& other) const {
         return Derived(value - other.value);
     }
 
+    // SCALAR MULTIPLICATION: Unit × number = same unit scaled
+    // MATH: [Distance] × scalar = [Distance]
+    // EXAMPLE: 5m × 2 = 10m
+    // WHY: Multiplying by a pure number doesn't change the dimension
+    // ALGORITHM: Multiply the numeric value
     constexpr Derived operator*(value_type scalar) const {
         return Derived(value * scalar);
     }
 
+    // SCALAR DIVISION: Unit ÷ number = same unit scaled
+    // MATH: [Distance] ÷ scalar = [Distance]
+    // EXAMPLE: 10m ÷ 2 = 5m
+    // WHY: Dividing by a pure number doesn't change the dimension
+    // ALGORITHM: Safely divide the numeric value (check for zero)
     constexpr Derived operator/(value_type scalar) const {
         return Derived(numerical::safeDivide(value, scalar));
     }
 
+    // UNIT DIVISION: Unit ÷ same unit = pure number (ratio)
+    // MATH: [Distance] ÷ [Distance] = dimensionless
+    // EXAMPLE: 10m ÷ 2m = 5 (pure number, no units)
+    // WHY: Units cancel out (m/m = 1)
+    // RETURNS: double (not a unit type)
+    //
+    // USE CASE: Calculate scale factor
+    //   double scale = actual_distance / expected_distance;
     constexpr value_type operator/(const Derived& other) const {
         return numerical::safeDivide(value, other.value);
     }
 
+    // NEGATION: Reverse the sign
+    // MATH: -[Distance] = [Distance]
+    // EXAMPLE: -(5m) = -5m
+    // USE CASE: Reverse direction
     constexpr Derived operator-() const {
         return Derived(-value);
     }
@@ -238,15 +501,86 @@ public:
         return Derived(numerical::clamp(value, low.value, high.value));
     }
 
-    // Linear interpolation
+    // ========================================================================
+    // LINEAR INTERPOLATION (LERP)
+    // ========================================================================
+    // WHAT: Find a point between two values
+    //
+    // MATH: lerp(a, b, t) = a + (b - a) × t
+    //   where t ∈ [0, 1]
+    //
+    // ALGORITHM BREAKDOWN:
+    //   1. Calculate difference: (b - a)
+    //   2. Scale by t: (b - a) × t
+    //   3. Add to start: a + (b - a) × t
+    //
+    // PARAMETER t:
+    //   t = 0.0 → returns start value (a)
+    //   t = 0.5 → returns midpoint (a + b)/2
+    //   t = 1.0 → returns target value (b)
+    //
+    // VISUAL:
+    //   start=10        target=20
+    //      |--------------|
+    //   t=0  t=0.25  t=0.5  t=0.75  t=1
+    //   10     12.5    15     17.5   20
+    //
+    // EXAMPLES:
+    //   lerp(10m, 20m, 0.0) = 10m (start)
+    //   lerp(10m, 20m, 0.5) = 15m (halfway)
+    //   lerp(10m, 20m, 1.0) = 20m (end)
+    //   lerp(10m, 20m, 0.25) = 12.5m (quarter way)
+    //
+    // USE CASES:
+    //   - Smooth robot motion from point A to B
+    //   - Animation and transitions
+    //   - Path planning
+    //   - Gradual acceleration
     constexpr Derived lerp(const Derived& target, value_type t) const {
         return Derived(value + (target.value - value) * t);
     }
 
-    // Smooth step interpolation (S-curve)
+    // ========================================================================
+    // SMOOTH STEP INTERPOLATION (S-CURVE)
+    // ========================================================================
+    // WHAT: Smooth acceleration/deceleration between two values
+    //
+    // WHY BETTER THAN LERP:
+    //   - LERP: Constant velocity (abrupt start/stop)
+    //   - SMOOTHSTEP: Gradual start, constant middle, gradual stop
+    //
+    // MATH: smoothstep(t) = 3t² - 2t³
+    //   This creates an S-shaped curve
+    //
+    // ALGORITHM:
+    //   1. Clamp t to [0, 1]
+    //   2. Apply smoothing: t' = t² × (3 - 2t)
+    //   3. Interpolate with smoothed t': lerp(start, target, t')
+    //
+    // VISUAL COMPARISON:
+    //   LERP:       /        (straight line, constant speed)
+    //              /
+    //
+    //   SMOOTHSTEP: ╱        (S-curve, smooth start/stop)
+    //              ╱
+    //
+    // VELOCITY PROFILE:
+    //   Time:     0 -------- 0.5 -------- 1.0
+    //   LERP:     |========|========|    (constant)
+    //   SMOOTHSTEP: ╱╲_____╱╲    (smooth)
+    //
+    // EXAMPLE:
+    //   smoothstep(0m, 10m, 0.0) = 0m   (slow start)
+    //   smoothstep(0m, 10m, 0.5) = 5m   (full speed)
+    //   smoothstep(0m, 10m, 1.0) = 10m  (slow stop)
+    //
+    // USE CASES:
+    //   - Smooth robot movements
+    //   - Comfortable elevator motion
+    //   - Natural-feeling animations
     UNITS_CONSTEXPR14 Derived smoothstep(const Derived& target, value_type t) const {
         t = numerical::clamp(t, value_type(0), value_type(1));
-        t = t * t * (3 - 2 * t);
+        t = t * t * (3 - 2 * t);  // S-curve smoothing formula
         return lerp(target, t);
     }
 
@@ -273,11 +607,29 @@ inline constexpr Derived operator*(typename UnitBase<Derived, Ratio>::value_type
 // ============================================================================
 // DISTANCE UNIT
 // ============================================================================
-// Why this design:
-// - Template ratio allows compile-time unit tracking
-// - All conversions go through meters (SI base unit)
-// - Factory methods provide type safety
-// - Conversion methods are explicit (no implicit conversions)
+// DESIGN PRINCIPLES:
+//
+// 1. COMPILE-TIME UNIT TRACKING
+//    Template ratio stores the unit scale (e.g., 1/1000 for mm)
+//    Compiler knows unit type at compile time (no runtime overhead!)
+//
+// 2. METERS AS BASE UNIT (SI Standard)
+//    All conversions go through meters internally
+//    Why: International standard, simplifies conversion logic
+//
+// 3. FACTORY METHODS FOR TYPE SAFETY
+//    Can't accidentally create Distance with wrong value
+//    Must use Distance::fromMeters(5.0), not Distance(5.0)
+//
+// 4. EXPLICIT CONVERSIONS ONLY
+//    Prevents silent bugs from implicit conversions
+//    Must explicitly call toMeters(), can't auto-convert
+//
+// INTERNAL STORAGE:
+//   Value is stored in units matching the Ratio parameter
+//   - Distance<ratio<1,1>>(5.0) stores 5.0 meters
+//   - Distance<ratio<1,1000>>(5.0) stores 5.0 millimeters
+//
 // ============================================================================
 template<typename Ratio = std::ratio<1, 1>>
 class Distance : public UnitBase<Distance<Ratio>, Ratio> {
@@ -287,43 +639,146 @@ public:
     using Base::Base;
     using Base::value;
 
-    // Conversion to other units (always explicit)
+    // ========================================================================
+    // CONVERSION TO OTHER UNITS (always explicit, prevents silent bugs)
+    // ========================================================================
+
+    // CONVERT TO METERS (SI base unit)
+    //
+    // MATH: meters = stored_value × (numerator / denominator)
+    //
+    // EXAMPLE 1: Millimeters to meters
+    //   Ratio = std::ratio<1, 1000> = 1/1000 = 0.001
+    //   Value = 5000 (5000 millimeters)
+    //   Result = 5000 × (1/1000) = 5.0 meters ✓
+    //
+    // EXAMPLE 2: Kilometers to meters
+    //   Ratio = std::ratio<1000, 1> = 1000/1 = 1000
+    //   Value = 2 (2 kilometers)
+    //   Result = 2 × (1000/1) = 2000 meters ✓
+    //
+    // WHY THIS FORMULA:
+    //   Ratio represents "this unit / meter"
+    //   To get meters, multiply by the ratio
     constexpr double toMeters() const {
         return value * Ratio::num / static_cast<double>(Ratio::den);
     }
 
+    // CONVERT TO KILOMETERS
+    // MATH: kilometers = meters × 0.001
+    // WHY: 1 km = 1000 m, so m → km requires dividing by 1000
+    // EXAMPLE: 5000 meters = 5000 × 0.001 = 5 kilometers
     constexpr double toKilometers() const { return toMeters() * 0.001; }
+
+    // CONVERT TO FEET
+    // MATH: feet = meters / 0.3048
+    // WHY: 1 foot = 0.3048 meters (exact definition)
+    //      So to convert m → ft, divide by 0.3048
+    // DERIVATION: feet = meters × (1 ft / 0.3048 m) = meters / 0.3048
+    // EXAMPLE: 3.048 meters = 3.048 / 0.3048 = 10 feet
     constexpr double toFeet() const { return toMeters() / constants::FEET_TO_METERS; }
+
+    // CONVERT TO INCHES
+    // MATH: inches = meters / 0.0254
+    // WHY: 1 inch = 0.0254 meters = 2.54 cm (exact definition)
+    // DERIVATION: inches = meters × (1 in / 0.0254 m) = meters / 0.0254
+    // EXAMPLE: 0.254 meters = 0.254 / 0.0254 = 10 inches
     constexpr double toInches() const { return toMeters() / constants::INCHES_TO_METERS; }
+
+    // CONVERT TO CENTIMETERS
+    // MATH: centimeters = meters × 100
+    // WHY: 1 meter = 100 centimeters (centi = 1/100)
+    // EXAMPLE: 1.5 meters = 1.5 × 100 = 150 centimeters
     constexpr double toCentimeters() const { return toMeters() * 100.0; }
+
+    // CONVERT TO MILLIMETERS
+    // MATH: millimeters = meters × 1000
+    // WHY: 1 meter = 1000 millimeters (milli = 1/1000)
+    // EXAMPLE: 0.5 meters = 0.5 × 1000 = 500 millimeters
     constexpr double toMillimeters() const { return toMeters() * 1000.0; }
+
+    // CONVERT TO MILES
+    // MATH: miles = meters / 1609.344
+    // WHY: 1 mile = 1609.344 meters (exact definition)
+    // DERIVATION: 1 mile = 5280 feet × 0.3048 m/ft = 1609.344 m
+    // EXAMPLE: 1609.344 meters = 1609.344 / 1609.344 = 1 mile
     constexpr double toMiles() const { return toMeters() / 1609.344; }
 
-    // Factory methods (type-safe construction)
+    // ========================================================================
+    // FACTORY METHODS (type-safe construction)
+    // ========================================================================
+    // WHY FACTORY METHODS:
+    //   Prevent confusion about what value represents
+    //   Distance::fromMeters(5.0) is clear
+    //   Distance(5.0) is ambiguous - meters? feet? millimeters?
+    //
+    // ALL CONVERSIONS GO THROUGH METERS (reduces code duplication)
+    // ========================================================================
+
+    // CREATE FROM METERS
+    //
+    // MATH: stored_value = meters × (denominator / numerator)
+    //   This is the inverse of toMeters()
+    //
+    // EXAMPLE 1: Create 5 meters as Millimeters type
+    //   Ratio = std::ratio<1, 1000>
+    //   Input = 5.0 meters
+    //   stored_value = 5.0 × (1000/1) = 5000
+    //   Stores 5000 (which represents 5000 millimeters) ✓
+    //
+    // EXAMPLE 2: Create 2000 meters as Kilometers type
+    //   Ratio = std::ratio<1000, 1>
+    //   Input = 2000 meters
+    //   stored_value = 2000 × (1/1000) = 2
+    //   Stores 2 (which represents 2 kilometers) ✓
     static constexpr Distance fromMeters(double m) {
         return Distance(m * Ratio::den / static_cast<double>(Ratio::num));
     }
 
+    // CREATE FROM KILOMETERS
+    // STEP 1: Convert km to meters: km × 1000
+    // STEP 2: Use fromMeters to create Distance
+    // EXAMPLE: 2.5 km = 2.5 × 1000 = 2500 meters
     static constexpr Distance fromKilometers(double km) {
         return fromMeters(km * 1000.0);
     }
 
+    // CREATE FROM FEET
+    // STEP 1: Convert feet to meters: feet × 0.3048
+    // STEP 2: Use fromMeters to create Distance
+    // EXAMPLE: 10 feet = 10 × 0.3048 = 3.048 meters
     static constexpr Distance fromFeet(double ft) {
         return fromMeters(ft * constants::FEET_TO_METERS);
     }
 
+    // CREATE FROM INCHES
+    // STEP 1: Convert inches to meters: inches × 0.0254
+    // STEP 2: Use fromMeters to create Distance
+    // EXAMPLE: 10 inches = 10 × 0.0254 = 0.254 meters
     static constexpr Distance fromInches(double in) {
         return fromMeters(in * constants::INCHES_TO_METERS);
     }
 
+    // CREATE FROM CENTIMETERS
+    // STEP 1: Convert cm to meters: cm ÷ 100
+    // STEP 2: Use fromMeters to create Distance
+    // EXAMPLE: 150 cm = 150 × 0.01 = 1.5 meters
     static constexpr Distance fromCentimeters(double cm) {
         return fromMeters(cm * 0.01);
     }
 
+    // CREATE FROM MILLIMETERS
+    // STEP 1: Convert mm to meters: mm ÷ 1000
+    // STEP 2: Use fromMeters to create Distance
+    // EXAMPLE: 500 mm = 500 × 0.001 = 0.5 meters
     static constexpr Distance fromMillimeters(double mm) {
         return fromMeters(mm * 0.001);
     }
 
+    // CREATE FROM MILES
+    // STEP 1: Convert miles to meters: miles × 1609.344
+    // STEP 2: Use fromMeters to create Distance
+    // EXAMPLE: 1 mile = 1 × 1609.344 = 1609.344 meters
     static constexpr Distance fromMiles(double mi) {
         return fromMeters(mi * 1609.344);
     }
@@ -469,21 +924,152 @@ public:
         return fromRadians(std::atan2(y, x));
     }
 
-    // Normalize to [0, 2π)
+    // ========================================================================
+    // NORMALIZE TO [0, 2π) - Positive angles only
+    // ========================================================================
+    // PROBLEM: Angles can be > 360° or negative
+    //   Example: Robot turned 370° or -30°
+    //   We want equivalent angle in standard range [0°, 360°)
+    //
+    // MATH: Use modulo operation
+    //   angle_normalized = angle mod 2π
+    //
+    // ALGORITHM:
+    //   1. Calculate remainder: angle mod 2π (fmod function)
+    //   2. If negative, add 2π to make positive
+    //   3. Result is in range [0, 2π)
+    //
+    // EXAMPLES:
+    //   370° → 370 mod 360 = 10°  (one full rotation + 10°)
+    //   -30° → -30 mod 360 = 330° (same as turning right 30°)
+    //   720° → 720 mod 360 = 0°   (two full rotations = 0°)
+    //   90°  → 90 mod 360 = 90°   (already in range, unchanged)
+    //
+    // VISUAL (0° is right, counterclockwise):
+    //          90° (up)
+    //           |
+    //  180° ----+---- 0° (right)
+    //           |
+    //         270° (down)
+    //
+    //   450° = 360° + 90° → normalizes to 90°
+    //   -90° = 360° - 90° → normalizes to 270°
+    //
+    // USE CASES:
+    //   - Display heading in standard format
+    //   - Compass bearings (0° = North, 90° = East)
+    //   - Robot orientation tracking
     UNITS_CONSTEXPR14 Angle normalizePositive() const {
         double rad = std::fmod(toRadians(), constants::TWO_PI);
         if (rad < 0) rad += constants::TWO_PI;
         return fromRadians(rad);
     }
 
-    // Normalize to [-π, π)
+    // ========================================================================
+    // NORMALIZE TO [-π, π) - Signed angles
+    // ========================================================================
+    // PROBLEM: Sometimes we want angles in range [-180°, +180°)
+    //   More intuitive for:
+    //   - Turn left (negative) vs right (positive)
+    //   - Error calculations in control systems
+    //   - Shortest rotation direction
+    //
+    // MATH: Shift, modulo, shift back
+    //   1. Add π (shift range)
+    //   2. Mod 2π
+    //   3. Subtract π (shift back)
+    //
+    // ALGORITHM:
+    //   1. Shift: (angle + π)
+    //   2. Normalize: mod 2π
+    //   3. Handle negative: if < 0, add 2π
+    //   4. Shift back: - π
+    //   Result is in range [-π, π)
+    //
+    // EXAMPLES:
+    //   370° → 10°    (small positive turn)
+    //   -30° → -30°   (small negative turn)
+    //   270° → -90°   (right turn, not 270° left!)
+    //   180° → -180° or 180° (on boundary)
+    //
+    // VISUAL:
+    //     +90° (left/up)
+    //         |
+    //  +/-180°+---- 0° (straight)
+    //         |
+    //     -90° (right/down)
+    //
+    // WHY THIS IS BETTER FOR CONTROL:
+    //   Positive range:  190° means "turn 190° left" (very far)
+    //   Signed range:    190° → -170° means "turn 170° right" (closer!)
+    //
+    // USE CASES:
+    //   - PID control (minimize turn distance)
+    //   - Robot path planning (shortest rotation)
+    //   - Joystick input (-180° to +180°)
     UNITS_CONSTEXPR14 Angle normalizeSigned() const {
         double rad = std::fmod(toRadians() + constants::PI, constants::TWO_PI);
         if (rad < 0) rad += constants::TWO_PI;
         return fromRadians(rad - constants::PI);
     }
 
-    // Shortest angular distance to another angle
+    // ========================================================================
+    // SHORTEST ANGULAR DISTANCE - Which way to turn?
+    // ========================================================================
+    // PROBLEM: To rotate from angle A to angle B, which direction is shorter?
+    //
+    // EXAMPLE PROBLEM:
+    //   Current: 10°
+    //   Target: 350°
+    //   Long way: 10° → 350° = +340° (turn left almost full circle)
+    //   Short way: 10° → 350° = -20° (turn right just a bit!)
+    //
+    // SOLUTION: Use signed normalization
+    //
+    // ALGORITHM:
+    //   1. Calculate difference: target - current
+    //   2. Normalize to [-180°, +180°]
+    //   3. Sign indicates direction:
+    //      Positive = turn left (counterclockwise)
+    //      Negative = turn right (clockwise)
+    //   4. Magnitude = degrees to turn
+    //
+    // EXAMPLES:
+    //   Current=10°, Target=350°
+    //     Difference = 350° - 10° = 340°
+    //     Normalized = -20° (turn right 20°) ✓
+    //
+    //   Current=350°, Target=10°
+    //     Difference = 10° - 350° = -340°
+    //     Normalized = +20° (turn left 20°) ✓
+    //
+    //   Current=0°, Target=90°
+    //     Difference = 90° - 0° = 90°
+    //     Normalized = +90° (turn left 90°) ✓
+    //
+    // VISUAL EXAMPLE:
+    //       current(10°)
+    //           |
+    //      0° --+------------
+    //           |     \
+    //           |      \  SHORT PATH (-20°)
+    //           |       \
+    //    270° --+-------- target(350°)
+    //     ^                ^
+    //     |                |
+    //   LONG PATH: 10°→90°→180°→270°→350° = 340° (don't do this!)
+    //   SHORT PATH: 10°→0°→350° = -20° (do this!)
+    //
+    // USE CASES:
+    //   - Robot turning to target
+    //   - Servo moving to position
+    //   - Turret aiming
+    //   - Gimbal stabilization
+    //
+    // RETURNS: Signed angle
+    //   Positive: turn counterclockwise (left)
+    //   Negative: turn clockwise (right)
+    //   Magnitude: degrees to turn
     UNITS_CONSTEXPR14 Angle shortestDistanceTo(const Angle& other) const {
         return (other - *this).normalizeSigned();
     }

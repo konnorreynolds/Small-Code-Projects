@@ -64,26 +64,195 @@ public:
         return Radians::atan2(y, x);
     }
 
-    // Vector operations
+    // ========================================================================
+    // DOT PRODUCT (Scalar Product)
+    // ========================================================================
+    // WHAT: Measures how much two vectors point in the same direction
+    //
+    // MATH: a · b = ax×bx + ay×by
+    //
+    // GEOMETRIC MEANING:
+    //   a · b = |a| × |b| × cos(θ)
+    //   where θ is angle between vectors
+    //
+    // PROPERTIES:
+    //   - Parallel vectors (same direction): dot = |a|×|b| (maximum, positive)
+    //   - Perpendicular vectors (90°): dot = 0
+    //   - Opposite vectors (180°): dot = -|a|×|b| (minimum, negative)
+    //
+    // EXAMPLES:
+    //   Vec2D(1,0) · Vec2D(1,0) = 1×1 + 0×0 = 1 (same direction)
+    //   Vec2D(1,0) · Vec2D(0,1) = 1×0 + 0×1 = 0 (perpendicular)
+    //   Vec2D(1,0) · Vec2D(-1,0) = 1×-1 + 0×0 = -1 (opposite)
+    //   Vec2D(3,4) · Vec2D(1,0) = 3×1 + 4×0 = 3 (projection length)
+    //
+    // USE CASES:
+    //   - Calculate angle between vectors: θ = acos(a·b / |a||b|)
+    //   - Check if perpendicular: if (a·b ≈ 0)
+    //   - Project vector onto another
+    //   - Calculate work: W = Force · displacement
     constexpr double dot(const Vec2D& other) const {
         return x * other.x + y * other.y;
     }
 
+    // ========================================================================
+    // CROSS PRODUCT (2D version returns scalar, not vector)
+    // ========================================================================
+    // WHAT: In 2D, measures how much vectors are "rotated" relative to each other
+    //
+    // MATH: a × b = ax×by - ay×bx
+    //
+    // GEOMETRIC MEANING:
+    //   a × b = |a| × |b| × sin(θ)
+    //   where θ is angle from a to b (counterclockwise positive)
+    //
+    // SIGN MEANING:
+    //   Positive: b is counterclockwise from a (left turn)
+    //   Zero: vectors are parallel (same or opposite direction)
+    //   Negative: b is clockwise from a (right turn)
+    //
+    // MAGNITUDE MEANING:
+    //   |a × b| = area of parallelogram formed by vectors
+    //
+    // EXAMPLES:
+    //   Vec2D(1,0) × Vec2D(0,1) = 1×1 - 0×0 = 1 (90° left turn)
+    //   Vec2D(0,1) × Vec2D(1,0) = 0×0 - 1×1 = -1 (90° right turn)
+    //   Vec2D(1,0) × Vec2D(2,0) = 1×0 - 0×2 = 0 (parallel)
+    //   Vec2D(2,0) × Vec2D(0,3) = 2×3 - 0×0 = 6 (area = 6)
+    //
+    // USE CASES:
+    //   - Determine turn direction (left vs right)
+    //   - Calculate triangle/polygon area
+    //   - Check if point is left/right of line
+    //   - Detect clockwise/counterclockwise orientation
     constexpr double cross(const Vec2D& other) const {
-        return x * other.y - y * other.x;  // 2D cross product (scalar)
+        return x * other.y - y * other.x;
     }
 
+    // ========================================================================
+    // VECTOR PROJECTION
+    // ========================================================================
+    // WHAT: "Shadow" of this vector onto another vector
+    //
+    // MATH: proj_b(a) = (a·b / b·b) × b
+    //
+    // BREAKDOWN:
+    //   1. a·b = how much of a points along b
+    //   2. b·b = |b|² (length squared of b)
+    //   3. (a·b / b·b) = scalar scale factor
+    //   4. Multiply b by this factor
+    //
+    // VISUAL:
+    //        a
+    //       /|
+    //      / |
+    //     /  | (perpendicular drop)
+    //    /   |
+    //   /____|________  b
+    //    proj (shadow)
+    //
+    // EXAMPLE:
+    //   a = Vec2D(3, 4)
+    //   b = Vec2D(1, 0) (unit vector along x-axis)
+    //   a·b = 3×1 + 4×0 = 3
+    //   b·b = 1×1 + 0×0 = 1
+    //   proj = (3/1) × Vec2D(1,0) = Vec2D(3, 0)
+    //   (The "shadow" of (3,4) on x-axis is (3,0))
+    //
+    // USE CASES:
+    //   - Decompose velocity into components
+    //   - Calculate force along a direction
+    //   - Find closest point on a line
     UNITS_CONSTEXPR14 Vec2D project(const Vec2D& onto) const {
         double d = onto.dot(onto);
         return numerical::isZero(d) ? Vec2D() : onto * (this->dot(onto) / d);
     }
 
+    // ========================================================================
+    // VECTOR REFLECTION
+    // ========================================================================
+    // WHAT: Mirror this vector across a surface defined by normal vector
+    //
+    // MATH: reflected = v - 2(v·n)n
+    //   where n is normalized (unit length) normal vector
+    //
+    // BREAKDOWN:
+    //   1. v·n = how much v points into the surface
+    //   2. 2(v·n)n = twice the perpendicular component
+    //   3. v - 2(v·n)n = original - 2×perp = reflected
+    //
+    // VISUAL:
+    //      v (incoming)
+    //       \
+    //        \
+    //   ------n------- surface (normal n)
+    //          \
+    //           \ reflected (outgoing)
+    //
+    // LAW OF REFLECTION: angle_in = angle_out
+    //
+    // EXAMPLE (bounce off vertical wall):
+    //   v = Vec2D(3, 4) (moving right-up)
+    //   normal = Vec2D(1, 0) (wall faces right)
+    //   v·n = 3×1 + 4×0 = 3
+    //   reflected = (3,4) - 2×3×(1,0) = (3,4) - (6,0) = (-3,4)
+    //   (Now moving left-up, bounced off wall)
+    //
+    // USE CASES:
+    //   - Ball bouncing off walls
+    //   - Laser/light reflection
+    //   - Collision response
     UNITS_CONSTEXPR14 Vec2D reflect(const Vec2D& normal) const {
         Vec2D n = normal.normalized();
         return *this - n * (2.0 * this->dot(n));
     }
 
-    // Rotation
+    // ========================================================================
+    // 2D ROTATION
+    // ========================================================================
+    // WHAT: Rotate vector counterclockwise by angle
+    //
+    // MATH (Rotation Matrix):
+    //   [x']   [cos(θ)  -sin(θ)] [x]
+    //   [y'] = [sin(θ)   cos(θ)] [y]
+    //
+    // EXPANDED:
+    //   x' = x×cos(θ) - y×sin(θ)
+    //   y' = x×sin(θ) + y×cos(θ)
+    //
+    // WHY THIS FORMULA:
+    //   Derived from polar coordinates and trig identities
+    //   Preserves vector length (rotation doesn't scale)
+    //
+    // EXAMPLES:
+    //   Vec2D(1,0).rotate(90°):
+    //     x' = 1×cos(90°) - 0×sin(90°) = 1×0 - 0×1 = 0
+    //     y' = 1×sin(90°) + 0×cos(90°) = 1×1 + 0×0 = 1
+    //     Result: Vec2D(0, 1) ✓ (rotated from east to north)
+    //
+    //   Vec2D(5,0).rotate(45°):
+    //     cos(45°) = 0.707, sin(45°) = 0.707
+    //     x' = 5×0.707 - 0×0.707 = 3.535
+    //     y' = 5×0.707 + 0×0.707 = 3.535
+    //     Result: Vec2D(3.535, 3.535) (northeast, 45°)
+    //
+    // VISUAL:
+    //        y (north)
+    //        |
+    //        |  / rotated
+    //        | /
+    //   -----+--------- x (east)
+    //        |   original →
+    //
+    // SIGN CONVENTION:
+    //   Positive angle: counterclockwise (math standard)
+    //   Negative angle: clockwise
+    //
+    // USE CASES:
+    //   - Transform robot coordinate frames
+    //   - Rotate heading vectors
+    //   - Orbital motion
+    //   - Steering calculations
     UNITS_CONSTEXPR14 Vec2D rotate(const Radians& angle) const {
         double c = angle.cos();
         double s = angle.sin();
@@ -279,41 +448,170 @@ public:
     PIDController(double kP, double kI, double kD)
         : PIDController(Gains(kP, kI, kD)) {}
 
+    // ========================================================================
+    // PID CALCULATE - Main control loop
+    // ========================================================================
+    // WHAT: Calculate control output to minimize error
+    //
+    // PID EQUATION:
+    //   output = kP×error + kI×∫error×dt + kD×(derror/dt) + kF×feedforward
+    //
+    // TERMS EXPLAINED:
+    //
+    // 1. PROPORTIONAL (P): Responds to current error
+    //    - Formula: P = kP × error
+    //    - Meaning: Bigger error → bigger correction
+    //    - Problem: Can't eliminate steady-state error, oscillates
+    //    - Analogy: Pressing gas pedal harder when you're further from target speed
+    //
+    // 2. INTEGRAL (I): Responds to accumulated past error
+    //    - Formula: I = kI × ∑(error × dt)
+    //    - Meaning: Sums up all past errors over time
+    //    - Purpose: Eliminates steady-state error (persistent offset)
+    //    - Problem: Can "wind up" (accumulate too much), causes overshoot
+    //    - Analogy: Keeps pushing harder if you haven't reached target yet
+    //
+    // 3. DERIVATIVE (D): Responds to rate of change of error
+    //    - Formula: D = kD × (Δerror / Δt)
+    //    - Meaning: How fast is error changing?
+    //    - Purpose: Damping (reduce oscillation, smooth motion)
+    //    - Problem: Amplifies noise (small fluctuations)
+    //    - Analogy: Start braking before you reach target to avoid overshoot
+    //
+    // 4. FEEDFORWARD (F): Pre-calculated control based on target
+    //    - Formula: F = kF × setpoint
+    //    - Meaning: "I know I'll need this much control for this target"
+    //    - Purpose: Faster response, less reliance on feedback
+    //    - Analogy: You know a heavy load needs more gas, don't wait for error
+    //
+    // EXAMPLE (Temperature control, target = 25°C):
+    //   Current temp = 20°C
+    //   Error = 25 - 20 = 5°C (too cold)
+    //
+    //   P term: kP×5 = immediate heating proportional to 5° difference
+    //   I term: kI×(sum of all past errors) = compensate for heat loss
+    //   D term: kD×(how fast temp is changing) = don't overshoot 25°
+    //   Total: P + I + D = heater power
+    //
+    // TUNING GUIDELINES:
+    //   Start: kP only, then add D, then add I
+    //   - Increase kP until oscillation starts
+    //   - Add kD to dampen oscillations
+    //   - Add small kI to eliminate steady-state error
+    //
+    // ========================================================================
     double calculate(double error, double dt, double feedforward = 0) {
+        // First call initialization
         if (!initialized_) {
             prev_error_ = error;
             prev_derivative_ = 0;
             initialized_ = true;
         }
 
-        // Proportional term
+        // ====================================================================
+        // PROPORTIONAL TERM
+        // ====================================================================
+        // MATH: P = kP × error
+        // EFFECT: Immediate response to current error
+        // LARGER kP: Faster response, but more oscillation
+        // EXAMPLE: error = 10, kP = 0.5 → P = 5
         double p = gains_.kP * error;
 
-        // Integral term with clamping
+        // ====================================================================
+        // INTEGRAL TERM (with anti-windup)
+        // ====================================================================
+        // MATH: I = kI × ∫error dt ≈ kI × sum(error × dt)
+        //
+        // DISCRETE INTEGRATION (Riemann sum):
+        //   integral += error × dt
+        //   This approximates the area under the error curve
+        //
+        // WHY CLAMPING (Anti-windup):
+        //   If error persists (e.g., stuck against wall), integral grows huge
+        //   When error finally decreases, huge integral causes massive overshoot
+        //   Solution: Limit integral to reasonable range [-iMax, +iMax]
+        //
+        // EXAMPLE:
+        //   dt = 0.01s, error = 5 for 10 steps
+        //   integral = 5×0.01 + 5×0.01 + ... = 0.5 after 10 steps
+        //   If kI = 2, then I = 2 × 0.5 = 1.0
         integral_ += error * dt;
         integral_ = numerical::clamp(integral_, -gains_.iMax, gains_.iMax);
         double i = gains_.kI * integral_;
 
-        // Derivative term with filtering
+        // ====================================================================
+        // DERIVATIVE TERM (with low-pass filtering)
+        // ====================================================================
+        // MATH: D = kD × (derror/dt) ≈ kD × (error - prev_error) / dt
+        //
+        // PROBLEM: Derivative amplifies noise!
+        //   If error jumps from sensor noise: 5.0 → 5.1 → 5.0
+        //   Raw derivative: 0.1/0.01 = 10 (huge spike!)
+        //
+        // SOLUTION: Low-pass filter
+        //   filtered_D = α×previous_D + (1-α)×new_D
+        //   α = 0.9 means 90% old value, 10% new value (smooth)
+        //
+        // EXAMPLE:
+        //   prev_error = 10, error = 8, dt = 0.1
+        //   raw_derivative = (8-10)/0.1 = -20 (error decreasing fast)
+        //   If prev filtered = -15, α = 0.9:
+        //   derivative = 0.9×(-15) + 0.1×(-20) = -13.5 - 2 = -15.5
+        //   D = kD × (-15.5)
         double raw_derivative = numerical::safeDivide(error - prev_error_, dt);
         double derivative = derivative_alpha_ * prev_derivative_ +
                           (1.0 - derivative_alpha_) * raw_derivative;
         double d = gains_.kD * derivative;
 
+        // Update state for next iteration
         prev_error_ = error;
         prev_derivative_ = derivative;
 
-        // Calculate output with feedforward
+        // ====================================================================
+        // COMBINE ALL TERMS
+        // ====================================================================
+        // Total output = P + I + D + Feedforward
+        //
+        // P: React to current error (main driver)
+        // I: Fix persistent offset
+        // D: Smooth the response
+        // F: Pre-compensate based on known system behavior
         double output = p + i + d + gains_.kF * feedforward;
 
-        // Apply output saturation
+        // ====================================================================
+        // OUTPUT SATURATION
+        // ====================================================================
+        // PROBLEM: Can't apply infinite control
+        //   Motor PWM: limited to [0, 255]
+        //   Heater: can't be more than 100% on
+        //
+        // SOLUTION: Clamp output to physical limits
+        //   This prevents damaging actuators
         double saturated_output = numerical::clamp(output, gains_.outputMin, gains_.outputMax);
 
-        // Anti-windup: reduce integral if output is saturated
+        // ====================================================================
+        // ANTI-WINDUP (Back-calculation method)
+        // ====================================================================
+        // PROBLEM: If output is saturated, integral keeps growing!
+        //   Example: Motor at 100%, but error persists
+        //   Integral grows huge while saturated
+        //   When error finally reduces, huge integral causes overshoot
+        //
+        // SOLUTION: When saturated, reduce integral
+        //   1. Calculate excess = output - saturated_output
+        //   2. Remove this excess from integral
+        //   3. Use gradual reduction (0.1 factor) for stability
+        //
+        // MATH:
+        //   If output=120 but saturated_output=100 (limit):
+        //   excess = 120 - 100 = 20
+        //   Reduce integral by: 20 / kI × 0.1
+        //
+        // WHY: Prevents integral windup during saturation
+        //      Allows faster recovery when error changes
         if (output != saturated_output && gains_.kI != 0) {
-            // Back-calculation anti-windup
             double excess = output - saturated_output;
-            integral_ -= excess / gains_.kI * 0.1;  // Gradual reduction
+            integral_ -= excess / gains_.kI * 0.1;
         }
 
         return saturated_output;
@@ -411,24 +709,155 @@ private:
     double accel_time_;
     double cruise_time_;
 
+    // ========================================================================
+    // CALCULATE MOTION PROFILE
+    // ========================================================================
+    // WHAT: Plan a smooth motion from start to goal with acceleration limits
+    //
+    // WHY: Prevents:
+    //   - Mechanical stress (instant acceleration damages motors/gears)
+    //   - Wheel slip (sudden acceleration loses traction)
+    //   - Jerky motion (uncomfortable, inaccurate)
+    //   - Following errors (controller can't keep up with instant changes)
+    //
+    // TWO PROFILE TYPES:
+    //
+    // 1. TRAPEZOIDAL PROFILE (long distance):
+    //    Velocity
+    //      ^     ___________
+    //      |    /           \
+    //      |   /             \
+    //      |  /               \
+    //      | /                 \
+    //      |/___________________|> Time
+    //       accel cruise  decel
+    //
+    //    Phases:
+    //    - Accelerate to max velocity
+    //    - Cruise at max velocity
+    //    - Decelerate to stop
+    //
+    // 2. TRIANGULAR PROFILE (short distance):
+    //    Velocity
+    //      ^      /\
+    //      |     /  \
+    //      |    /    \
+    //      |   /      \
+    //      |  /        \
+    //      |_/__________|> Time
+    //       accel decel
+    //
+    //    Phases:
+    //    - Accelerate (never reach max velocity!)
+    //    - Immediately decelerate
+    //    - Distance too short for cruise phase
+    //
+    // ========================================================================
     void calculate() {
         double distance = std::abs(goal_.position - initial_.position);
 
-        // Calculate time to reach max velocity
+        // ====================================================================
+        // CALCULATE ACCELERATION DISTANCE
+        // ====================================================================
+        // QUESTION: How far do we travel while accelerating to max velocity?
+        //
+        // KINEMATIC EQUATION: v² = v₀² + 2a×d
+        //   Where: v = final velocity (max velocity)
+        //          v₀ = initial velocity (0)
+        //          a = acceleration
+        //          d = distance traveled
+        //
+        // SOLVE FOR d:
+        //   v² = 0 + 2×a×d
+        //   d = v² / (2×a)
+        //
+        // EXAMPLE:
+        //   max_velocity = 2 m/s
+        //   acceleration = 1 m/s²
+        //   accel_dist = (2²) / (2×1) = 4 / 2 = 2 meters
+        //   (Takes 2 meters to reach 2 m/s at 1 m/s² acceleration)
         double accel_dist = constraints_.maxVelocity * constraints_.maxVelocity /
                            (2.0 * constraints_.maxAcceleration);
 
+        // ====================================================================
+        // DETERMINE PROFILE TYPE
+        // ====================================================================
+        // COMPARISON: Do we have enough distance to reach max velocity?
+        //
+        // Total distance needed to accel + decel = 2 × accel_dist
+        //
+        // IF (2 × accel_dist > distance):
+        //   TRIANGULAR profile - not enough room to reach max velocity
+        //   Must start decelerating before reaching max!
+        //
+        // ELSE:
+        //   TRAPEZOIDAL profile - enough room for cruise phase
+        //   Accelerate, cruise at max, then decelerate
+        //
         if (2.0 * accel_dist > distance) {
-            // Triangular profile (never reaches max velocity)
+            // ================================================================
+            // TRIANGULAR PROFILE
+            // ================================================================
+            // PROBLEM: Distance too short, can't reach max velocity
+            // SOLUTION: Calculate peak velocity we CAN reach
+            //
+            // KINEMATIC EQUATION: v² = 2×a×d
+            //   But distance is split: half for accel, half for decel
+            //   So: d_accel = distance / 2
+            //
+            // TIME TO ACCEL: t = √(distance / acceleration)
+            //   Derivation:
+            //   d = ½×a×t² (distance during constant acceleration)
+            //   Solving for t: t = √(2d/a)
+            //   Since we use half distance: t = √(d/a)
+            //
+            // EXAMPLE:
+            //   distance = 1 meter
+            //   acceleration = 1 m/s²
+            //   accel_time = √(1/1) = 1 second
+            //   (Accelerate for 1s, decelerate for 1s, total 2s)
             accel_time_ = std::sqrt(distance / constraints_.maxAcceleration);
-            cruise_time_ = 0;
+            cruise_time_ = 0;  // No cruise phase!
+
         } else {
-            // Trapezoidal profile
+            // ================================================================
+            // TRAPEZOIDAL PROFILE
+            // ================================================================
+            // ENOUGH DISTANCE: Can reach max velocity and cruise
+            //
+            // ACCEL TIME: t = v / a
+            //   How long to reach max velocity?
+            //   From: v = v₀ + a×t with v₀=0
+            //   t = v / a
+            //
+            // CRUISE DISTANCE:
+            //   Total distance = accel_dist + cruise_dist + decel_dist
+            //   cruise_dist = total - accel_dist - decel_dist
+            //   cruise_dist = total - 2×accel_dist
+            //   (Because accel_dist = decel_dist)
+            //
+            // CRUISE TIME:
+            //   time = distance / velocity
+            //   cruise_time = cruise_dist / max_velocity
+            //
+            // EXAMPLE:
+            //   distance = 10 meters
+            //   max_velocity = 2 m/s
+            //   acceleration = 1 m/s²
+            //
+            //   accel_dist = 2²/(2×1) = 2 m
+            //   accel_time = 2/1 = 2 s
+            //   cruise_dist = 10 - 2×2 = 6 m
+            //   cruise_time = 6/2 = 3 s
+            //   decel_time = 2 s
+            //   total_time = 2 + 3 + 2 = 7 s
             accel_time_ = constraints_.maxVelocity / constraints_.maxAcceleration;
             double cruise_dist = distance - 2.0 * accel_dist;
             cruise_time_ = cruise_dist / constraints_.maxVelocity;
         }
 
+        // Total time = accel + cruise + decel
+        // (decel time = accel time, symmetric profile)
         end_time_ = 2.0 * accel_time_ + cruise_time_;
     }
 
