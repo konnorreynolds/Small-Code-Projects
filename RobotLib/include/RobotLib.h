@@ -59,6 +59,11 @@
 #include "units_utilities.h"
 
 // ============================================================================
+// Output Module (Clean logging and printing for examples)
+// ============================================================================
+#include "units_output.h"
+
+// ============================================================================
 // Estimation Module (Kalman filters, state estimation)
 // ============================================================================
 #include "units_estimation.h"
