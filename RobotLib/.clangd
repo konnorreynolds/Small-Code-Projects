@@ -1,0 +1,32 @@
+# Clangd configuration for RobotLib
+# This tells clangd to use C++14 or later to avoid false warnings
+
+CompileFlags:
+  Add:
+    - "-std=c++14"
+    - "-DUNITS_CONSTEXPR14=constexpr"
+  Remove:
+    - "-std=c++11"
+    - "-std=gnu++11"
+
+# Diagnostics configuration
+Diagnostics:
+  # Suppress warnings about C++14 features in constexpr
+  Suppress:
+    - "constexpr-not-const"
+  UnusedIncludes: Strict
+  MissingIncludes: Strict
+
+# Index configuration
+Index:
+  Background: Build
+
+# InlayHints configuration
+InlayHints:
+  Enabled: Yes
+  ParameterNames: Yes
+  DeducedTypes: Yes
+
+# Completion configuration
+Completion:
+  AllScopes: Yes
