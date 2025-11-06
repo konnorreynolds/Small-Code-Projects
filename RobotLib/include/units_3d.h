@@ -53,11 +53,76 @@ public:
         return numerical::isZero(mag) ? Vec3D() : Vec3D(x / mag, y / mag, z / mag);
     }
 
-    // Vector operations
+    // ========================================================================
+    // DOT PRODUCT (3D)
+    // ========================================================================
+    // MATH: a · b = ax×bx + ay×by + az×bz
+    //
+    // GEOMETRIC MEANING:
+    //   a · b = |a| × |b| × cos(θ)
+    //
+    // USE CASES:
+    //   - Find angle between vectors: θ = acos((a·b)/(|a||b|))
+    //   - Check if perpendicular: if a·b = 0
+    //   - Project one vector onto another
+    //   - Calculate work: W = Force · displacement
+    //
+    // EXAMPLE:
+    //   a = (1, 2, 3)
+    //   b = (4, 5, 6)
+    //   a·b = 1×4 + 2×5 + 3×6 = 4 + 10 + 18 = 32
+    //
     constexpr double dot(const Vec3D& other) const {
         return x * other.x + y * other.y + z * other.z;
     }
 
+    // ========================================================================
+    // CROSS PRODUCT (3D) - Returns perpendicular vector
+    // ========================================================================
+    // WHAT: Creates vector perpendicular to both input vectors
+    //
+    // MATH:
+    //   a × b = (ay×bz - az×by, az×bx - ax×bz, ax×by - ay×bx)
+    //
+    // MNEMONIC (using determinant):
+    //   | i    j    k  |
+    //   | ax   ay   az |
+    //   | bx   by   bz |
+    //
+    // PROPERTIES:
+    //   - Result perpendicular to both a and b
+    //   - Magnitude = |a| × |b| × sin(θ)
+    //   - Direction follows right-hand rule
+    //   - Anti-commutative: a×b = -(b×a)
+    //   - a×a = 0 (parallel vectors)
+    //
+    // GEOMETRIC MEANING:
+    //   |a × b| = area of parallelogram formed by a and b
+    //
+    // RIGHT-HAND RULE:
+    //   Point fingers along a, curl toward b
+    //   Thumb points in direction of a×b
+    //
+    // EXAMPLES:
+    //   1. Standard basis:
+    //      (1,0,0) × (0,1,0) = (0,0,1)  ✓ (x × y = z)
+    //      (0,1,0) × (0,0,1) = (1,0,0)  ✓ (y × z = x)
+    //      (0,0,1) × (1,0,0) = (0,1,0)  ✓ (z × x = y)
+    //
+    //   2. Find normal to plane:
+    //      v1 = (1,0,0), v2 = (0,1,0)
+    //      normal = v1 × v2 = (0,0,1) (points up from XY plane)
+    //
+    //   3. Calculate torque:
+    //      τ = r × F (position × force)
+    //
+    // USE CASES:
+    //   - Find normal vector to a surface
+    //   - Calculate angular momentum: L = r × p
+    //   - Calculate torque: τ = r × F
+    //   - Determine if vectors are parallel (cross = 0)
+    //   - Find rotation axis between two orientations
+    //
     constexpr Vec3D cross(const Vec3D& other) const {
         return Vec3D(
             y * other.z - z * other.y,
@@ -137,8 +202,73 @@ public:
     constexpr Quaternion(double w, double x, double y, double z)
         : w(w), x(x), y(y), z(z) {}
 
-    // Create from axis-angle representation
-    // axis should be normalized, angle in radians
+    // ========================================================================
+    // CREATE QUATERNION FROM AXIS-ANGLE
+    // ========================================================================
+    // WHAT: Create rotation quaternion from rotation axis and angle
+    //
+    // INPUTS:
+    //   axis: Unit vector defining rotation axis (MUST be normalized!)
+    //   angleRad: Rotation angle in radians (right-hand rule)
+    //
+    // FORMULA:
+    //   q = (cos(θ/2), axis.x×sin(θ/2), axis.y×sin(θ/2), axis.z×sin(θ/2))
+    //   q = (w, x, y, z)
+    //
+    // WHY HALF ANGLE (θ/2)?
+    //   Quaternion rotation formula: v' = q × v × q*
+    //   This applies the rotation TWICE (once for q, once for q*)
+    //   To get rotation of θ, we need q to represent θ/2
+    //   Mathematical property of quaternion algebra!
+    //
+    // DERIVATION:
+    //   From Rodrigues' rotation formula and quaternion algebra:
+    //   q = cos(θ/2) + sin(θ/2) × (axis.x×i + axis.y×j + axis.z×k)
+    //   where i, j, k are quaternion basis elements
+    //
+    // COMPONENTS:
+    //   w (scalar): cos(θ/2)
+    //     - w=1 (θ=0°): no rotation
+    //     - w=0 (θ=180°): half rotation
+    //     - w=-1 (θ=360°): full rotation (same as no rotation!)
+    //
+    //   (x,y,z) (vector): axis × sin(θ/2)
+    //     - Encodes both axis direction and rotation amount
+    //     - Length = sin(θ/2)
+    //
+    // EXAMPLES:
+    //
+    // 1. 90° rotation around Z-axis:
+    //    axis = (0, 0, 1)
+    //    angle = π/2 (90°)
+    //    halfAngle = π/4 (45°)
+    //    w = cos(π/4) = 0.707
+    //    x = 0 × sin(π/4) = 0
+    //    y = 0 × sin(π/4) = 0
+    //    z = 1 × sin(π/4) = 0.707
+    //    q = (0.707, 0, 0, 0.707)
+    //
+    // 2. 180° rotation around X-axis:
+    //    axis = (1, 0, 0)
+    //    angle = π (180°)
+    //    halfAngle = π/2 (90°)
+    //    w = cos(π/2) = 0
+    //    x = 1 × sin(π/2) = 1
+    //    y = 0 × sin(π/2) = 0
+    //    z = 0 × sin(π/2) = 0
+    //    q = (0, 1, 0, 0)
+    //
+    // 3. Identity (no rotation):
+    //    angle = 0
+    //    halfAngle = 0
+    //    w = cos(0) = 1
+    //    x, y, z = anything × sin(0) = 0
+    //    q = (1, 0, 0, 0)  ← Identity quaternion
+    //
+    // UNIT QUATERNION:
+    //   w² + x² + y² + z² = cos²(θ/2) + sin²(θ/2) = 1
+    //   All rotation quaternions have magnitude 1 (unit quaternions)
+    //
     static UNITS_CONSTEXPR14 Quaternion fromAxisAngle(const Vec3D& axis, double angleRad) {
         double halfAngle = angleRad * 0.5;
         double s = std::sin(halfAngle);
@@ -146,8 +276,74 @@ public:
         return Quaternion(c, axis.x * s, axis.y * s, axis.z * s);
     }
 
-    // Create from Euler angles (roll, pitch, yaw in radians)
-    // Convention: ZYX (yaw, pitch, roll) intrinsic rotations
+    // ========================================================================
+    // CREATE QUATERNION FROM EULER ANGLES
+    // ========================================================================
+    // WHAT: Convert Euler angles (roll, pitch, yaw) to quaternion
+    //
+    // EULER ANGLES:
+    //   Roll (φ): Rotation around X-axis (bank, tilt side-to-side)
+    //   Pitch (θ): Rotation around Y-axis (nose up/down)
+    //   Yaw (ψ): Rotation around Z-axis (compass heading)
+    //
+    // VISUAL (aircraft):
+    //          Pitch (Y-axis)
+    //             ↑
+    //             |
+    //        _____|_____
+    //       /     |     \
+    //      |------●------|  → Roll (X-axis)
+    //       \_____Yaw____/
+    //             (Z-axis down)
+    //
+    // CONVENTION: ZYX (Tait-Bryan angles)
+    //   Apply rotations in order: Yaw → Pitch → Roll
+    //   These are "intrinsic" rotations (each in the rotated frame)
+    //
+    // WHY THIS IS COMPLEX:
+    //   Need to compose three rotations: q = q_yaw × q_pitch × q_roll
+    //   Math expands into complex trig expressions
+    //
+    // FORMULA DERIVATION:
+    //   Start with three axis-angle quaternions:
+    //   q_roll  = (cos(φ/2), sin(φ/2), 0, 0)  [X-axis]
+    //   q_pitch = (cos(θ/2), 0, sin(θ/2), 0)  [Y-axis]
+    //   q_yaw   = (cos(ψ/2), 0, 0, sin(ψ/2))  [Z-axis]
+    //
+    //   Multiply: q = q_yaw × q_pitch × q_roll
+    //   (Using quaternion multiplication rules)
+    //
+    //   Result (after expansion and simplification):
+    //   w = cr×cp×cy + sr×sp×sy
+    //   x = sr×cp×cy - cr×sp×sy
+    //   y = cr×sp×cy + sr×cp×sy
+    //   z = cr×cp×sy - sr×sp×cy
+    //
+    //   Where: cr=cos(roll/2), sr=sin(roll/2), etc.
+    //
+    // MNEMONIC (for signs):
+    //   w: all same products (+ +)
+    //   x: roll differs (- opposite)
+    //   y: pitch differs (+ +)
+    //   z: yaw differs (-)
+    //
+    // EXAMPLE (90° yaw, 0° pitch, 0° roll):
+    //   roll=0, pitch=0, yaw=π/2
+    //   cr=cos(0)=1, sr=sin(0)=0
+    //   cp=cos(0)=1, sp=sin(0)=0
+    //   cy=cos(π/4)=0.707, sy=sin(π/4)=0.707
+    //
+    //   w = 1×1×0.707 + 0×0×0.707 = 0.707
+    //   x = 0×1×0.707 - 1×0×0.707 = 0
+    //   y = 1×0×0.707 + 0×1×0.707 = 0
+    //   z = 1×1×0.707 - 0×0×0.707 = 0.707
+    //   q = (0.707, 0, 0, 0.707)  ← 90° Z-rotation
+    //
+    // GIMBAL LOCK WARNING:
+    //   Euler angles suffer from gimbal lock at pitch = ±90°
+    //   Quaternions don't have this problem!
+    //   That's why we prefer quaternions for 3D rotations
+    //
     static UNITS_CONSTEXPR14 Quaternion fromEuler(double roll, double pitch, double yaw) {
         double cr = std::cos(roll * 0.5);
         double sr = std::sin(roll * 0.5);
