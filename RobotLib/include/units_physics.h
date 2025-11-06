@@ -38,10 +38,10 @@ public:
     constexpr explicit Velocity(double v) : value(v) {}
 
     // Convert to standard SI units (m/s)
+    // C++11 constexpr: must be single return statement
     constexpr double toMetersPerSecond() const {
-        constexpr double dist_factor = distance_ratio::num / static_cast<double>(distance_ratio::den);
-        constexpr double time_factor = time_ratio::den / static_cast<double>(time_ratio::num);
-        return value * dist_factor * time_factor;
+        return value * (distance_ratio::num / static_cast<double>(distance_ratio::den))
+                     * (time_ratio::den / static_cast<double>(time_ratio::num));
     }
 
     // Other common conversions
@@ -51,10 +51,10 @@ public:
     constexpr double toKnots() const { return toMetersPerSecond() * 1.94384449244; }
 
     // Factory methods
+    // C++11 constexpr: must be single return statement
     static constexpr Velocity fromMetersPerSecond(double mps) {
-        constexpr double dist_factor = distance_ratio::den / static_cast<double>(distance_ratio::num);
-        constexpr double time_factor = time_ratio::num / static_cast<double>(time_ratio::den);
-        return Velocity(mps * dist_factor * time_factor);
+        return Velocity(mps * (distance_ratio::den / static_cast<double>(distance_ratio::num))
+                            * (time_ratio::num / static_cast<double>(time_ratio::den)));
     }
 
     static constexpr Velocity fromKilometersPerHour(double kmh) {
@@ -117,10 +117,11 @@ public:
     constexpr explicit Acceleration(double v) : value(v) {}
 
     // Convert to SI units (m/s²)
+    // C++11 constexpr: must be single return statement
     constexpr double toMetersPerSecondSquared() const {
-        constexpr double dist_factor = distance_ratio::num / static_cast<double>(distance_ratio::den);
-        constexpr double time_factor = time_ratio::den / static_cast<double>(time_ratio::num);
-        return value * dist_factor * time_factor * time_factor;
+        return value * (distance_ratio::num / static_cast<double>(distance_ratio::den))
+                     * (time_ratio::den / static_cast<double>(time_ratio::num))
+                     * (time_ratio::den / static_cast<double>(time_ratio::num));
     }
 
     constexpr double toGravities() const {
@@ -128,10 +129,11 @@ public:
     }
 
     // Factory methods
+    // C++11 constexpr: must be single return statement
     static constexpr Acceleration fromMetersPerSecondSquared(double mps2) {
-        constexpr double dist_factor = distance_ratio::den / static_cast<double>(distance_ratio::num);
-        constexpr double time_factor = time_ratio::num / static_cast<double>(time_ratio::den);
-        return Acceleration(mps2 * dist_factor / (time_factor * time_factor));
+        return Acceleration(mps2 * (distance_ratio::den / static_cast<double>(distance_ratio::num))
+                                  / ((time_ratio::num / static_cast<double>(time_ratio::den))
+                                  * (time_ratio::num / static_cast<double>(time_ratio::den))));
     }
 
     static constexpr Acceleration fromGravities(double g) {
