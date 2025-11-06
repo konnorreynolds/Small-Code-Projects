@@ -29,6 +29,7 @@ std::cout << velocity.toMetersPerSecond() << " m/s\n";
 - ✅ **State Estimation** - Template-based Extended Kalman Filter (EKF)
 - ✅ **Path Planning** - A* pathfinding and Dubins paths for car-like robots
 - ✅ **Model Predictive Control** - MPC with constraints for optimal trajectory tracking
+- ✅ **Robot Simulation & Visualization** - Test algorithms in simulation before hardware (SDL2, zero overhead)
 - ✅ **ROS2 Integration** - Message conversion helpers for ROS2 projects
 - ✅ **MATLAB/Simulink Support** - Code generation and data export utilities
 - ✅ **Fluent/Chaining API** - Beautiful method chaining for easy robotics programming
@@ -146,7 +147,23 @@ The library is now organized into four logical components:
    - Debug macros for conditional compilation
    - Replaces cluttered std::cout calls
 
-Total size: ~228KB (header-only library)
+### Optional Simulation Modules (Zero Overhead)
+
+14. **[units_simulation.h](include/units_simulation.h)** (10KB) ⭐ NEW in v2.2! (Optional)
+   - 2D physics simulation for differential drive robots
+   - Collision detection and world boundaries
+   - Sensor simulation (ultrasonic, IR, encoders)
+   - Realistic noise modeling
+   - **Zero overhead** - completely separate from main library
+
+15. **[units_visualization.h](include/units_visualization.h)** (12KB) ⭐ NEW in v2.2! (Optional)
+   - Real-time SDL2-based visualization
+   - Robot, obstacle, and path rendering
+   - Sensor ray visualization
+   - Interactive controls
+   - **Requires SDL2** - only for development/testing
+
+Total size: ~228KB (header-only library) + ~22KB (optional simulation)
 
 ## Why This Architecture?
 
@@ -399,6 +416,7 @@ RobotLib includes comprehensive documentation:
 
 - **[QUICKSTART.md](QUICKSTART.md)** - Step-by-step getting started guide
 - **[examples/README.md](examples/README.md)** - 20 core examples + 6 platform-specific examples (Arduino IDE, PlatformIO, ESP32, STM32, Teensy)
+- **[simulation/README.md](simulation/README.md)** - Robot simulation & visualization guide (SDL2-based, optional)
 - **[docs/FINAL_VERIFICATION.md](docs/FINAL_VERIFICATION.md)** - Pre-use validation report
 - **[docs/TEST_REPORT.md](docs/TEST_REPORT.md)** - Comprehensive testing results
 - **[docs/FEATURE_SUMMARY.md](docs/FEATURE_SUMMARY.md)** - Complete API reference
