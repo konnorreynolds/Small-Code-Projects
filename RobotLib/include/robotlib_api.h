@@ -191,26 +191,116 @@ public:
         return *this;
     }
 
+    // ========================================================================
+    // UPDATE - Main control loop (with position sensor only)
+    // ========================================================================
+    // WHAT: Called every loop iteration to update arm control
+    //
+    // INPUTS:
+    //   dt: Time since last update (seconds)
+    //   measured_position: Current angle from encoder/potentiometer
+    //
+    // ALGORITHM:
+    //   1. Calculate velocity from position change (numerical derivative)
+    //   2. Calculate PID control output
+    //   3. Add feedforward compensation
+    //   4. Clamp to safe limits
+    //
+    // ========================================================================
     template<typename AngleRatio>
     Arm& update(double dt, const Angle<AngleRatio>& measured_position) {
-        // Calculate velocity from position change
+        // ====================================================================
+        // STEP 1: CALCULATE VELOCITY (Numerical Differentiation)
+        // ====================================================================
+        // FORMULA: velocity = Δposition / Δtime
+        //
+        // MATH:
+        //   ω = (θ_new - θ_old) / dt
+        //
+        // EXAMPLE:
+        //   Old position: 30° = 0.524 rad
+        //   New position: 35° = 0.611 rad
+        //   Time step: dt = 0.02 seconds (50Hz control loop)
+        //   Velocity = (0.611 - 0.524) / 0.02 = 4.35 rad/s
+        //
+        // WHY: We need velocity for derivative term and feedforward
+        //
         double prev_pos = current_position_.toRadians();
         current_position_ = Radians::fromRadians(measured_position.toRadians());
         double new_pos = current_position_.toRadians();
         current_velocity_ = RadiansPerSecond::fromRadiansPerSecond((new_pos - prev_pos) / dt);
 
         if (pid_enabled_) {
+            // ================================================================
+            // STEP 2: PID CONTROL
+            // ================================================================
+            // ERROR = Target - Current (how far off we are)
+            //
+            // EXAMPLE:
+            //   Target: 90°
+            //   Current: 75°
+            //   Error: 90° - 75° = 15° (need to move 15° more)
+            //
+            // SIGN:
+            //   Positive error: arm is below target (move up)
+            //   Negative error: arm is above target (move down)
+            //
             double error = target_position_.toRadians() - current_position_.toRadians();
+
+            // PID calculates control output [-1, 1]
+            // Then scale by speed limit (user-defined 0-1)
+            //
+            // EXAMPLE:
+            //   PID output: 0.8 (80% power)
+            //   Speed limit: 0.5 (user set max 50% speed)
+            //   Final: 0.8 × 0.5 = 0.4 (40% duty cycle)
+            //
             duty_cycle_ = pid_.calculate(error, dt) * speed_;
 
-            // Add feedforward if enabled
+            // ================================================================
+            // STEP 3: FEEDFORWARD COMPENSATION
+            // ================================================================
+            // WHY: PID reacts to error AFTER it happens
+            //      Feedforward predicts what control is needed
+            //
+            // TWO TERMS:
+            //
+            // 1. STATIC FRICTION (kS):
+            //    Constant force needed to overcome friction
+            //    SIGN: Direction depends on which way we're moving
+            //    EXAMPLE: kS=0.05 means always need 5% just to start moving
+            //
+            // 2. VELOCITY FEEDFORWARD (kV):
+            //    More power needed for faster motion
+            //    FORMULA: kV × desired_velocity
+            //    EXAMPLE: kV=0.001, velocity=10 rad/s → 0.01 (1% more power)
+            //
+            // TOTAL FEEDFORWARD = kS×sign(error) + kV×velocity
+            //
             if (ff_enabled_) {
-                double velocity = error / dt;  // Simplified
-                duty_cycle_ += kS_ * (error > 0 ? 1.0 : -1.0) + kV_ * velocity;
+                // Estimate desired velocity from error
+                // (Simplified: error/dt gives crude velocity estimate)
+                double velocity = error / dt;
+
+                // Static friction: overcome stiction
+                // Sign: +1 if moving forward, -1 if backward
+                double friction_comp = kS_ * (error > 0 ? 1.0 : -1.0);
+
+                // Velocity feedforward: more power for faster motion
+                double velocity_comp = kV_ * velocity;
+
+                duty_cycle_ += friction_comp + velocity_comp;
             }
         }
 
-        // Clamp output
+        // ====================================================================
+        // STEP 4: SATURATION (Safety Limits)
+        // ====================================================================
+        // PROBLEM: Can't command more than 100% power or less than -100%
+        // SOLUTION: Clamp to [-1.0, 1.0]
+        //
+        // WHY: Protects motor from over-voltage and ensures safe operation
+        //
         if (duty_cycle_ < -1.0) duty_cycle_ = -1.0;
         if (duty_cycle_ > 1.0) duty_cycle_ = 1.0;
 
@@ -354,23 +444,131 @@ public:
     // Control
     // ========================================================================
 
+    // ========================================================================
+    // DRIVE - Differential Drive Kinematics
+    // ========================================================================
+    // WHAT: Convert desired robot motion to individual wheel speeds
+    //
+    // INPUTS:
+    //   linear: Forward/backward speed (m/s)
+    //   angular: Rotation speed (rad/s)
+    //
+    // OUTPUTS:
+    //   left_duty_, right_duty_: Motor power for each wheel
+    //
+    // DIFFERENTIAL DRIVE MATH:
+    //   Robot has two wheels separated by wheelbase L
+    //   To move forward: both wheels same speed
+    //   To turn: wheels at different speeds
+    //
+    // FORMULAS:
+    //   v_left = v - (ω × L/2)
+    //   v_right = v + (ω × L/2)
+    //
+    //   where:
+    //   v = linear velocity (m/s)
+    //   ω = angular velocity (rad/s)
+    //   L = wheelbase (distance between wheels)
+    //
+    // ========================================================================
     DifferentialDrive& drive(const MetersPerSecond& linear, const RadiansPerSecond& angular) {
         linear_velocity_ = linear;
         angular_velocity_ = angular;
 
-        // Convert to wheel velocities
+        // ====================================================================
+        // DIFFERENTIAL DRIVE KINEMATICS
+        // ====================================================================
+        // CONCEPT: To turn, one wheel goes faster than the other
+        //
+        // VISUAL (top view of robot):
+        //       Forward (v)
+        //           ↑
+        //      [L]  ●  [R]    L = Left wheel
+        //       |←─→|         R = Right wheel
+        //         L           ← = Wheelbase
+        //
+        // STRAIGHT MOTION (ω=0):
+        //   Both wheels same speed: v_L = v_R = v
+        //   Robot moves straight forward
+        //
+        // PURE ROTATION (v=0):
+        //   Wheels rotate opposite: v_L = -ω×L/2, v_R = +ω×L/2
+        //   Robot spins in place
+        //
+        // COMBINED (v≠0, ω≠0):
+        //   Robot follows a curved path (arc)
+        //
+        // ====================================================================
+
         double v = linear.toMetersPerSecond();
         double w = angular.toRadiansPerSecond();
         double L = wheelbase_.toMeters();
 
+        // ====================================================================
+        // WHEEL VELOCITY CALCULATION
+        // ====================================================================
+        // DERIVATION:
+        //   When robot turns, it follows circular arc with radius R
+        //   Left wheel follows smaller circle: R - L/2
+        //   Right wheel follows larger circle: R + L/2
+        //
+        // MATH:
+        //   v_left = v - (ω × L/2)
+        //   v_right = v + (ω × L/2)
+        //
+        // WHY SUBTRACT/ADD L/2?
+        //   ω × (L/2) = speed difference needed for that wheel
+        //   Left wheel is closer to turn center → slower
+        //   Right wheel is farther from turn center → faster
+        //
+        // EXAMPLES:
+        //
+        // 1. STRAIGHT FORWARD (v=1 m/s, ω=0, L=0.5m):
+        //    v_left = 1 - (0 × 0.25) = 1 m/s
+        //    v_right = 1 + (0 × 0.25) = 1 m/s
+        //    Both wheels same → straight
+        //
+        // 2. TURN LEFT (v=1 m/s, ω=2 rad/s, L=0.5m):
+        //    v_left = 1 - (2 × 0.25) = 1 - 0.5 = 0.5 m/s
+        //    v_right = 1 + (2 × 0.25) = 1 + 0.5 = 1.5 m/s
+        //    Left slower, right faster → curves left
+        //
+        // 3. SPIN IN PLACE (v=0, ω=3 rad/s, L=0.5m):
+        //    v_left = 0 - (3 × 0.25) = -0.75 m/s (backward!)
+        //    v_right = 0 + (3 × 0.25) = 0.75 m/s (forward)
+        //    Wheels oppose → spins clockwise
+        //
         double left_vel = v - (w * L / 2.0);
         double right_vel = v + (w * L / 2.0);
 
-        // Convert to duty cycles (-1.0 to 1.0)
+        // ====================================================================
+        // CONVERT TO DUTY CYCLE (Motor Power)
+        // ====================================================================
+        // DUTY CYCLE: Fraction of max speed (-1.0 to 1.0)
+        //   -1.0 = full power backward
+        //    0.0 = stopped
+        //   +1.0 = full power forward
+        //
+        // MATH:
+        //   duty = velocity / max_velocity
+        //
+        // EXAMPLE:
+        //   left_vel = 0.5 m/s
+        //   max_speed = 2.0 m/s
+        //   left_duty = 0.5 / 2.0 = 0.25 (25% power)
+        //
         left_duty_ = left_vel / max_speed_.toMetersPerSecond();
         right_duty_ = right_vel / max_speed_.toMetersPerSecond();
 
-        // Clamp
+        // ====================================================================
+        // SATURATION (Safety Limits)
+        // ====================================================================
+        // PROBLEM: Calculated duty might exceed ±1.0
+        //   Happens when turning very fast or max_speed too low
+        //
+        // SOLUTION: Clamp to safe range
+        //   This might reduce turn rate slightly but prevents motor damage
+        //
         if (left_duty_ < -1.0) left_duty_ = -1.0;
         if (left_duty_ > 1.0) left_duty_ = 1.0;
         if (right_duty_ < -1.0) right_duty_ = -1.0;
@@ -428,19 +626,147 @@ public:
         return *this;
     }
 
+    // ========================================================================
+    // UPDATE ODOMETRY - Track robot position from wheel encoders
+    // ========================================================================
+    // WHAT: Estimate robot's global position from wheel movement
+    //
+    // INPUTS:
+    //   dt: Time since last update (seconds)
+    //   (Uses left_velocity_ and right_velocity_ from sensors)
+    //
+    // OUTPUTS:
+    //   Updates: x_position_, y_position_, theta_ (robot pose)
+    //
+    // WHY: GPS doesn't work indoors, odometry is the fundamental way
+    //      mobile robots know where they are
+    //
+    // ACCURACY: Drifts over time due to wheel slip, but essential for
+    //           short-term navigation and combining with other sensors
+    //
+    // ========================================================================
     DifferentialDrive& updateOdometry(double dt) {
-        // Calculate distance traveled by each wheel since last update
+        // ====================================================================
+        // STEP 1: CALCULATE WHEEL DISPLACEMENT
+        // ====================================================================
+        // FORMULA: distance = velocity × time
+        //
+        // MATH:
+        //   Δd_left = v_left × dt
+        //   Δd_right = v_right × dt
+        //
+        // EXAMPLE:
+        //   Left wheel velocity: 0.5 m/s
+        //   Right wheel velocity: 0.7 m/s
+        //   Time step: dt = 0.02 s (50Hz update rate)
+        //
+        //   left_delta = 0.5 × 0.02 = 0.01 m (1 cm)
+        //   right_delta = 0.7 × 0.02 = 0.014 m (1.4 cm)
+        //
         double left_vel = left_velocity_.toMetersPerSecond();
         double right_vel = right_velocity_.toMetersPerSecond();
 
         double left_delta = left_vel * dt;
         double right_delta = right_vel * dt;
 
-        // Calculate robot motion
+        // ====================================================================
+        // STEP 2: CALCULATE ROBOT CENTER DISPLACEMENT AND ROTATION
+        // ====================================================================
+        //
+        // LINEAR DISTANCE (robot center):
+        //   FORMULA: distance = (left_delta + right_delta) / 2
+        //
+        //   WHY: Robot center is halfway between wheels
+        //        Average of two wheels gives center movement
+        //
+        //   EXAMPLE:
+        //     left_delta = 0.01 m
+        //     right_delta = 0.014 m
+        //     distance = (0.01 + 0.014) / 2 = 0.012 m (robot moved 1.2 cm)
+        //
+        // ROTATION (heading change):
+        //   FORMULA: dθ = (right_delta - left_delta) / wheelbase
+        //
+        //   DERIVATION:
+        //     When wheels travel different distances, robot rotates
+        //     Arc length difference = right_delta - left_delta
+        //     This arc is subtended by wheelbase radius
+        //     Therefore: dθ = arc_difference / wheelbase
+        //
+        //   WHY THIS WORKS:
+        //     Imagine right wheel goes 1m, left wheel goes 0m
+        //     Robot pivots around left wheel
+        //     Right wheel traces arc of length 1m at radius = wheelbase
+        //     Angle = arc_length / radius = 1m / wheelbase
+        //
+        //   EXAMPLE:
+        //     left_delta = 0.01 m
+        //     right_delta = 0.014 m
+        //     wheelbase = 0.5 m
+        //     dθ = (0.014 - 0.01) / 0.5 = 0.004 / 0.5 = 0.008 rad
+        //     = 0.008 × 180/π = 0.46° (small turn to the left)
+        //
+        //   SIGN CONVENTION:
+        //     Positive dθ: counterclockwise rotation (right faster)
+        //     Negative dθ: clockwise rotation (left faster)
+        //     Zero dθ: straight motion (wheels same speed)
+        //
         double distance = (left_delta + right_delta) / 2.0;
         double dtheta = (right_delta - left_delta) / wheelbase_.toMeters();
 
-        // Update position
+        // ====================================================================
+        // STEP 3: UPDATE GLOBAL POSITION
+        // ====================================================================
+        //
+        // COORDINATE SYSTEM:
+        //   X-axis: points "forward" in world frame
+        //   Y-axis: points "left" in world frame
+        //   θ (theta): robot heading angle from X-axis
+        //
+        // VISUAL (top view):
+        //        Y (left)
+        //        ↑
+        //        |
+        //        |   θ
+        //        |  ╱
+        //        | ╱ robot
+        //        |╱
+        //   ─────●────────→ X (forward)
+        //      (0,0)
+        //
+        // ROTATION UPDATE:
+        //   θ_new = θ_old + dθ
+        //   Simply accumulate rotation
+        //
+        // POSITION UPDATE (using heading):
+        //   Robot moved 'distance' meters in direction θ
+        //   Break into X and Y components using trig:
+        //
+        //   dx = distance × cos(θ)
+        //   dy = distance × sin(θ)
+        //
+        //   x_new = x_old + dx
+        //   y_new = y_old + dy
+        //
+        // WHY THIS ORDER:
+        //   Update theta FIRST, then use it for position
+        //   Ensures position uses the average heading during motion
+        //
+        // EXAMPLE:
+        //   Current: (x=1.0, y=2.0, θ=90° = π/2)
+        //   Distance moved: 0.1 m
+        //   Heading change: dθ = 0.1 rad
+        //
+        //   New heading: θ = π/2 + 0.1 = 1.67 rad ≈ 96°
+        //   dx = 0.1 × cos(1.67) = 0.1 × (-0.08) = -0.008 m
+        //   dy = 0.1 × sin(1.67) = 0.1 × (0.996) = 0.0996 m
+        //   New position: (0.992, 2.0996, 96°)
+        //
+        // NOTE ON ACCURACY:
+        //   This is a simplified model (assumes small angle changes)
+        //   For large dt or fast turns, use more sophisticated integration
+        //   But this works well for typical control loop rates (>20Hz)
+        //
         theta_ += dtheta;
         x_position_ += distance * std::cos(theta_);
         y_position_ += distance * std::sin(theta_);
