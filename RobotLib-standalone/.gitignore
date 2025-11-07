@@ -1,0 +1,209 @@
+# ============================================================================
+# RobotLib .gitignore
+# ============================================================================
+
+# Build directories
+build/
+Build/
+BUILD/
+cmake-build-*/
+.cmake/
+
+# Compiled binaries
+*.exe
+*.out
+*.app
+*.bin
+*.elf
+*.hex
+*.a
+*.so
+*.dylib
+*.dll
+
+# Object files
+*.o
+*.obj
+*.ko
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+install_manifest.txt
+CTestTestfile.cmake
+_deps/
+
+# Makefile
+*.d
+*.make
+Makefile
+!*/Makefile  # Keep Makefiles in subdirectories
+
+# Simulation executables
+simulation/basic_simulation
+simulation/pid_navigation
+simulation/line_follower
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+ENV/
+env/
+
+# IDE - VSCode
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# IDE - CLion / IntelliJ
+.idea/
+*.iml
+*.iws
+*.ipr
+cmake-build-*/
+
+# IDE - Eclipse
+.cproject
+.project
+.settings/
+
+# IDE - Code::Blocks
+*.cbp
+*.layout
+*.depend
+
+# Platform.IO
+.pio/
+.pioenvs/
+.piolibdeps/
+.clang_complete
+.gcc-flags.json
+
+# Arduino
+*.ino.cpp
+*.ino.elf
+*.ino.hex
+*.ino.map
+*.ino.with_bootloader.hex
+.arduino/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# Linux
+*~
+.directory
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+
+# Archives (except releases)
+*.zip
+*.tar.gz
+*.tar.bz2
+*.7z
+!releases/*.zip
+!releases/*.tar.gz
+
+# Test outputs
+test_output/
+test_results/
+
+# Documentation build
+docs/_build/
+docs/.buildinfo
+
+# Package managers
+node_modules/
+package-lock.json
+
+# Editor configs (keep these)
+!.editorconfig
+!.clangd
+
+# Keep important files
+!LICENSE
+!README.md
+!CHANGELOG.md
+!CONTRIBUTING.md
+!DISCLAIMER.md
+!library.json
+
+# Keep example source files
+!examples/**/*.cpp
+!examples/**/*.ino
+!examples/**/*.h
+!examples/**/platformio.ini
+
+# Keep simulation source
+!simulation/*.cpp
+!simulation/*.h
+!simulation/CMakeLists.txt
+!simulation/Makefile
+!simulation/README.md
+
+# Keep include directory
+!include/**/*.h
+
+# Keep CI/CD
+!.github/
+!.github/workflows/
+!.github/workflows/*.yml
+
+# Coverage reports
+*.gcov
+*.gcda
+*.gcno
+coverage/
+lcov.info
+
+# Profiling
+*.prof
+gmon.out
+callgrind.out.*
+
+# Valgrind
+*.memcheck
+
+# Backup files from editors
+*~
+\#*\#
+.#*
+
+# Version control
+.svn/
+.hg/
+.git/
+.gitattributes
+
+# Keep docs folder
+!docs/
+!docs/**/*.md
+!docs/**/*.png
+!docs/**/*.jpg

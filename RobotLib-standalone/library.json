@@ -1,0 +1,111 @@
+{
+  "name": "RobotLib",
+  "version": "2.2.0",
+  "description": "Type-safe C++11 units library for robotics with PID control, differential drive, odometry, and simulation. AI-assisted development - review thoroughly before production use. See DISCLAIMER.md for details.",
+  "keywords": [
+    "robotics",
+    "units",
+    "pid",
+    "control",
+    "differential-drive",
+    "odometry",
+    "kinematics",
+    "embedded",
+    "type-safe",
+    "arduino",
+    "esp32",
+    "stm32",
+    "teensy",
+    "simulation",
+    "header-only",
+    "cpp11"
+  ],
+  "authors": [
+    {
+      "name": "Konnor Reynolds",
+      "url": "https://github.com/konnorreynolds",
+      "maintainer": true
+    }
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/konnorreynolds/RobotLib",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/konnorreynolds/RobotLib.git"
+  },
+  "frameworks": [
+    "arduino",
+    "mbed",
+    "espidf"
+  ],
+  "platforms": [
+    "atmelavr",
+    "atmelmegaavr",
+    "espressif32",
+    "espressif8266",
+    "ststm32",
+    "teensy",
+    "raspberrypi",
+    "native"
+  ],
+  "headers": "RobotLib.h",
+  "examples": [
+    {
+      "name": "Basic Units",
+      "base": "examples/01_basic_usage",
+      "files": [
+        "01_hello_units.cpp"
+      ]
+    },
+    {
+      "name": "PID Control",
+      "base": "examples/02_control",
+      "files": [
+        "02_pid_control.cpp"
+      ]
+    },
+    {
+      "name": "Differential Drive",
+      "base": "examples/03_full_systems",
+      "files": [
+        "01_differential_drive_robot.cpp"
+      ]
+    },
+    {
+      "name": "FRC Swerve Robot",
+      "base": "examples/complete_robots",
+      "files": [
+        "01_frc_swerve_shooter.cpp"
+      ]
+    },
+    {
+      "name": "Arduino Maze Solver",
+      "base": "examples/complete_robots",
+      "files": [
+        "02_arduino_maze_solver.cpp"
+      ]
+    }
+  ],
+  "dependencies": {},
+  "export": {
+    "include": [
+      "include/*"
+    ],
+    "exclude": [
+      "tests/*",
+      "docs/*",
+      ".git/*",
+      ".pio/*",
+      "*.md"
+    ]
+  },
+  "build": {
+    "flags": [
+      "-std=c++11"
+    ],
+    "unflags": [
+      "-std=gnu++11"
+    ],
+    "includeDir": "include"
+  }
+}

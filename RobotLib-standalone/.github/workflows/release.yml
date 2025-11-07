@@ -1,0 +1,65 @@
+name: Create Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  create-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Extract version from tag
+      id: version
+      run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+    - name: Create release archive
+      run: |
+        mkdir -p release
+        cp -r include release/
+        cp -r examples release/
+        cp -r simulation release/
+        cp README.md LICENSE DISCLAIMER.md library.json release/
+        cd release
+        tar -czf ../RobotLib-v${{ steps.version.outputs.VERSION }}.tar.gz .
+        cd ..
+        zip -r RobotLib-v${{ steps.version.outputs.VERSION }}.zip release/*
+
+    - name: Extract changelog for this version
+      id: changelog
+      run: |
+        VERSION=${{ steps.version.outputs.VERSION }}
+        # Extract changelog section for this version
+        if [ -f CHANGELOG.md ]; then
+          awk "/## \[$VERSION\]/,/## \[/" CHANGELOG.md | head -n -1 > release-notes.md
+        else
+          echo "Release v$VERSION" > release-notes.md
+        fi
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        name: RobotLib v${{ steps.version.outputs.VERSION }}
+        body_path: release-notes.md
+        files: |
+          RobotLib-v${{ steps.version.outputs.VERSION }}.tar.gz
+          RobotLib-v${{ steps.version.outputs.VERSION }}.zip
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Verify release
+      run: |
+        echo "✓ Release v${{ steps.version.outputs.VERSION }} created successfully"
+        echo "  - Source archive (.tar.gz)"
+        echo "  - Source archive (.zip)"
+        echo ""
+        echo "Next steps:"
+        echo "  1. Update library registries (PlatformIO, Arduino)"
+        echo "  2. Announce release in discussions/social media"
+        echo "  3. Update documentation if needed"

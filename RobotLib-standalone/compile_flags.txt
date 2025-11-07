@@ -1,0 +1,6 @@
+-std=c++14
+-I
+include
+-DUNITS_CONSTEXPR14=constexpr
+-Wall
+-Wextra

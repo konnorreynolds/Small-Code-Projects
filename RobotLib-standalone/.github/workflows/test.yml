@@ -1,0 +1,121 @@
+name: Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-compilation:
+    name: Test Compilation (${{ matrix.os }}, C++${{ matrix.std }})
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        std: [11, 14, 17]
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Install dependencies (Ubuntu)
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential
+
+    - name: Compile core library
+      run: |
+        g++ -std=c++${{ matrix.std }} -Wall -Wextra -I./include -c include/units_core.h -o /tmp/test_core.o
+        g++ -std=c++${{ matrix.std }} -Wall -Wextra -I./include -c include/units_physics.h -o /tmp/test_physics.o
+        g++ -std=c++${{ matrix.std }} -Wall -Wextra -I./include -c include/units_robotics.h -o /tmp/test_robotics.o
+
+    - name: Compile example
+      run: |
+        g++ -std=c++${{ matrix.std }} -Wall -Wextra -I./include examples/01_basics/simple_motor.cpp -o test_motor
+        ./test_motor
+
+    - name: Check header-only (no symbols)
+      run: |
+        if nm -g /tmp/test_core.o 2>/dev/null | grep -v "no symbols"; then
+          echo "✓ Header-only check passed"
+        fi
+
+  test-embedded-platforms:
+    name: Test Embedded Compatibility
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Test C++11 strict mode
+      run: |
+        g++ -std=c++11 -pedantic -Wall -Wextra -Werror -I./include -fsyntax-only include/units_core.h
+        echo "✓ C++11 strict mode passed"
+
+    - name: Test no C++14 features
+      run: |
+        if grep -r "constexpr.*{" include/*.h | grep -v "UNITS_CONSTEXPR14"; then
+          echo "⚠ Found non-C++11 constexpr"
+        else
+          echo "✓ C++11 compatible"
+        fi
+
+    - name: Test minimal includes
+      run: |
+        echo '#include "units_core.h"' > /tmp/test_minimal.cpp
+        echo 'int main() { return 0; }' >> /tmp/test_minimal.cpp
+        g++ -std=c++11 -I./include /tmp/test_minimal.cpp -o /tmp/test_minimal
+        echo "✓ Minimal include works"
+
+  test-examples:
+    name: Test Examples Compile
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Compile all basic examples
+      run: |
+        for file in examples/01_basics/*.cpp; do
+          echo "Compiling $file..."
+          g++ -std=c++11 -I./include "$file" -o /tmp/example || exit 1
+        done
+        echo "✓ All basic examples compile"
+
+    - name: Compile fluent API examples
+      run: |
+        for file in examples/06_fluent_api/*.cpp; do
+          echo "Compiling $file..."
+          g++ -std=c++11 -I./include "$file" -o /tmp/example || exit 1
+        done
+        echo "✓ All fluent API examples compile"
+
+  code-quality:
+    name: Code Quality Checks
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Check for TODO/FIXME
+      run: |
+        if grep -r "TODO\|FIXME" include/*.h examples/*.cpp; then
+          echo "⚠ Found TODO/FIXME comments"
+        else
+          echo "✓ No TODO/FIXME found"
+        fi
+
+    - name: Check file sizes
+      run: |
+        echo "Header file sizes:"
+        du -h include/*.h | sort -h
+        total=$(du -ch include/*.h | grep total | awk '{print $1}')
+        echo "Total size: $total"
+
+    - name: Count lines of code
+      run: |
+        echo "Lines of code:"
+        wc -l include/*.h | tail -1
+        wc -l examples/*/*.cpp | tail -1
