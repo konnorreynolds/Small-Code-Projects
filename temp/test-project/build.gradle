@@ -9,15 +9,6 @@ java {
     targetCompatibility = JavaVersion.VERSION_17
 }
 
-sourceSets {
-    main {
-        java {
-            srcDirs 'src/main/java'
-            srcDirs '../yams-repo/yams/java'
-        }
-    }
-}
-
 def ROBOT_MAIN_CLASS = "frc.robot.Main"
 
 deploy {
