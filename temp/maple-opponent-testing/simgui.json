@@ -1,0 +1,56 @@
+{
+  "NTProvider": {
+    "types": {
+      "/FMSInfo": "FMSInfo",
+      "/SmartDashboard/Field": "Field2d",
+      "/SmartDashboard/Mechanisms/swerve/backleft/azimuth/angleMotor/Commands/Down": "Command",
+      "/SmartDashboard/Mechanisms/swerve/backleft/azimuth/angleMotor/Commands/LiveTuning": "Command",
+      "/SmartDashboard/Mechanisms/swerve/backleft/azimuth/angleMotor/Commands/Up": "Command",
+      "/SmartDashboard/Mechanisms/swerve/backleft/azimuth/angleMotor/Commands/ZeroEncoder": "Command",
+      "/SmartDashboard/Mechanisms/swerve/backleft/drive/driveMotor/Commands/Down": "Command",
+      "/SmartDashboard/Mechanisms/swerve/backleft/drive/driveMotor/Commands/LiveTuning": "Command",
+      "/SmartDashboard/Mechanisms/swerve/backleft/drive/driveMotor/Commands/Up": "Command",
+      "/SmartDashboard/Mechanisms/swerve/backleft/drive/driveMotor/Commands/ZeroEncoder": "Command",
+      "/SmartDashboard/Mechanisms/swerve/backright/azimuth/angleMotor/Commands/Down": "Command",
+      "/SmartDashboard/Mechanisms/swerve/backright/azimuth/angleMotor/Commands/LiveTuning": "Command",
+      "/SmartDashboard/Mechanisms/swerve/backright/azimuth/angleMotor/Commands/Up": "Command",
+      "/SmartDashboard/Mechanisms/swerve/backright/azimuth/angleMotor/Commands/ZeroEncoder": "Command",
+      "/SmartDashboard/Mechanisms/swerve/backright/drive/driveMotor/Commands/Down": "Command",
+      "/SmartDashboard/Mechanisms/swerve/backright/drive/driveMotor/Commands/LiveTuning": "Command",
+      "/SmartDashboard/Mechanisms/swerve/backright/drive/driveMotor/Commands/Up": "Command",
+      "/SmartDashboard/Mechanisms/swerve/backright/drive/driveMotor/Commands/ZeroEncoder": "Command",
+      "/SmartDashboard/Mechanisms/swerve/frontleft/azimuth/angleMotor/Commands/Down": "Command",
+      "/SmartDashboard/Mechanisms/swerve/frontleft/azimuth/angleMotor/Commands/LiveTuning": "Command",
+      "/SmartDashboard/Mechanisms/swerve/frontleft/azimuth/angleMotor/Commands/Up": "Command",
+      "/SmartDashboard/Mechanisms/swerve/frontleft/azimuth/angleMotor/Commands/ZeroEncoder": "Command",
+      "/SmartDashboard/Mechanisms/swerve/frontleft/drive/driveMotor/Commands/Down": "Command",
+      "/SmartDashboard/Mechanisms/swerve/frontleft/drive/driveMotor/Commands/LiveTuning": "Command",
+      "/SmartDashboard/Mechanisms/swerve/frontleft/drive/driveMotor/Commands/Up": "Command",
+      "/SmartDashboard/Mechanisms/swerve/frontleft/drive/driveMotor/Commands/ZeroEncoder": "Command",
+      "/SmartDashboard/Mechanisms/swerve/frontright/azimuth/angleMotor/Commands/Down": "Command",
+      "/SmartDashboard/Mechanisms/swerve/frontright/azimuth/angleMotor/Commands/LiveTuning": "Command",
+      "/SmartDashboard/Mechanisms/swerve/frontright/azimuth/angleMotor/Commands/Up": "Command",
+      "/SmartDashboard/Mechanisms/swerve/frontright/azimuth/angleMotor/Commands/ZeroEncoder": "Command",
+      "/SmartDashboard/Mechanisms/swerve/frontright/drive/driveMotor/Commands/Down": "Command",
+      "/SmartDashboard/Mechanisms/swerve/frontright/drive/driveMotor/Commands/LiveTuning": "Command",
+      "/SmartDashboard/Mechanisms/swerve/frontright/drive/driveMotor/Commands/Up": "Command",
+      "/SmartDashboard/Mechanisms/swerve/frontright/drive/driveMotor/Commands/ZeroEncoder": "Command"
+    },
+    "windows": {
+      "/SmartDashboard/Field": {
+        "bottom": 1476,
+        "height": 8.210550308227539,
+        "left": 150,
+        "right": 2961,
+        "top": 79,
+        "width": 16.541748046875,
+        "window": {
+          "visible": true
+        }
+      }
+    }
+  },
+  "NetworkTables Info": {
+    "visible": true
+  }
+}
