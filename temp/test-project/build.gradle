@@ -1,0 +1,33 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+application {
+    mainClass = 'test.ReefscapeTest'
+}
+
+repositories {
+    mavenCentral()
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs = ['src/test/java']  // Use test folder as main source
+        }
+    }
+}
+
+dependencies {
+    // No external dependencies
+}
+
+tasks.named('run') {
+    standardInput = System.in
+}
