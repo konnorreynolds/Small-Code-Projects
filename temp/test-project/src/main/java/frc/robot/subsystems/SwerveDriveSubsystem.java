@@ -29,8 +29,19 @@ public class SwerveDriveSubsystem {
 
     /**
      * Drive to pose with opponent avoidance (A button command)
+     * Creates opponent obstacle and uses opponent config internally.
      */
-    public void driveToWithOpponentAvoidance(MockPose2d target, MockObstacle opponent) {
+    public void driveToWithOpponentAvoidance() {
+        // Target pose
+        MockPose2d target = new MockPose2d(8.0, 4.0, 0);
+
+        // Create opponent obstacle
+        MockObstacle opponent = MockObstacle.robot(
+            new MockPose2d(5.0, 3.0, 0),
+            new MockTranslation2d(0.2, 0.1),
+            true
+        ).aggressive().difficulty(1.0);  // Hard difficulty opponent
+
         System.out.println("\n=== DRIVE TO POSE WITH OPPONENT AVOIDANCE ===");
         System.out.println("Current: " + currentPose);
         System.out.println("Target:  " + target);
@@ -38,12 +49,7 @@ public class SwerveDriveSubsystem {
         System.out.println("Config: Opponent (aggressive, difficulty=" + opponent.difficultyLevel + ")");
 
         // Create obstacle list
-        List<MockObstacle> obstacles = new ArrayList<>();
-        obstacles.add(opponent);
-
-        // Add field boundaries
-        obstacles.add(MockObstacle.wall(new MockTranslation2d(0, 0), new MockTranslation2d(16.54, 0)));
-        obstacles.add(MockObstacle.wall(new MockTranslation2d(0, 8.23), new MockTranslation2d(16.54, 8.23)));
+        List<MockObstacle> obstacles = createObstacles(opponent);
 
         // Use opponent config (aggressive, high avoidance)
         MockConfig config = MockConfig.forOpponent();
@@ -96,6 +102,22 @@ public class SwerveDriveSubsystem {
 
         // Update robot pose
         currentPose = current;
+    }
+
+    /**
+     * Create obstacles including opponent and field boundaries
+     */
+    private List<MockObstacle> createObstacles(MockObstacle opponent) {
+        List<MockObstacle> obstacles = new ArrayList<>();
+
+        // Add opponent
+        obstacles.add(opponent);
+
+        // Add field boundaries (FRC field is 54' x 27' = 16.54m x 8.23m)
+        obstacles.add(MockObstacle.wall(new MockTranslation2d(0, 0), new MockTranslation2d(16.54, 0)));
+        obstacles.add(MockObstacle.wall(new MockTranslation2d(0, 8.23), new MockTranslation2d(16.54, 8.23)));
+
+        return obstacles;
     }
 
     private double distanceTo(MockPose2d from, MockPose2d to) {

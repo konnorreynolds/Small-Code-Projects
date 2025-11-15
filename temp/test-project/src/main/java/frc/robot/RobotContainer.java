@@ -1,7 +1,6 @@
 package frc.robot;
 
 import frc.robot.subsystems.SwerveDriveSubsystem;
-import frc.robot.utils.*;
 
 /**
  * Robot container with controller bindings
@@ -21,24 +20,11 @@ public class RobotContainer {
     }
 
     private void configureButtonBindings() {
-        // A Button: Drive to target pose with opponent avoidance
+        // A Button: Drive to pose with opponent avoidance
+        // Config and obstacles are created in the subsystem
         controller.onAButton(() -> {
             System.out.println("\n[A BUTTON PRESSED]");
-            System.out.println("Driving to target pose (8.0, 4.0) with opponent avoidance...");
-
-            // Create target pose
-            MockPose2d target = new MockPose2d(8.0, 4.0, 0);
-
-            // Add opponent obstacle
-            MockObstacle opponent = MockObstacle.robot(
-                new MockPose2d(5.0, 3.0, 0),
-                new MockTranslation2d(0.2, 0.1),
-                true
-            ).aggressive().difficulty(1.0);  // Hard difficulty opponent
-
-            // Execute drive command
-            swerve.driveToWithOpponentAvoidance(target, opponent);
-
+            swerve.driveToWithOpponentAvoidance();
             System.out.println("Drive command completed\n");
         });
 
