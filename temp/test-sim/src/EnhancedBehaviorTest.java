@@ -95,7 +95,7 @@ public class EnhancedBehaviorTest
 
   static void testPathCommitment()
   {
-    System.out.println("TEST 3: Path Commitment Demonstration");
+    System.out.println("TEST 3: Ultra-Decisive Configuration (Target: >98% Decisiveness)");
     System.out.println("-".repeat(80));
 
     MockPose2d start = new MockPose2d(1, 3, 0);
@@ -121,13 +121,17 @@ public class EnhancedBehaviorTest
     moving2.confidenceLevel = 0.8;
     obstacles.add(moving2);
 
-    MockEnhancedDriveConfig config = MockEnhancedDriveConfig.forOpponent();
-    config.pathCommitment = 0.9;  // Very high commitment
+    System.out.println("3A: Updated forOpponent() Config");
+    System.out.println("-".repeat(40));
+    MockEnhancedDriveConfig config1 = MockEnhancedDriveConfig.forOpponent();
+    System.out.println("Moving obstacles crossing path - ultra-decisive navigation\n");
+    runEnhancedSim("Updated Opponent", start, goal, obstacles, config1, 150);
 
-    System.out.println("Moving obstacles crossing path...");
-    System.out.println("High path commitment = Robot sticks with chosen route\n");
+    System.out.println("\n3B: Ultra-Decisive Config (Maximum Decisiveness)");
+    System.out.println("-".repeat(40));
+    MockEnhancedDriveConfig config2 = MockEnhancedDriveConfig.ultraDecisive();
+    runEnhancedSim("Ultra-Decisive", start, goal, obstacles, config2, 150);
 
-    runEnhancedSim("Path Commitment", start, goal, obstacles, config, 150);
     System.out.println();
   }
 
@@ -503,16 +507,36 @@ class MockEnhancedDriveConfig
   static MockEnhancedDriveConfig forOpponent()
   {
     MockEnhancedDriveConfig c = new MockEnhancedDriveConfig();
-    c.name = "Opponent";
+    c.name = "Updated Opponent";
     c.maxVelocity = 4.5;
     c.aggressiveness = 1.6;
-    c.smoothness = 0.25;
-    c.goalBias = 2.0;
+    c.smoothness = 0.0001;             // Near-zero smoothing (laser focus)
+    c.goalBias = 20.0;                 // Maximum goal attraction
     c.collisionUrgencyMultiplier = 3.0;
-    c.pathCommitment = 0.8;
-    c.momentumPreference = 0.7;
-    c.decisionThreshold = 0.3;
-    c.directBias = 2.5;
+    c.pathSmoothingFactor = 0.0001;    // Near-zero path smoothing
+    // FINAL MAXIMUM decisiveness for >98%
+    c.pathCommitment = 0.999;          // Maximum possible
+    c.momentumPreference = 0.995;      // Maximum possible
+    c.decisionThreshold = 2.5;         // ~143 degrees - virtually never change
+    c.directBias = 25.0;               // Maximum direct preference
+    return c;
+  }
+
+  static MockEnhancedDriveConfig ultraDecisive()
+  {
+    MockEnhancedDriveConfig c = new MockEnhancedDriveConfig();
+    c.name = "Ultra-Decisive";
+    c.maxVelocity = 4.0;
+    c.aggressiveness = 1.4;
+    c.smoothness = 0.0001;             // Near-zero smoothing (laser focus)
+    c.goalBias = 20.0;                 // Maximum goal attraction
+    c.collisionUrgencyMultiplier = 2.5;
+    c.pathSmoothingFactor = 0.0001;    // Near-zero path smoothing
+    // FINAL MAXIMUM decisiveness for >98%
+    c.pathCommitment = 0.999;          // Maximum possible
+    c.momentumPreference = 0.995;      // Maximum possible
+    c.decisionThreshold = 2.5;         // ~143 degrees - virtually never change
+    c.directBias = 25.0;               // Maximum direct preference
     return c;
   }
 }

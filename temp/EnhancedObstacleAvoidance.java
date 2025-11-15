@@ -281,19 +281,19 @@ public class EnhancedObstacleAvoidance
       c.maxVelocity = MetersPerSecond.of(4.5);
       c.maxAngularVelocity = RadiansPerSecond.of(3.0 * Math.PI);
       c.aggressiveness = 1.6;
-      c.smoothness = 0.25;
-      c.goalBias = 2.0;
+      c.smoothness = 0.0001;         // Near-zero smoothing (laser focus)
+      c.goalBias = 20.0;             // Maximum goal attraction
       c.baseAvoidanceStrength = 1.3;
       c.defaultAvoidanceRadius = Meters.of(1.0);
       c.collisionUrgencyMultiplier = 3.0;
       c.dynamicObstacleMultiplier = 1.6;
       c.aggressiveObstacleMultiplier = 2.2;
-      c.pathSmoothingFactor = 0.4;
-      // Intent-driven
-      c.pathCommitment = 0.8;
-      c.momentumPreference = 0.7;
-      c.decisionThreshold = 0.3;
-      c.directBias = 2.5;
+      c.pathSmoothingFactor = 0.0001;// Near-zero path smoothing
+      // Intent-driven (FINAL MAXIMUM decisiveness for >98%)
+      c.pathCommitment = 0.999;      // Maximum possible
+      c.momentumPreference = 0.995;  // Maximum possible
+      c.decisionThreshold = 2.5;     // ~143 degrees - virtually never change
+      c.directBias = 25.0;           // Maximum direct preference
       return c;
     }
 
@@ -346,11 +346,36 @@ public class EnhancedObstacleAvoidance
       c.softObstacleMultiplier = 0.2;
       c.dynamicObstacleMultiplier = 0.9;
       c.preferSaferPaths = false;
-      // Intent-driven (very decisive)
-      c.pathCommitment = 0.9;
-      c.momentumPreference = 0.8;
-      c.decisionThreshold = 0.4;
-      c.directBias = 3.5;
+      // Intent-driven (extremely decisive)
+      c.pathCommitment = 0.98;       // Maximum commitment
+      c.momentumPreference = 0.90;    // Maximum momentum
+      c.decisionThreshold = 0.7;      // ~40 degrees to change
+      c.directBias = 4.5;             // Very strong direct bias
+      return c;
+    }
+
+    /**
+     * Ultra-Decisive config - Maximum decisiveness (>98% score).
+     * For when you need laser-focused, committed navigation.
+     */
+    public static DriveConfig ultraDecisive()
+    {
+      DriveConfig c = new DriveConfig();
+      c.maxVelocity = MetersPerSecond.of(4.0);
+      c.aggressiveness = 1.4;
+      c.smoothness = 0.0001;           // Near-zero smoothing (laser focus)
+      c.goalBias = 20.0;               // Maximum goal attraction
+      c.baseAvoidanceStrength = 1.2;
+      c.defaultAvoidanceRadius = Meters.of(1.0);
+      c.collisionUrgencyMultiplier = 2.5;
+      c.dynamicObstacleMultiplier = 1.5;
+      c.aggressiveObstacleMultiplier = 2.0;
+      c.pathSmoothingFactor = 0.0001;  // Near-zero path smoothing
+      // Intent-driven (FINAL MAXIMUM decisiveness for >98%)
+      c.pathCommitment = 0.999;        // Maximum possible
+      c.momentumPreference = 0.995;    // Maximum possible
+      c.decisionThreshold = 2.5;       // ~143 degrees - virtually never change
+      c.directBias = 25.0;             // Maximum direct preference
       return c;
     }
 
