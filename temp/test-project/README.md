@@ -34,20 +34,7 @@ This project demonstrates integrating obstacle avoidance with YAMS (Yet Another 
 - Phoenix6 (CTRE CANcoder and Pigeon 2.0)
 - REVLib (REV Spark Max motor controllers)
 - WPILibNewCommands
-
-### YAMS Source
-The project includes YAMS source from `../yams-repo/yams/java` configured in `build.gradle`:
-
-```gradle
-sourceSets {
-    main {
-        java {
-            srcDirs 'src/main/java'
-            srcDirs '../yams-repo/yams/java'
-        }
-    }
-}
-```
+- YAMS (Yet Another Mechanism System) version 2025.10.29
 
 ## Building the Project
 
