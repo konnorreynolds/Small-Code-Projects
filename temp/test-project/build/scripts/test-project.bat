@@ -74,7 +74,7 @@ set CLASSPATH=%APP_HOME%\lib\test-project.jar
 
 
 @rem Execute test-project
-"%JAVA_EXE%" %DEFAULT_JVM_OPTS% %JAVA_OPTS% %TEST_PROJECT_OPTS%  -classpath "%CLASSPATH%" test.ReefscapeTest %*
+"%JAVA_EXE%" %DEFAULT_JVM_OPTS% %JAVA_OPTS% %TEST_PROJECT_OPTS%  -classpath "%CLASSPATH%" frc.robot.Robot %*
 
 :end
 @rem End local scope for the variables with windows NT shell

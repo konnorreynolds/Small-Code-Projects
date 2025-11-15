@@ -212,7 +212,7 @@ DEFAULT_JVM_OPTS=""
 
 set -- \
         -classpath "$CLASSPATH" \
-        test.ReefscapeTest \
+        frc.robot.Robot \
         "$@"
 
 # Stop when "xargs" is not available.

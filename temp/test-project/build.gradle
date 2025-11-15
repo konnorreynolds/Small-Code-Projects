@@ -9,7 +9,7 @@ java {
 }
 
 application {
-    mainClass = 'test.ReefscapeTest'
+    mainClass = 'frc.robot.Robot'
 }
 
 repositories {
@@ -19,7 +19,7 @@ repositories {
 sourceSets {
     main {
         java {
-            srcDirs = ['src/test/java']  // Use test folder as main source
+            srcDirs = ['src/main/java', 'src/test/java']  // Both main robot code and tests
         }
     }
 }
