@@ -1,60 +1,74 @@
 package frc.robot;
 
-/**
- * Main robot class - TimedRobot entry point
- */
-public class Robot {
-    private RobotContainer robotContainer;
+import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
-    public void robotInit() {
-        robotContainer = new RobotContainer();
-        System.out.println("Robot initialized");
+public class Robot extends TimedRobot {
+  private Command m_autonomousCommand;
+  private RobotContainer m_robotContainer;
+
+  @Override
+  public void robotInit() {
+    m_robotContainer = new RobotContainer();
+  }
+
+  @Override
+  public void robotPeriodic() {
+    CommandScheduler.getInstance().run();
+  }
+
+  @Override
+  public void disabledInit() {}
+
+  @Override
+  public void disabledPeriodic() {}
+
+  @Override
+  public void disabledExit() {}
+
+  @Override
+  public void autonomousInit() {
+    m_autonomousCommand = m_robotContainer.getAutonomousCommand();
+
+    if (m_autonomousCommand != null) {
+      m_autonomousCommand.schedule();
     }
+  }
 
-    public void robotPeriodic() {
-        // CommandScheduler would run here in real WPILib
+  @Override
+  public void autonomousPeriodic() {}
+
+  @Override
+  public void autonomousExit() {}
+
+  @Override
+  public void teleopInit() {
+    if (m_autonomousCommand != null) {
+      m_autonomousCommand.cancel();
     }
+  }
 
-    public void autonomousInit() {
-        System.out.println("Autonomous mode started");
-    }
+  @Override
+  public void teleopPeriodic() {}
 
-    public void autonomousPeriodic() {
-        // Auto commands would execute here
-    }
+  @Override
+  public void teleopExit() {}
 
-    public void teleopInit() {
-        System.out.println("Teleop mode started");
-    }
+  @Override
+  public void testInit() {
+    CommandScheduler.getInstance().cancelAll();
+  }
 
-    public void teleopPeriodic() {
-        // Driver control happens here
-    }
+  @Override
+  public void testPeriodic() {}
 
-    public void disabledInit() {
-        System.out.println("Robot disabled");
-    }
+  @Override
+  public void testExit() {}
 
-    public void disabledPeriodic() {
-        // Nothing runs while disabled
-    }
+  @Override
+  public void simulationInit() {}
 
-    public RobotContainer getRobotContainer() {
-        return robotContainer;
-    }
-
-    public static void main(String[] args) {
-        Robot robot = new Robot();
-        robot.robotInit();
-        robot.teleopInit();
-
-        System.out.println("\n=== YAMS Swerve Robot Ready ===");
-        System.out.println("Simulating A button press...");
-        System.out.println("===============================\n");
-
-        // Simulate A button press
-        robot.getRobotContainer().simulateAButtonPress();
-
-        System.out.println("\nRobot demo complete!");
-    }
+  @Override
+  public void simulationPeriodic() {}
 }
