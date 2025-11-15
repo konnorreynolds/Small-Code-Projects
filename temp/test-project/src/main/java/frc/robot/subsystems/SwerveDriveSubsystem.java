@@ -1,6 +1,9 @@
 package frc.robot.subsystems;
 
-import frc.robot.utils.*;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,17 +14,21 @@ import java.util.List;
  * Maps controller A button to drive to pose with opponent avoidance.
  */
 public class SwerveDriveSubsystem {
-    // Mock swerve drive components
-    private MockSwerveDrive drive;
-    private MockPose2d currentPose;
-    private MockChassisSpeeds currentSpeeds;
+    // Swerve drive components (would be real YAGSL in production)
+    private Pose2d currentPose;
+    private ChassisSpeeds currentSpeeds;
     private ObstacleNavigator navigator;
 
+    // Obstacle configuration
+    private Config config;
+    private List<Obstacle> obstacles;
+
     public SwerveDriveSubsystem() {
-        drive = new MockSwerveDrive();
-        currentPose = new MockPose2d(2.0, 2.0, 0);
-        currentSpeeds = new MockChassisSpeeds(0, 0, 0);
+        currentPose = new Pose2d(2.0, 2.0, new Rotation2d());
+        currentSpeeds = new ChassisSpeeds(0, 0, 0);
         navigator = new ObstacleNavigator();
+        config = Config.forOpponent();
+        obstacles = new ArrayList<>();
 
         System.out.println("SwerveDriveSubsystem initialized");
         System.out.println("  Starting pose: " + currentPose);
@@ -33,12 +40,12 @@ public class SwerveDriveSubsystem {
      */
     public void driveToWithOpponentAvoidance() {
         // Target pose
-        MockPose2d target = new MockPose2d(8.0, 4.0, 0);
+        Pose2d target = new Pose2d(8.0, 4.0, new Rotation2d());
 
         // Create opponent obstacle
-        MockObstacle opponent = MockObstacle.robot(
-            new MockPose2d(5.0, 3.0, 0),
-            new MockTranslation2d(0.2, 0.1),
+        Obstacle opponent = Obstacle.robot(
+            new Pose2d(5.0, 3.0, new Rotation2d()),
+            new Translation2d(0.2, 0.1),
             true
         ).aggressive().difficulty(1.0);  // Hard difficulty opponent
 
@@ -49,42 +56,37 @@ public class SwerveDriveSubsystem {
         System.out.println("Config: Opponent (aggressive, difficulty=" + opponent.difficultyLevel + ")");
 
         // Create obstacle list
-        List<MockObstacle> obstacles = createObstacles(opponent);
-
-        // Use opponent config (aggressive, high avoidance)
-        MockConfig config = MockConfig.forOpponent();
+        List<Obstacle> obstacleList = createObstacles(opponent);
 
         // Simulate navigation
         int steps = 0;
-        double startTime = System.currentTimeMillis() / 1000.0;
-        MockPose2d current = new MockPose2d(currentPose.x, currentPose.y, currentPose.theta);
-        MockTranslation2d velocity = new MockTranslation2d(0, 0);
+        Pose2d current = new Pose2d(currentPose.getTranslation(), currentPose.getRotation());
+        Translation2d velocity = new Translation2d(0, 0);
 
         System.out.println("\nNavigation:");
 
         while (distanceTo(current, target) > 0.3 && steps < 20) {
-            double dx = target.x - current.x;
-            double dy = target.y - current.y;
-            double dist = Math.sqrt(dx * dx + dy * dy);
+            double dist = distanceTo(current, target);
 
             // Get navigation command
-            MockChassisSpeeds speeds = navigator.drive(
-                current, target, obstacles, config, velocity
+            ChassisSpeeds speeds = navigator.drive(
+                current, target, obstacleList, config, velocity
             );
 
             // Update position
             double dt = 0.2;
-            current.x += speeds.vx * dt;
-            current.y += speeds.vy * dt;
-            velocity.x = speeds.vx;
-            velocity.y = speeds.vy;
+            Translation2d newTranslation = current.getTranslation().plus(
+                new Translation2d(speeds.vxMetersPerSecond * dt, speeds.vyMetersPerSecond * dt)
+            );
+            current = new Pose2d(newTranslation, current.getRotation());
+            velocity = new Translation2d(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond);
 
             double elapsed = steps * dt;
-            double speed = Math.sqrt(speeds.vx * speeds.vx + speeds.vy * speeds.vy);
+            double speed = Math.hypot(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond);
 
             if (steps % 2 == 0) {
                 System.out.printf("  t=%.2fs: Pos(%.2f, %.2f) Speed(%.2f m/s) Dist(%.2fm)%n",
-                    elapsed, current.x, current.y, speed, dist);
+                    elapsed, current.getX(), current.getY(), speed, dist);
             }
 
             steps++;
@@ -107,39 +109,86 @@ public class SwerveDriveSubsystem {
     /**
      * Create obstacles including opponent and field boundaries
      */
-    private List<MockObstacle> createObstacles(MockObstacle opponent) {
-        List<MockObstacle> obstacles = new ArrayList<>();
+    private List<Obstacle> createObstacles(Obstacle opponent) {
+        List<Obstacle> obstacleList = new ArrayList<>();
 
         // Add opponent
-        obstacles.add(opponent);
+        obstacleList.add(opponent);
 
         // Add field boundaries (FRC field is 54' x 27' = 16.54m x 8.23m)
-        obstacles.add(MockObstacle.wall(new MockTranslation2d(0, 0), new MockTranslation2d(16.54, 0)));
-        obstacles.add(MockObstacle.wall(new MockTranslation2d(0, 8.23), new MockTranslation2d(16.54, 8.23)));
+        obstacleList.add(Obstacle.wall(new Translation2d(0, 0), new Translation2d(16.54, 0)));
+        obstacleList.add(Obstacle.wall(new Translation2d(0, 8.23), new Translation2d(16.54, 8.23)));
 
-        return obstacles;
+        return obstacleList;
     }
 
-    private double distanceTo(MockPose2d from, MockPose2d to) {
-        double dx = to.x - from.x;
-        double dy = to.y - from.y;
-        return Math.sqrt(dx * dx + dy * dy);
+    private double distanceTo(Pose2d from, Pose2d to) {
+        return from.getTranslation().getDistance(to.getTranslation());
     }
 
-    public MockPose2d getPose() {
+    public Pose2d getPose() {
         return currentPose;
     }
 
     /**
-     * Mock YAMS-style swerve drive
+     * Obstacle representation
      */
-    private static class MockSwerveDrive {
-        public MockSwerveDrive() {
-            System.out.println("  Mock YAMS swerve drive created (4 modules)");
+    public static class Obstacle {
+        public Pose2d position;
+        public Translation2d velocity;
+        public boolean isDynamic;
+        public double avoidanceWeight = 1.0;
+        public double difficultyLevel = 0.5;
+
+        private Obstacle(Pose2d pos, Translation2d vel, boolean dynamic) {
+            this.position = pos;
+            this.velocity = vel;
+            this.isDynamic = dynamic;
         }
 
-        public void setRobotRelativeSpeeds(MockChassisSpeeds speeds) {
-            // Would command actual swerve modules
+        public static Obstacle robot(Pose2d pose, Translation2d velocity, boolean dynamic) {
+            return new Obstacle(pose, velocity, dynamic);
+        }
+
+        public static Obstacle wall(Translation2d start, Translation2d end) {
+            Translation2d mid = start.plus(end).div(2.0);
+            return new Obstacle(
+                new Pose2d(mid, new Rotation2d()),
+                new Translation2d(0, 0),
+                false
+            );
+        }
+
+        public Obstacle aggressive() {
+            this.avoidanceWeight = 2.5;
+            return this;
+        }
+
+        public Obstacle difficulty(double level) {
+            this.difficultyLevel = level;
+            return this;
+        }
+    }
+
+    /**
+     * Configuration for obstacle avoidance
+     */
+    public static class Config {
+        public double maxVelocity = 4.0;
+        public double avoidanceRadius = 2.0;
+        public double avoidanceStrength = 1.5;
+        public double goalAttraction = 10.0;
+
+        /**
+         * Opponent config - aggressive avoidance for dynamic opponents
+         */
+        public static Config forOpponent() {
+            Config c = new Config();
+            c.maxVelocity = 4.5;
+            c.avoidanceRadius = 2.5;      // Larger safety bubble
+            c.avoidanceStrength = 2.0;     // Strong repulsion
+            c.goalAttraction = 12.0;       // High goal bias
+            return c;
         }
     }
 
@@ -147,46 +196,47 @@ public class SwerveDriveSubsystem {
      * Obstacle navigation using APF algorithm
      */
     private static class ObstacleNavigator {
-        public MockChassisSpeeds drive(MockPose2d current, MockPose2d target,
-                                       List<MockObstacle> obstacles, MockConfig config,
-                                       MockTranslation2d currentVel) {
-            double dx = target.x - current.x;
-            double dy = target.y - current.y;
-            double dist = Math.sqrt(dx * dx + dy * dy);
+        public ChassisSpeeds drive(Pose2d current, Pose2d target,
+                                   List<Obstacle> obstacles, Config config,
+                                   Translation2d currentVel) {
+            Translation2d currentPos = current.getTranslation();
+            Translation2d targetPos = target.getTranslation();
 
-            if (dist < 0.01) return new MockChassisSpeeds(0, 0, 0);
+            double dist = currentPos.getDistance(targetPos);
+
+            if (dist < 0.01) return new ChassisSpeeds(0, 0, 0);
 
             // Goal attraction
-            MockTranslation2d desiredDir = new MockTranslation2d(dx / dist, dy / dist);
-            MockTranslation2d avoidance = new MockTranslation2d(0, 0);
+            Translation2d toGoal = targetPos.minus(currentPos);
+            Translation2d desiredDir = toGoal.div(toGoal.getNorm());
+            Translation2d avoidance = new Translation2d(0, 0);
 
             // Obstacle repulsion
-            for (MockObstacle obs : obstacles) {
-                double obsDx = current.x - obs.position.x;
-                double obsDy = current.y - obs.position.y;
-                double obsDist = Math.sqrt(obsDx * obsDx + obsDy * obsDy);
+            for (Obstacle obs : obstacles) {
+                Translation2d toObstacle = currentPos.minus(obs.position.getTranslation());
+                double obsDist = toObstacle.getNorm();
 
                 if (obsDist < config.avoidanceRadius && obsDist > 0.01) {
                     double repulsion = config.avoidanceStrength * obs.avoidanceWeight *
                         Math.pow(1.0 - obsDist / config.avoidanceRadius, 2.0);
-                    avoidance.x += (obsDx / obsDist) * repulsion;
-                    avoidance.y += (obsDy / obsDist) * repulsion;
+                    Translation2d repulsionDir = toObstacle.div(obsDist);
+                    avoidance = avoidance.plus(repulsionDir.times(repulsion));
                 }
             }
 
             // Combine goal attraction and obstacle repulsion
-            double combinedX = desiredDir.x * config.goalAttraction + avoidance.x;
-            double combinedY = desiredDir.y * config.goalAttraction + avoidance.y;
+            Translation2d combined = desiredDir.times(config.goalAttraction).plus(avoidance);
+            double mag = combined.getNorm();
 
-            double mag = Math.sqrt(combinedX * combinedX + combinedY * combinedY);
             if (mag > 0.01) {
-                combinedX /= mag;
-                combinedY /= mag;
+                combined = combined.div(mag);
             }
 
             // Scale by max velocity
             double speed = Math.min(config.maxVelocity, dist * 2.0);
-            return new MockChassisSpeeds(combinedX * speed, combinedY * speed, 0);
+            Translation2d velocity = combined.times(speed);
+
+            return new ChassisSpeeds(velocity.getX(), velocity.getY(), 0);
         }
     }
 }

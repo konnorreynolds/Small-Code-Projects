@@ -19,13 +19,13 @@ repositories {
 sourceSets {
     main {
         java {
-            srcDirs = ['src/main/java', 'src/test/java']  // Both main robot code and tests
+            srcDirs = ['src/main/java', 'src/test/java']
         }
     }
 }
 
 dependencies {
-    // No external dependencies
+    // No external dependencies - using bundled WPILib geometry classes
 }
 
 tasks.named('run') {
