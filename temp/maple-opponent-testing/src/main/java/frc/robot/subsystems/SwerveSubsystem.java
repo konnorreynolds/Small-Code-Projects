@@ -193,18 +193,33 @@ public class SwerveSubsystem extends SubsystemBase
 
   private void createReefscapeObstacles() {
     // Field boundaries (smaller safety margin for testing)
-    staticObstacles.add(ObstacleAvoidance.wall(
+    // Left wall (vertical)
+    ObstacleAvoidance.Obstacle leftWall = ObstacleAvoidance.line(
         new Translation2d(0, 0), new Translation2d(0, 8.052), Meters.of(0.3)
-    ));
-    staticObstacles.add(ObstacleAvoidance.wall(
+    );
+    leftWall.likelyDestination = new Translation2d(0, 8.052); // Mark as vertical
+    staticObstacles.add(leftWall);
+
+    // Right wall (vertical)
+    ObstacleAvoidance.Obstacle rightWall = ObstacleAvoidance.line(
         new Translation2d(17.548, 0), new Translation2d(17.548, 8.052), Meters.of(0.3)
-    ));
-    staticObstacles.add(ObstacleAvoidance.wall(
+    );
+    rightWall.likelyDestination = new Translation2d(17.548, 8.052); // Mark as vertical
+    staticObstacles.add(rightWall);
+
+    // Bottom wall (horizontal)
+    ObstacleAvoidance.Obstacle bottomWall = ObstacleAvoidance.line(
         new Translation2d(0, 0), new Translation2d(17.548, 0), Meters.of(0.3)
-    ));
-    staticObstacles.add(ObstacleAvoidance.wall(
+    );
+    bottomWall.likelyDestination = new Translation2d(17.548, 0); // Mark as horizontal
+    staticObstacles.add(bottomWall);
+
+    // Top wall (horizontal)
+    ObstacleAvoidance.Obstacle topWall = ObstacleAvoidance.line(
         new Translation2d(0, 8.052), new Translation2d(17.548, 8.052), Meters.of(0.3)
-    ));
+    );
+    topWall.likelyDestination = new Translation2d(17.548, 8.052); // Mark as horizontal
+    staticObstacles.add(topWall);
 
     // Blue Reef (hexagon obstacle)
     staticObstacles.add(ObstacleAvoidance.circle(
@@ -249,31 +264,38 @@ public class SwerveSubsystem extends SubsystemBase
         field.getObject(name + "_circle").setPoses(circlePoses);
 
       } else if (obstacle.shape == ObstacleAvoidance.Obstacle.Shape.RECTANGLE) {
-        // Visualize wall as line of poses
-        Translation2d start = obstacle.position;
-        double width = obstacle.width.in(Meters);
-        double height = obstacle.height.in(Meters);
+        // Visualize rectangular obstacle as a line
+        // Use likelyDestination to determine orientation
+        Translation2d center = obstacle.position;
+        Translation2d end = obstacle.likelyDestination;
+        double w = obstacle.width.in(Meters);
 
-        // Determine if it's horizontal or vertical wall
-        if (Math.abs(height) > Math.abs(width)) {
-          // Vertical wall
-          int numPoints = Math.max(3, (int)(height / 0.5));
-          Pose2d[] wallPoses = new Pose2d[numPoints];
-          for (int i = 0; i < numPoints; i++) {
-            double y = start.getY() + (height * i / (numPoints - 1));
-            wallPoses[i] = new Pose2d(start.getX(), y, Rotation2d.fromDegrees(0));
+        // Determine if vertical or horizontal by checking which coordinate changed
+        boolean isVertical = Math.abs(end.getX() - center.getX()) < 0.01;
+
+        int numPoints = Math.max(4, (int)(w / 0.5));
+        Pose2d[] linePoses = new Pose2d[numPoints];
+
+        for (int i = 0; i < numPoints; i++) {
+          double t = (double)i / (numPoints - 1) - 0.5;
+          if (isVertical) {
+            // Vertical wall
+            linePoses[i] = new Pose2d(
+                center.getX(),
+                center.getY() + w * t,
+                Rotation2d.fromDegrees(0)
+            );
+          } else {
+            // Horizontal wall
+            linePoses[i] = new Pose2d(
+                center.getX() + w * t,
+                center.getY(),
+                Rotation2d.fromDegrees(90)
+            );
           }
-          field.getObject(name + "_wall").setPoses(wallPoses);
-        } else {
-          // Horizontal wall
-          int numPoints = Math.max(3, (int)(width / 0.5));
-          Pose2d[] wallPoses = new Pose2d[numPoints];
-          for (int i = 0; i < numPoints; i++) {
-            double x = start.getX() + (width * i / (numPoints - 1));
-            wallPoses[i] = new Pose2d(x, start.getY(), Rotation2d.fromDegrees(90));
-          }
-          field.getObject(name + "_wall").setPoses(wallPoses);
         }
+
+        field.getObject(name + "_line").setPoses(linePoses);
       }
 
       obstacleIndex++;
