@@ -49,29 +49,11 @@ import static edu.wpi.first.units.Units.Meters;
 
 public class SwerveSubsystem extends SubsystemBase
 {
-  // Navigator - Choose one option below:
-
-  // OPTION 1: Default balanced navigation
+  // Navigator - try: CompactNavigator.aggressive(), .defensive(), .rally(), or .bulldozer()
   private final CompactNavigator navigator = new CompactNavigator();
-
-  // OPTION 2: Presets
-  // private final CompactNavigator navigator = CompactNavigator.aggressive();  // Fast, push through
-  // private final CompactNavigator navigator = CompactNavigator.defensive();   // Slow, safe
-  // private final CompactNavigator navigator = CompactNavigator.rally();       // High speed with control
-  // private final CompactNavigator navigator = CompactNavigator.bulldozer();   // Ignores opponents
-
-  // OPTION 3: Custom parameters
-  // private final CompactNavigator navigator = new CompactNavigator(
-  //     5.0,   // maxSpeed (m/s)
-  //     8.0,   // goalAttraction
-  //     1.5,   // avoidanceStrength
-  //     0.6    // opponentWeight (lower = allow bumping)
-  // );
 
   private final SwerveDrive drive;
   private final Field2d field = new Field2d();
-
-  // Maple-sim integration
   private final Arena2025Reefscape arena = new Arena2025Reefscape();
   private final ReefscapeOpponentManager opponentManager = new ReefscapeOpponentManager();
   private final List<SmartKitBot> opponents = new ArrayList<>();
@@ -181,71 +163,30 @@ public class SwerveSubsystem extends SubsystemBase
         .withRotationController(new PIDController(1, 0, 0));
     drive = new SwerveDrive(config);
 
-    // Initialize Reefscape field obstacles
-    createReefscapeObstacles();
-
-    // Share obstacles with opponent manager
+    // Setup obstacles
+    navigator.addObstacles(CompactNavigator.fieldWalls());
+    navigator.addObstacles(CompactNavigator.reefscapeObstacles());
     opponentManager.setSharedObstacles(CompactNavigator.fieldWalls());
     opponentManager.getSharedObstacles().addAll(CompactNavigator.reefscapeObstacles());
 
-    // Create smart opponents with obstacle avoidance (2 KitBots on red alliance)
-    // Each can have different navigation styles!
+    // Create opponents (try different presets like CompactNavigator.aggressive())
+    opponents.add(new SmartKitBot(opponentManager, DriverStation.Alliance.Red, 1));
+    opponents.add(new SmartKitBot(opponentManager, DriverStation.Alliance.Red, 2));
 
-    // Opponent 1 - Use default balanced navigation
-    SmartKitBot opponent1 = new SmartKitBot(opponentManager, DriverStation.Alliance.Red, 1);
-    opponents.add(opponent1);
-
-    // Opponent 2 - Use default balanced navigation
-    SmartKitBot opponent2 = new SmartKitBot(opponentManager, DriverStation.Alliance.Red, 2);
-    opponents.add(opponent2);
-
-    // Examples of different opponent styles:
-    // Aggressive opponent (fast, push through):
-    // SmartKitBot opponent1 = new SmartKitBot(opponentManager, DriverStation.Alliance.Red, 1, CompactNavigator.aggressive());
-
-    // Defensive opponent (slow, cautious):
-    // SmartKitBot opponent2 = new SmartKitBot(opponentManager, DriverStation.Alliance.Red, 2, CompactNavigator.defensive());
-
-    // Bulldozer opponent (pushes through other robots):
-    // SmartKitBot opponent1 = new SmartKitBot(opponentManager, DriverStation.Alliance.Red, 1, CompactNavigator.bulldozer());
-
-    // Rally opponent (high speed with control):
-    // SmartKitBot opponent2 = new SmartKitBot(opponentManager, DriverStation.Alliance.Red, 2, CompactNavigator.rally());
-
-    // Set opponents to active state when teleop starts
-    RobotModeTriggers.teleop().onTrue(Commands.runOnce(() -> {
-      for (SmartOpponent opp : opponents) {
-        opp.setState(SmartOpponent.States.STARTING);
-      }
-    }));
+    // Activate opponents on teleop
+    RobotModeTriggers.teleop().onTrue(Commands.runOnce(() ->
+      opponents.forEach(o -> o.setState(SmartOpponent.States.STARTING))
+    ));
 
     SmartDashboard.putData("Field", field);
-    SmartDashboard.putString("Obstacle Count", "Total: " + navigator.getObstacleCount() + ", Opponents: 2");
-  }
-
-  private void createReefscapeObstacles() {
-    // Add field walls and reefscape obstacles to navigator
-    navigator.addObstacles(CompactNavigator.fieldWalls());
-    navigator.addObstacles(CompactNavigator.reefscapeObstacles());
-
-    System.out.println("Created " + navigator.getObstacleCount() + " obstacles using CompactNavigator");
   }
 
 
-  public Command driveToPose(Pose2d pose)
-  {
+  public Command driveToPose(Pose2d pose) {
     return run(() -> {
-      // Use CompactNavigator like a PIDController
-      List<SmartOpponent> opponentList = new ArrayList<>(opponents);
-      ChassisSpeeds speeds = navigator.calculate(drive.getPose(), pose, opponentList);
-
+      ChassisSpeeds speeds = navigator.calculate(drive.getPose(), pose, new ArrayList<>(opponents));
       drive.setRobotRelativeChassisSpeeds(speeds);
-
-      // Visualize goal position
       field.getObject("Goal").setPose(pose);
-
-      // Debug output
-      SmartDashboard.putNumber("Distance to Goal", drive.getPose().getTranslation().getDistance(pose.getTranslation()));
     });
   }
 
