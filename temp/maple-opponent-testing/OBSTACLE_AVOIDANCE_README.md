@@ -47,9 +47,13 @@ cd maple-opponent-testing
 
 2. **Field2d Widget**
    - Blue robot (your robot) starting at (3, 3)
-   - 2 red opponent robots (KitBots)
+   - 2 red opponent robots (KitBots) - "Opponent0", "Opponent1"
+   - Goal position - "Goal" (green)
    - Real-time path visualization
-   - Obstacle locations
+   - All obstacles visualized:
+     - Walls: Lines of robot icons along boundaries
+     - Circles: 16-point circular patterns (reefs, pillar)
+     - Named as "Obstacle0" through "Obstacle6"
 
 3. **SmartDashboard Values**
    - `Obstacles/Total`: Total obstacles (static + dynamic)
@@ -147,6 +151,30 @@ public static Config opponent() {
 }
 ```
 
+## Obstacle Visualization
+
+All obstacles are displayed on the Field2d widget:
+
+### Static Obstacles
+- **Walls** (4): Visualized as lines of robot poses along boundaries
+  - Left wall (x=0)
+  - Right wall (x=17.548)
+  - Bottom wall (y=0)
+  - Top wall (y=8.052)
+
+- **Circular Obstacles** (3): Visualized as 16-point circles
+  - Blue Reef: Circle at (4.489, 4.026) with 0.8m radius
+  - Red Reef: Circle at (13.059, 4.026) with 0.8m radius
+  - Center Pillar: Circle at (8.774, 4.026) with 0.4m radius
+
+### Dynamic Obstacles
+- **Opponents**: Real-time updated poses
+  - "Opponent0": KitBot #1
+  - "Opponent1": KitBot #2
+
+### Goal
+- **Target Pose**: Displayed as "Goal" object at (14, 4)
+
 ## Architecture
 
 ### SwerveSubsystem
@@ -156,6 +184,7 @@ public static Config opponent() {
 - **ObstacleAvoidance**: APF navigation algorithm
 - **Static Obstacles**: Created from reefscape field geometry
 - **Dynamic Obstacles**: Updated each iteration from opponent poses/velocities
+- **Obstacle Visualization**: All obstacles rendered on Field2d at startup
 
 ### Obstacle Avoidance Flow
 

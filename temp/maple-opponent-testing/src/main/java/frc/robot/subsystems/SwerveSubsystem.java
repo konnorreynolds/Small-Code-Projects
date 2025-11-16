@@ -186,6 +186,9 @@ public class SwerveSubsystem extends SubsystemBase
 
     SmartDashboard.putData("Field", field);
     SmartDashboard.putString("Obstacle Count", "Static: " + staticObstacles.size() + ", Dynamic: 2");
+
+    // Visualize static obstacles on Field2d
+    visualizeObstacles();
   }
 
   private void createReefscapeObstacles() {
@@ -219,6 +222,64 @@ public class SwerveSubsystem extends SubsystemBase
     ));
 
     System.out.println("Created " + staticObstacles.size() + " Reefscape static obstacles");
+  }
+
+  private void visualizeObstacles() {
+    int obstacleIndex = 0;
+
+    for (ObstacleAvoidance.Obstacle obstacle : staticObstacles) {
+      String name = "Obstacle" + obstacleIndex;
+
+      if (obstacle.shape == ObstacleAvoidance.Obstacle.Shape.CIRCLE) {
+        // Visualize circle as a single pose with rotation indicating radius
+        field.getObject(name).setPose(new Pose2d(
+            obstacle.position,
+            new Rotation2d()
+        ));
+
+        // Create a circle visualization using multiple poses
+        int numPoints = 16;
+        Pose2d[] circlePoses = new Pose2d[numPoints];
+        for (int i = 0; i < numPoints; i++) {
+          double angle = 2 * Math.PI * i / numPoints;
+          double x = obstacle.position.getX() + obstacle.radius.in(Meters) * Math.cos(angle);
+          double y = obstacle.position.getY() + obstacle.radius.in(Meters) * Math.sin(angle);
+          circlePoses[i] = new Pose2d(x, y, Rotation2d.fromRadians(angle + Math.PI/2));
+        }
+        field.getObject(name + "_circle").setPoses(circlePoses);
+
+      } else if (obstacle.shape == ObstacleAvoidance.Obstacle.Shape.RECTANGLE) {
+        // Visualize wall as line of poses
+        Translation2d start = obstacle.position;
+        double width = obstacle.width.in(Meters);
+        double height = obstacle.height.in(Meters);
+
+        // Determine if it's horizontal or vertical wall
+        if (Math.abs(height) > Math.abs(width)) {
+          // Vertical wall
+          int numPoints = Math.max(3, (int)(height / 0.5));
+          Pose2d[] wallPoses = new Pose2d[numPoints];
+          for (int i = 0; i < numPoints; i++) {
+            double y = start.getY() + (height * i / (numPoints - 1));
+            wallPoses[i] = new Pose2d(start.getX(), y, Rotation2d.fromDegrees(0));
+          }
+          field.getObject(name + "_wall").setPoses(wallPoses);
+        } else {
+          // Horizontal wall
+          int numPoints = Math.max(3, (int)(width / 0.5));
+          Pose2d[] wallPoses = new Pose2d[numPoints];
+          for (int i = 0; i < numPoints; i++) {
+            double x = start.getX() + (width * i / (numPoints - 1));
+            wallPoses[i] = new Pose2d(x, start.getY(), Rotation2d.fromDegrees(90));
+          }
+          field.getObject(name + "_wall").setPoses(wallPoses);
+        }
+      }
+
+      obstacleIndex++;
+    }
+
+    System.out.println("Visualized " + obstacleIndex + " static obstacles on Field2d");
   }
 
   public Command driveToPose(Pose2d pose)
@@ -257,6 +318,9 @@ public class SwerveSubsystem extends SubsystemBase
       );
 
       drive.setRobotRelativeChassisSpeeds(speeds);
+
+      // Visualize goal position
+      field.getObject("Goal").setPose(pose);
 
       // Debug output
       SmartDashboard.putNumber("Obstacles/Total", obstacles.size());
