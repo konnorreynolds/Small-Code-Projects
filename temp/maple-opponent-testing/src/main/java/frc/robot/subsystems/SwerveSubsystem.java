@@ -50,6 +50,29 @@ import static edu.wpi.first.units.Units.Meters;
 
 public class SwerveSubsystem extends SubsystemBase
 {
+  // ========================================================================
+  // TUNABLE PARAMETERS - Adjust these for different obstacle avoidance behaviors
+  // ========================================================================
+
+  // Navigation Speed
+  private static final double NAV_SPEED_MPS = 5.0;  // Navigation speed in m/s (higher = faster but less safe)
+
+  // Obstacle Detection
+  private static final double WALL_RADIUS = 0.4;         // Radius of wall obstacle circles (m)
+  private static final double WALL_SPACING = 0.6;        // Spacing between wall circles (m)
+  private static final double WALL_WEIGHT = 3.0;         // Wall avoidance strength (higher = stronger)
+  private static final double REEF_RADIUS = 0.95;        // Reef obstacle radius (m)
+  private static final double REEF_WEIGHT = 2.5;         // Reef avoidance strength
+  private static final double OPPONENT_WEIGHT = 1.2;     // Opponent avoidance strength multiplier
+
+  // APF Avoidance Parameters
+  private static final double AVOIDANCE_RADIUS = 1.5;    // Safety margin around obstacles (m)
+  private static final double AVOIDANCE_STRENGTH = 1.8;  // Base repulsion force strength
+  private static final double GOAL_ATTRACTION = 2.5;     // Goal pull strength (higher = more aggressive)
+  private static final double PREDICTION_TIME = 1.5;     // Collision prediction look-ahead (seconds)
+
+  // ========================================================================
+
   private final List<ObstacleAvoidance.Obstacle> obstacles = new ArrayList<>();
   private final List<ObstacleAvoidance.Obstacle> staticObstacles = new ArrayList<>();
 
@@ -65,7 +88,7 @@ public class SwerveSubsystem extends SubsystemBase
   private final List<SmartOpponent> opponents = new ArrayList<>();
 
   private AngularVelocity maximumChassisSpeedsAngularVelocity = DegreesPerSecond.of(720);
-  private LinearVelocity  maximumChassisSpeedsLinearVelocity  = MetersPerSecond.of(6);
+  private LinearVelocity  maximumChassisSpeedsLinearVelocity  = MetersPerSecond.of(8);
 
   /**
    * Get a {@link Supplier<ChassisSpeeds>} for the robot relative chassis speeds based on "standard" swerve drive
@@ -197,75 +220,75 @@ public class SwerveSubsystem extends SubsystemBase
   }
 
   private void createReefscapeObstacles() {
-    // Field boundaries - proper sizes for prediction-based avoidance
+    // Create walls as series of circular obstacles for proper APF avoidance
+    // Using tunable parameters from top of class
+
     // Left wall (vertical)
-    ObstacleAvoidance.Obstacle leftWall = ObstacleAvoidance.line(
-        new Translation2d(0.7, 0), new Translation2d(0.7, 8.052), Meters.of(0.6)
-    );
-    leftWall.likelyDestination = new Translation2d(0.7, 8.052); // Mark as vertical
-    leftWall.type = ObstacleAvoidance.Obstacle.Type.DANGEROUS;
-    leftWall.avoidanceWeight = 2.5;
-    leftWall.priority = 1.0;
-    staticObstacles.add(leftWall);
+    for (double y = 0; y <= 8.052; y += WALL_SPACING) {
+      ObstacleAvoidance.Obstacle wall = ObstacleAvoidance.circle(
+          new Translation2d(0.8, y), Meters.of(WALL_RADIUS)
+      );
+      wall.type = ObstacleAvoidance.Obstacle.Type.DANGEROUS;
+      wall.avoidanceWeight = WALL_WEIGHT;
+      wall.priority = 1.0;
+      staticObstacles.add(wall);
+    }
 
     // Right wall (vertical)
-    ObstacleAvoidance.Obstacle rightWall = ObstacleAvoidance.line(
-        new Translation2d(16.848, 0), new Translation2d(16.848, 8.052), Meters.of(0.6)
-    );
-    rightWall.likelyDestination = new Translation2d(16.848, 8.052); // Mark as vertical
-    rightWall.type = ObstacleAvoidance.Obstacle.Type.DANGEROUS;
-    rightWall.avoidanceWeight = 2.5;
-    rightWall.priority = 1.0;
-    staticObstacles.add(rightWall);
+    for (double y = 0; y <= 8.052; y += WALL_SPACING) {
+      ObstacleAvoidance.Obstacle wall = ObstacleAvoidance.circle(
+          new Translation2d(16.748, y), Meters.of(WALL_RADIUS)
+      );
+      wall.type = ObstacleAvoidance.Obstacle.Type.DANGEROUS;
+      wall.avoidanceWeight = WALL_WEIGHT;
+      wall.priority = 1.0;
+      staticObstacles.add(wall);
+    }
 
     // Bottom wall (horizontal)
-    ObstacleAvoidance.Obstacle bottomWall = ObstacleAvoidance.line(
-        new Translation2d(0, 0.7), new Translation2d(17.548, 0.7), Meters.of(0.6)
-    );
-    bottomWall.likelyDestination = new Translation2d(17.548, 0.7); // Mark as horizontal
-    bottomWall.type = ObstacleAvoidance.Obstacle.Type.DANGEROUS;
-    bottomWall.avoidanceWeight = 2.5;
-    bottomWall.priority = 1.0;
-    staticObstacles.add(bottomWall);
+    for (double x = 0; x <= 17.548; x += WALL_SPACING) {
+      ObstacleAvoidance.Obstacle wall = ObstacleAvoidance.circle(
+          new Translation2d(x, 0.8), Meters.of(WALL_RADIUS)
+      );
+      wall.type = ObstacleAvoidance.Obstacle.Type.DANGEROUS;
+      wall.avoidanceWeight = WALL_WEIGHT;
+      wall.priority = 1.0;
+      staticObstacles.add(wall);
+    }
 
     // Top wall (horizontal)
-    ObstacleAvoidance.Obstacle topWall = ObstacleAvoidance.line(
-        new Translation2d(0, 7.352), new Translation2d(17.548, 7.352), Meters.of(0.6)
-    );
-    topWall.likelyDestination = new Translation2d(17.548, 7.352); // Mark as horizontal
-    topWall.type = ObstacleAvoidance.Obstacle.Type.DANGEROUS;
-    topWall.avoidanceWeight = 2.5;
-    topWall.priority = 1.0;
-    staticObstacles.add(topWall);
+    for (double x = 0; x <= 17.548; x += WALL_SPACING) {
+      ObstacleAvoidance.Obstacle wall = ObstacleAvoidance.circle(
+          new Translation2d(x, 7.252), Meters.of(WALL_RADIUS)
+      );
+      wall.type = ObstacleAvoidance.Obstacle.Type.DANGEROUS;
+      wall.avoidanceWeight = WALL_WEIGHT;
+      wall.priority = 1.0;
+      staticObstacles.add(wall);
+    }
 
-    // Blue Reef (hexagon obstacle)
+    // Blue Reef
     ObstacleAvoidance.Obstacle blueReef = ObstacleAvoidance.circle(
-        new Translation2d(4.489, 4.026), Meters.of(0.9)
+        new Translation2d(4.489, 4.026), Meters.of(REEF_RADIUS)
     );
-    blueReef.type = ObstacleAvoidance.Obstacle.Type.STATIC;
-    blueReef.avoidanceWeight = 2.0;
-    blueReef.priority = 0.9;
+    blueReef.avoidanceWeight = REEF_WEIGHT;
     staticObstacles.add(blueReef);
 
-    // Red Reef (hexagon obstacle)
+    // Red Reef
     ObstacleAvoidance.Obstacle redReef = ObstacleAvoidance.circle(
-        new Translation2d(13.059, 4.026), Meters.of(0.9)
+        new Translation2d(13.059, 4.026), Meters.of(REEF_RADIUS)
     );
-    redReef.type = ObstacleAvoidance.Obstacle.Type.STATIC;
-    redReef.avoidanceWeight = 2.0;
-    redReef.priority = 0.9;
+    redReef.avoidanceWeight = REEF_WEIGHT;
     staticObstacles.add(redReef);
 
     // Center pillar
     ObstacleAvoidance.Obstacle pillar = ObstacleAvoidance.circle(
-        new Translation2d(8.774, 4.026), Meters.of(0.5)
+        new Translation2d(8.774, 4.026), Meters.of(REEF_RADIUS * 0.6)
     );
-    pillar.type = ObstacleAvoidance.Obstacle.Type.STATIC;
-    pillar.avoidanceWeight = 2.0;
-    pillar.priority = 0.9;
+    pillar.avoidanceWeight = REEF_WEIGHT;
     staticObstacles.add(pillar);
 
-    System.out.println("Created " + staticObstacles.size() + " Reefscape static obstacles");
+    System.out.println("Created " + staticObstacles.size() + " obstacles (tunable config)");
   }
 
   private void visualizeObstacles() {
@@ -340,49 +363,34 @@ public class SwerveSubsystem extends SubsystemBase
       obstacles.clear();
       obstacles.addAll(staticObstacles);
 
-      // Add opponents as dynamic obstacles
+      // Add opponents as dynamic obstacles using tunable parameters
       for (SmartOpponent opponent : opponents) {
         Pose2d opponentPose = opponent.getPose();
-        // Create robot obstacle with strong prediction-based avoidance
-        // Using zero velocity for now - APF will handle avoidance based on position
         Translation2d velocity = new Translation2d();
 
         ObstacleAvoidance.Obstacle opponentObstacle = ObstacleAvoidance.robot(
             opponentPose, velocity, true
-        ).aggressive().difficulty(0.8);  // Strong avoidance with prediction
-
+        );
+        opponentObstacle.avoidanceWeight *= OPPONENT_WEIGHT;  // Apply tunable weight
         obstacles.add(opponentObstacle);
       }
 
-      // Drive with prediction-based obstacle avoidance
-      // Strong prediction and velocity-aware collision avoidance
-      ObstacleAvoidance.Config predictiveConfig = new ObstacleAvoidance.Config();
-      predictiveConfig.maxVelocity = MetersPerSecond.of(6.0);
-
-      // Prediction settings - critical for avoiding obstacles
-      predictiveConfig.useCollisionPrediction = true;
-      predictiveConfig.useVelocityAwareAvoidance = true;
-      predictiveConfig.predictionLookAhead = 1.5;  // Look 1.5 seconds ahead
-      predictiveConfig.collisionUrgencyMultiplier = 4.0;  // Strong collision avoidance
-
-      // Avoidance strength
-      predictiveConfig.baseAvoidanceStrength = 1.8;
-      predictiveConfig.defaultAvoidanceRadius = Meters.of(1.5);  // Large safety margin
-      predictiveConfig.dangerRadius = Meters.of(0.6);
-
-      // Path behavior
-      predictiveConfig.goalBias = 2.5;  // Moderate goal pull
-      predictiveConfig.pathCommitment = 0.85;  // Allow course corrections
-      predictiveConfig.directBias = 2.0;  // Moderate direct preference
-      predictiveConfig.aggressiveness = 1.0;
-      predictiveConfig.smoothness = 0.6;
+      // Create simple, tunable APF configuration
+      ObstacleAvoidance.Config config = new ObstacleAvoidance.Config();
+      config.maxVelocity = MetersPerSecond.of(NAV_SPEED_MPS);
+      config.baseAvoidanceStrength = AVOIDANCE_STRENGTH;
+      config.defaultAvoidanceRadius = Meters.of(AVOIDANCE_RADIUS);
+      config.goalBias = GOAL_ATTRACTION;
+      config.predictionLookAhead = PREDICTION_TIME;
+      config.useCollisionPrediction = true;
+      config.useVelocityAwareAvoidance = true;
 
       ChassisSpeeds speeds = poseController.drive(
           drive.getPose(),
           pose,
           obstacles,
           rotationPID,
-          predictiveConfig,
+          config,
           new Translation2d()
       );
 
