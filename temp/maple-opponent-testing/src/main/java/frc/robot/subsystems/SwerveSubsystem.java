@@ -10,6 +10,8 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -27,7 +29,6 @@ import yams.mechanisms.config.SwerveModuleConfig;
 import yams.mechanisms.swerve.SwerveDrive;
 import yams.mechanisms.swerve.SwerveModule;
 import yams.mechanisms.swerve.utility.SwerveInputStream;
-import yams.motorcontrollers.SmartMotorController;
 import yams.motorcontrollers.SmartMotorControllerConfig;
 import yams.motorcontrollers.local.SparkWrapper;
 import java.util.ArrayList;
@@ -90,15 +91,6 @@ public class SwerveSubsystem extends SubsystemBase {
     }
   }
 
-  /**
-   * Get a {@link Supplier<ChassisSpeeds>} for the robot relative chassis speeds based on "standard" swerve drive
-   * controls.
-   *
-   * @param translationXScalar Translation in the X direction from [-1,1]
-   * @param translationYScalar Translation in the Y direction from [-1,1]
-   * @param rotationScalar     Rotation speed from [-1,1]
-   * @return {@link Supplier<ChassisSpeeds>} for the robot relative chassis speeds.
-   */
   public SwerveInputStream getChassisSpeedsSupplier(DoubleSupplier x, DoubleSupplier y, DoubleSupplier rot) {
     return new SwerveInputStream(drive, x, y, rot)
         .withMaximumAngularVelocity(maxAngularVel)
@@ -183,6 +175,7 @@ public class SwerveSubsystem extends SubsystemBase {
 
   private void addLine(double x1, double y1, double x2, double y2) {
     double dx = x2 - x1, dy = y2 - y1, len = Math.sqrt(dx*dx + dy*dy);
+    if (len < 0.01) return; // Skip zero-length lines
     for (double t = 0; t <= 1; t += 0.8 / len) nav.addWall(x1 + dx*t, y1 + dy*t);
   }
 
