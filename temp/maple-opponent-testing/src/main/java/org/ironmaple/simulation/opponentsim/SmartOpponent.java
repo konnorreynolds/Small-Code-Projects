@@ -2,7 +2,6 @@ package org.ironmaple.simulation.opponentsim;
 
 
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.LinearFilter;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -10,7 +9,6 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.system.plant.DCMotor;
-import frc.robot.subsystems.ObstacleAvoidance;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StringPublisher;
 import edu.wpi.first.networktables.StructPublisher;
@@ -338,74 +336,121 @@ public abstract class SmartOpponent extends SubsystemBase {
     }
 
     /**
-     * Advanced pathfinding with obstacle avoidance
+     * Advanced pathfinding with Dijkstra obstacle avoidance
      */
-    // Compact APF-based navigator for smooth obstacle avoidance
+    // Compact Dijkstra-based navigator for optimal pathfinding
     private static final class Navigator {
-        private static final Translation2d ZERO = new Translation2d();
-        private final ObstacleAvoidance controller = new ObstacleAvoidance();
-        private final PIDController rotPID = new PIDController(1.5, 0, 0.1);
-        private final List<ObstacleAvoidance.Obstacle> obstacles = new ArrayList<>(60);
-        private final ObstacleAvoidance.Config cfg = new ObstacleAvoidance.Config();
-        private final double speed, goalPull, avoidStr, oppWeight;
+        private static final int GRID_SIZE = 70; // 70x70 grid for fine resolution
+        private static final double CELL_SIZE = 17.548 / GRID_SIZE;
+        private final boolean[][] obstacles = new boolean[GRID_SIZE][GRID_SIZE];
 
-        Navigator(double speed, double goalPull, double avoidStr, double oppWeight) {
-            this.speed = speed; this.goalPull = goalPull; this.avoidStr = avoidStr; this.oppWeight = oppWeight;
-            rotPID.enableContinuousInput(-Math.PI, Math.PI);
-            cfg.maxVelocity = Meters.per(Second).of(speed);
-            cfg.baseAvoidanceStrength = avoidStr;
-            cfg.defaultAvoidanceRadius = Meters.of(1.2);
-            cfg.goalBias = goalPull;
-            cfg.predictionLookAhead = 1.2;
-            cfg.useCollisionPrediction = true;
-            cfg.useVelocityAwareAvoidance = true;
+        Navigator() {
+            // Mark Reefscape 2025 obstacles on grid
+            markLine(0, 1.27, 0, 6.782); markLine(0, 1.27, 1.672, 0); markLine(0, 6.782, 1.672, 8.052);
+            markLine(17.548, 1.27, 17.548, 6.782); markLine(17.548, 1.27, 15.876, 0); markLine(17.548, 6.782, 15.876, 8.052);
+            markLine(1.672, 8.052, 11, 8.052); markLine(12, 8.052, 15.876, 8.052);
+            markLine(1.672, 0, 5.8, 0); markLine(6.3, 0, 15.876, 0);
+            markCircle(4.489, 4.026, 0.9); markCircle(13.059, 4.026, 0.9); markCircle(8.774, 4.026, 0.3);
         }
 
-        void addWall(double x, double y) {
-            var w = ObstacleAvoidance.circle(new Translation2d(x, y), Meters.of(0.35));
-            w.type = ObstacleAvoidance.Obstacle.Type.DANGEROUS;
-            w.avoidanceWeight = 2.0;
-            w.priority = 1.0;
-            obstacles.add(w);
-        }
-
-        void addCircle(double x, double y, double r) {
-            var c = ObstacleAvoidance.circle(new Translation2d(x, y), Meters.of(r));
-            c.avoidanceWeight = 2.0;
-            obstacles.add(c);
-        }
-
-        ChassisSpeeds navigate(Pose2d current, Pose2d target, List<SmartOpponent> opps) {
-            var all = new ArrayList<ObstacleAvoidance.Obstacle>(obstacles.size() + opps.size());
-            all.addAll(obstacles);
-            for (var opp : opps) {
-                var o = ObstacleAvoidance.robot(opp.getPose(), ZERO, true);
-                o.avoidanceWeight *= oppWeight;
-                all.add(o);
+        private void markLine(double x1, double y1, double x2, double y2) {
+            double dx = x2 - x1, dy = y2 - y1, len = Math.sqrt(dx*dx + dy*dy);
+            if (len < 0.01) return;
+            for (double t = 0; t <= 1; t += 0.05 / len) {
+                int gx = toGrid(x1 + dx*t), gy = toGrid(y1 + dy*t);
+                markCell(gx, gy, 2); // Inflate 2 cells for safety
             }
-            return controller.drive(current, target, all, rotPID, cfg, ZERO);
+        }
+
+        private void markCircle(double cx, double cy, double r) {
+            int gcx = toGrid(cx), gcy = toGrid(cy), gr = (int)(r / CELL_SIZE) + 2;
+            for (int dx = -gr; dx <= gr; dx++) {
+                for (int dy = -gr; dy <= gr; dy++) {
+                    if (dx*dx + dy*dy <= gr*gr) markCell(gcx + dx, gcy + dy, 0);
+                }
+            }
+        }
+
+        private void markCell(int gx, int gy, int inflate) {
+            for (int dx = -inflate; dx <= inflate; dx++) {
+                for (int dy = -inflate; dy <= inflate; dy++) {
+                    int x = gx + dx, y = gy + dy;
+                    if (x >= 0 && x < GRID_SIZE && y >= 0 && y < GRID_SIZE) obstacles[x][y] = true;
+                }
+            }
+        }
+
+        private int toGrid(double coord) { return (int)(coord / CELL_SIZE); }
+        private double fromGrid(int g) { return g * CELL_SIZE + CELL_SIZE/2; }
+
+        // Dijkstra pathfinding with early termination
+        List<Translation2d> findPath(Pose2d start, Pose2d goal) {
+            int sx = toGrid(start.getX()), sy = toGrid(start.getY());
+            int gx = toGrid(goal.getX()), gy = toGrid(goal.getY());
+
+            if (sx < 0 || sx >= GRID_SIZE || sy < 0 || sy >= GRID_SIZE) return new ArrayList<>();
+            if (gx < 0 || gx >= GRID_SIZE || gy < 0 || gy >= GRID_SIZE) return new ArrayList<>();
+            if (obstacles[sx][sy] || obstacles[gx][gy]) return new ArrayList<>();
+
+            double[][] dist = new double[GRID_SIZE][GRID_SIZE];
+            int[][] prevX = new int[GRID_SIZE][GRID_SIZE];
+            int[][] prevY = new int[GRID_SIZE][GRID_SIZE];
+            boolean[][] visited = new boolean[GRID_SIZE][GRID_SIZE];
+
+            for (int i = 0; i < GRID_SIZE; i++) Arrays.fill(dist[i], Double.MAX_VALUE);
+            dist[sx][sy] = 0;
+
+            // Dijkstra main loop
+            for (int iter = 0; iter < GRID_SIZE * GRID_SIZE; iter++) {
+                int ux = -1, uy = -1;
+                double minDist = Double.MAX_VALUE;
+
+                for (int i = 0; i < GRID_SIZE; i++) {
+                    for (int j = 0; j < GRID_SIZE; j++) {
+                        if (!visited[i][j] && dist[i][j] < minDist) {
+                            minDist = dist[i][j]; ux = i; uy = j;
+                        }
+                    }
+                }
+
+                if (ux == -1 || (ux == gx && uy == gy)) break; // Found or exhausted
+                visited[ux][uy] = true;
+
+                // 8-connected neighbors
+                int[][] dirs = {{-1,0},{1,0},{0,-1},{0,1},{-1,-1},{-1,1},{1,-1},{1,1}};
+                for (int[] d : dirs) {
+                    int nx = ux + d[0], ny = uy + d[1];
+                    if (nx >= 0 && nx < GRID_SIZE && ny >= 0 && ny < GRID_SIZE &&
+                        !obstacles[nx][ny] && !visited[nx][ny]) {
+                        double cost = (d[0] != 0 && d[1] != 0) ? 1.414 : 1.0;
+                        double newDist = dist[ux][uy] + cost;
+                        if (newDist < dist[nx][ny]) {
+                            dist[nx][ny] = newDist;
+                            prevX[nx][ny] = ux; prevY[nx][ny] = uy;
+                        }
+                    }
+                }
+            }
+
+            // Reconstruct path
+            List<Translation2d> path = new ArrayList<>();
+            if (dist[gx][gy] == Double.MAX_VALUE) return path;
+
+            int cx = gx, cy = gy;
+            while (cx != sx || cy != sy) {
+                path.add(new Translation2d(fromGrid(cx), fromGrid(cy)));
+                int px = prevX[cx][cy], py = prevY[cx][cy];
+                if (px == -1) break;
+                cx = px; cy = py;
+            }
+
+            java.util.Collections.reverse(path);
+            return path;
         }
     }
 
-    // Shared field obstacles for all opponents
-    private static final Navigator sharedNav = initializeNavigator();
-
-    private static Navigator initializeNavigator() {
-        var nav = new Navigator(5.0, 8.0, 1.5, 0.6); // speed, goalPull, avoidStr, oppWeight
-        // Reefscape 2025 field obstacles
-        addLine(nav, 0, 1.27, 0, 6.782); addLine(nav, 0, 1.27, 1.672, 0); addLine(nav, 0, 6.782, 1.672, 8.052);
-        addLine(nav, 17.548, 1.27, 17.548, 6.782); addLine(nav, 17.548, 1.27, 15.876, 0); addLine(nav, 17.548, 6.782, 15.876, 8.052);
-        addLine(nav, 1.672, 8.052, 11, 8.052); addLine(nav, 12, 8.052, 15.876, 8.052);
-        addLine(nav, 1.672, 0, 5.8, 0); addLine(nav, 6.3, 0, 15.876, 0);
-        nav.addCircle(4.489, 4.026, 0.9); nav.addCircle(13.059, 4.026, 0.9); nav.addCircle(8.774, 4.026, 0.2);
-        return nav;
-    }
-
-    private static void addLine(Navigator nav, double x1, double y1, double x2, double y2) {
-        double dx = x2 - x1, dy = y2 - y1, len = Math.sqrt(dx*dx + dy*dy);
-        if (len < 0.01) return;
-        for (double t = 0; t <= 1; t += 0.8 / len) nav.addWall(x1 + dx*t, y1 + dy*t);
-    }
+    // Shared navigator for all opponents
+    private static final Navigator sharedNav = new Navigator();
 
     public Command pathfindCommand(Pose2d targetPose, Distance tolerance) {
         if (!simulation.isPresent()) {
@@ -414,16 +459,29 @@ public abstract class SmartOpponent extends SubsystemBase {
 
         return Commands.run(() -> {
             Pose2d current = simulation.get().getActualPoseInSimulationWorld();
-            // Get other opponents for dynamic avoidance
-            List<SmartOpponent> others = new ArrayList<>();
-            if (manager.isPresent()) {
-                for (SmartOpponent opp : manager.get().getOpponents()) {
-                    if (opp != this) others.add(opp);
-                }
+
+            // Find path using Dijkstra
+            List<Translation2d> path = sharedNav.findPath(current, targetPose);
+
+            if (path.isEmpty()) {
+                simulation.get().runChassisSpeeds(new ChassisSpeeds(), new Translation2d(), false, false);
+                return;
             }
-            // Navigate with APF obstacle avoidance
-            ChassisSpeeds speeds = sharedNav.navigate(current, targetPose, others);
-            simulation.get().runChassisSpeeds(speeds, new Translation2d(), false, false);
+
+            // Follow first waypoint
+            Translation2d wp = path.get(0);
+            double dx = wp.getX() - current.getX(), dy = wp.getY() - current.getY();
+            double dist = Math.sqrt(dx*dx + dy*dy);
+
+            if (dist > 0.1) {
+                double maxVel = simulation.get().maxLinearVelocity().in(MetersPerSecond);
+                double speed = Math.min(maxVel, dist * 3.0);
+                double vx = (dx / dist) * speed, vy = (dy / dist) * speed;
+                double omega = targetPose.getRotation().minus(current.getRotation()).getRadians() * 2.0;
+                simulation.get().runChassisSpeeds(new ChassisSpeeds(vx, vy, omega), new Translation2d(), false, false);
+            } else {
+                simulation.get().runChassisSpeeds(new ChassisSpeeds(), new Translation2d(), false, false);
+            }
         }, this).until(() -> simulation.isPresent() &&
                 simulation.get().getActualPoseInSimulationWorld().getTranslation()
                         .getDistance(targetPose.getTranslation()) <= tolerance.in(Meters));
