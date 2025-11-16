@@ -69,12 +69,40 @@ public class SwerveSubsystem extends SubsystemBase
   private static final double AVOIDANCE_STRENGTH = 1.5;  // Base repulsion force strength
   private static final double GOAL_ATTRACTION = 8.0;     // Goal pull strength (higher = more aggressive) - DOMINANT FORCE
   private static final double PREDICTION_TIME = 1.2;     // Collision prediction look-ahead (seconds)
+  private static final double OPPONENT_AVOIDANCE = 0.6;  // Opponent avoidance strength (lower = allow bumping)
 
   // ========================================================================
 
+  // OPTION 1: Use custom tunable parameters
   private final ObstacleAvoidanceNavigator navigator = new ObstacleAvoidanceNavigator(
-      NAV_SPEED_MPS, AVOIDANCE_RADIUS, AVOIDANCE_STRENGTH, GOAL_ATTRACTION, PREDICTION_TIME
+      NAV_SPEED_MPS, AVOIDANCE_RADIUS, AVOIDANCE_STRENGTH, GOAL_ATTRACTION, PREDICTION_TIME, OPPONENT_AVOIDANCE
   );
+
+  // OPTION 2: Use presets (uncomment to use)
+  // Easy opponent - slow, cautious, avoids everything:
+  // private final ObstacleAvoidanceNavigator navigator = ObstacleAvoidanceNavigator.easy();
+
+  // Medium opponent - balanced (default competitive):
+  // private final ObstacleAvoidanceNavigator navigator = ObstacleAvoidanceNavigator.medium();
+
+  // Hard opponent - fast, aggressive, allows bumping:
+  // private final ObstacleAvoidanceNavigator navigator = ObstacleAvoidanceNavigator.hard();
+
+  // OPTION 3: Use drive styles
+  // Aggressive - maximum speed, push through:
+  // private final ObstacleAvoidanceNavigator navigator = ObstacleAvoidanceNavigator.aggressive();
+
+  // Defensive - prioritizes safety:
+  // private final ObstacleAvoidanceNavigator navigator = ObstacleAvoidanceNavigator.defensive();
+
+  // Precise - careful navigation:
+  // private final ObstacleAvoidanceNavigator navigator = ObstacleAvoidanceNavigator.precise();
+
+  // Rally - high speed with control:
+  // private final ObstacleAvoidanceNavigator navigator = ObstacleAvoidanceNavigator.rally();
+
+  // Bulldozer - ignores opponents, pushes through:
+  // private final ObstacleAvoidanceNavigator navigator = ObstacleAvoidanceNavigator.bulldozer();
   private final List<ObstacleAvoidance.Obstacle> staticObstacles = new ArrayList<>();
 
   private final SwerveDrive drive;
