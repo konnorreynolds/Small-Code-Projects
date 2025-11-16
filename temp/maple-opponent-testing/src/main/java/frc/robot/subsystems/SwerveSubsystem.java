@@ -17,6 +17,7 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.measure.*;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -30,6 +31,10 @@ import java.util.function.Supplier;
 
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import org.ironmaple.simulation.opponentsim.OpponentManager;
+import org.ironmaple.simulation.opponentsim.SmartOpponent;
+import org.ironmaple.simulation.seasonspecific.reefscape2025.Arena2025Reefscape;
+import org.ironmaple.simulation.seasonspecific.reefscape2025.opponentsim.KitBot;
+import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
 import yams.gearing.GearBox;
 import yams.gearing.MechanismGearing;
 import yams.mechanisms.config.SwerveDriveConfig;
@@ -47,12 +52,18 @@ import static edu.wpi.first.units.Units.Meters;
 public class SwerveSubsystem extends SubsystemBase
 {
   private final List<ObstacleAvoidance.Obstacle> obstacles = new ArrayList<>();
+  private final List<ObstacleAvoidance.Obstacle> staticObstacles = new ArrayList<>();
 
-  ObstacleAvoidance poseController = new ObstacleAvoidance();
+  private final ObstacleAvoidance poseController = new ObstacleAvoidance();
+  private final PIDController rotationPID = new PIDController(1.5, 0, 0.1);
 
+  private final SwerveDrive drive;
+  private final Field2d field = new Field2d();
 
-    private final SwerveDrive drive;
-  private final Field2d     field = new Field2d();
+  // Maple-sim integration
+  private final Arena2025Reefscape arena = new Arena2025Reefscape();
+  private final OpponentManager opponentManager = new OpponentManager();
+  private final List<SmartOpponent> opponents = new ArrayList<>();
 
   private AngularVelocity maximumChassisSpeedsAngularVelocity = DegreesPerSecond.of(720);
   private LinearVelocity  maximumChassisSpeedsLinearVelocity  = MetersPerSecond.of(4);
@@ -154,24 +165,104 @@ public class SwerveSubsystem extends SubsystemBase
                           new Translation2d(Inches.of(-24), Inches.of(-24)));
     SwerveDriveConfig config = new SwerveDriveConfig(this, fl, fr, bl, br)
         .withGyro(gyro.getYaw().asSupplier())
-        .withStartingPose(new Pose2d(0, 0, Rotation2d.fromDegrees(0)))
+        .withStartingPose(new Pose2d(3, 3, Rotation2d.fromDegrees(0)))
         .withTranslationController(new PIDController(1, 0, 0))
         .withRotationController(new PIDController(1, 0, 0));
     drive = new SwerveDrive(config);
-    obstacles.add(ObstacleAvoidance.line(new Translation2d(6, 3), new Translation2d(6, 8), Meters.of(0.5)));
+
+    // Configure rotation PID with continuous input
+    rotationPID.enableContinuousInput(-Math.PI, Math.PI);
+
+    // Initialize Reefscape field obstacles
+    createReefscapeObstacles();
+
+    // Create maple-sim opponents (2 KitBots on red alliance)
+    KitBot opponent1 = new KitBot(opponentManager, DriverStation.Alliance.Red, 1);
+    KitBot opponent2 = new KitBot(opponentManager, DriverStation.Alliance.Red, 2);
+    opponents.add(opponent1);
+    opponents.add(opponent2);
+    opponentManager.registerOpponent(opponent1, DriverStation.Alliance.Red);
+    opponentManager.registerOpponent(opponent2, DriverStation.Alliance.Red);
 
     SmartDashboard.putData("Field", field);
+    SmartDashboard.putString("Obstacle Count", "Static: " + staticObstacles.size() + ", Dynamic: 2");
+  }
+
+  private void createReefscapeObstacles() {
+    // Field boundaries (smaller safety margin for testing)
+    staticObstacles.add(ObstacleAvoidance.wall(
+        new Translation2d(0, 0), new Translation2d(0, 8.052), Meters.of(0.3)
+    ));
+    staticObstacles.add(ObstacleAvoidance.wall(
+        new Translation2d(17.548, 0), new Translation2d(17.548, 8.052), Meters.of(0.3)
+    ));
+    staticObstacles.add(ObstacleAvoidance.wall(
+        new Translation2d(0, 0), new Translation2d(17.548, 0), Meters.of(0.3)
+    ));
+    staticObstacles.add(ObstacleAvoidance.wall(
+        new Translation2d(0, 8.052), new Translation2d(17.548, 8.052), Meters.of(0.3)
+    ));
+
+    // Blue Reef (hexagon obstacle)
+    staticObstacles.add(ObstacleAvoidance.circle(
+        new Translation2d(4.489, 4.026), Meters.of(0.8)
+    ));
+
+    // Red Reef (hexagon obstacle)
+    staticObstacles.add(ObstacleAvoidance.circle(
+        new Translation2d(13.059, 4.026), Meters.of(0.8)
+    ));
+
+    // Center pillar
+    staticObstacles.add(ObstacleAvoidance.circle(
+        new Translation2d(8.774, 4.026), Meters.of(0.4)
+    ));
+
+    System.out.println("Created " + staticObstacles.size() + " Reefscape static obstacles");
   }
 
   public Command driveToPose(Pose2d pose)
   {
-    return drive.drive(() ->
-            poseController.drive(
-                    drive.getPose(),
-                    pose,
-                    obstacles,
-                    new PIDController(.1, 0, 0),
-                    ObstacleAvoidance.Config.opponent()));
+    return run(() -> {
+      // Update dynamic obstacles list with current opponents
+      obstacles.clear();
+      obstacles.addAll(staticObstacles);
+
+      // Add opponents as dynamic obstacles
+      for (SmartOpponent opponent : opponents) {
+        Pose2d opponentPose = opponent.getPose();
+        // Create aggressive robot obstacle with velocity
+        ChassisSpeeds opponentSpeeds = opponent.getSpeeds();
+        Translation2d velocity = new Translation2d(
+            opponentSpeeds.vxMetersPerSecond,
+            opponentSpeeds.vyMetersPerSecond
+        );
+
+        ObstacleAvoidance.Obstacle opponentObstacle = ObstacleAvoidance.robot(
+            opponentPose, velocity, true
+        ).aggressive().difficulty(0.9);
+
+        obstacles.add(opponentObstacle);
+      }
+
+      // Drive with obstacle avoidance
+      ChassisSpeeds speeds = poseController.drive(
+          drive.getPose(),
+          pose,
+          obstacles,
+          rotationPID,
+          ObstacleAvoidance.Config.opponent(),
+          new Translation2d(drive.getRobotRelativeSpeed().vxMetersPerSecond,
+                            drive.getRobotRelativeSpeed().vyMetersPerSecond)
+      );
+
+      drive.setRobotRelativeChassisSpeeds(speeds);
+
+      // Debug output
+      SmartDashboard.putNumber("Obstacles/Total", obstacles.size());
+      SmartDashboard.putNumber("Obstacles/Dynamic", opponents.size());
+      SmartDashboard.putNumber("Distance to Goal", drive.getPose().getTranslation().getDistance(pose.getTranslation()));
+    });
   }
 
   /**
@@ -190,143 +281,6 @@ public class SwerveSubsystem extends SubsystemBase
     return run(() -> drive.setRobotRelativeChassisSpeeds(speeds));
   }
 
-    /**
-     * Calculate ChassisSpeeds to drive to goal while avoiding obstacles.
-     *
-     * Uses Potential Fields for obstacle avoidance + ProfiledPIDControllers for smooth motion.
-     *
-     * Setup your controllers once in your class:
-     *   private final ProfiledPIDController translationController = new ProfiledPIDController(
-     *       2.0, 0.0, 0.0,  // kP, kI, kD
-     *       new TrapezoidProfile.Constraints(3.0, 2.0)  // max velocity, max acceleration (m/s, m/s²)
-     *   );
-     *
-     *   private final ProfiledPIDController rotationController = new ProfiledPIDController(
-     *       5.0, 0.0, 0.3,  // kP, kI, kD
-     *       new TrapezoidProfile.Constraints(Math.PI, 2 * Math.PI)  // max vel, max accel (rad/s, rad/s²)
-     *   );
-     *
-     * In your constructor:
-     *   rotationController.enableContinuousInput(-Math.PI, Math.PI);
-     *
-     * Usage:
-     *   ChassisSpeeds speeds = calculateDriveToPose(
-     *       getPose(),
-     *       goalPose,
-     *       getObstacles(),  // or List.of() for none
-     *       translationController,
-     *       rotationController
-     *   );
-     *   drive(speeds);
-     *
-     * @param currentPose Current robot pose from odometry
-     * @param goalPose Target pose to drive to
-     * @param obstacles List of obstacle positions in field coordinates (empty if none)
-     * @param translationController ProfiledPIDController for translation (manages speed/accel limits)
-     * @param rotationController ProfiledPIDController for rotation (manages rotation speed/accel)
-     * @return Field-relative ChassisSpeeds
-     */
-    private ChassisSpeeds calculateDriveToPose(
-            Pose2d currentPose,
-            Pose2d goalPose,
-            List<Translation2d> obstacles,
-            ProfiledPIDController translationController,
-            ProfiledPIDController rotationController) {
-
-        // ==================== TUNING PARAMETERS ====================
-
-        // Maximum speeds (safety limits - controllers may go slower based on their constraints)
-        LinearVelocity MAX_LINEAR_SPEED = MetersPerSecond.of(3.0);
-        AngularVelocity MAX_ROTATION_SPEED = RadiansPerSecond.of(Math.PI);
-
-        // Goal attraction strength - how aggressively robot moves toward goal
-        // Increase (1.5-2.5) if robot is too cautious
-        // Decrease (0.5-0.8) if robot overshoots or is too aggressive
-        double ATTRACTIVE_GAIN = 1.0;
-
-        // Obstacle repulsion strength - how strongly robot avoids obstacles
-        // Increase (3.0-5.0) if robot gets too close to obstacles
-        // Decrease (1.5-2.0) if robot avoids obstacles too early/widely
-        double REPULSIVE_GAIN = 2.5;
-
-        // Distance at which obstacles start affecting the robot
-        // Increase (2.0-3.0 m) to give obstacles wider berth
-        // Decrease (1.0-1.2 m) to only avoid very close obstacles
-        Distance OBSTACLE_INFLUENCE_RADIUS = Meters.of(1.5);
-
-        // ===========================================================
-
-        Translation2d currentPos = currentPose.getTranslation();
-        Translation2d goalPos = goalPose.getTranslation();
-
-        // === STEP 1: Calculate attractive force (pulls toward goal) ===
-        Translation2d vectorToGoal = goalPos.minus(currentPos);
-        double distanceToGoal = vectorToGoal.getNorm();
-
-        Translation2d attractiveForce = vectorToGoal.times(
-                ATTRACTIVE_GAIN / Math.max(distanceToGoal, 0.1)
-        );
-
-        // === STEP 2: Calculate repulsive forces (push away from obstacles) ===
-        Translation2d totalRepulsiveForce = new Translation2d();
-
-        for (Translation2d obstacle : obstacles) {
-            Translation2d vectorFromObstacle = currentPos.minus(obstacle);
-            double distanceToObstacle = vectorFromObstacle.getNorm();
-
-            // Only consider obstacles within influence radius
-            if (distanceToObstacle < OBSTACLE_INFLUENCE_RADIUS.in(Meters) &&
-                    distanceToObstacle > 0.01) {
-
-                // Repulsive force: stronger when closer
-                double repulsiveForceMagnitude = REPULSIVE_GAIN *
-                        (1.0 / distanceToObstacle - 1.0 / OBSTACLE_INFLUENCE_RADIUS.in(Meters)) /
-                        (distanceToObstacle * distanceToObstacle);
-
-                Translation2d repulsiveForceVector = vectorFromObstacle
-                        .div(distanceToObstacle)
-                        .times(repulsiveForceMagnitude);
-
-                totalRepulsiveForce = totalRepulsiveForce.plus(repulsiveForceVector);
-            }
-        }
-
-        // === STEP 3: Combine forces to get desired direction ===
-        Translation2d combinedForce = attractiveForce.plus(totalRepulsiveForce);
-
-        // === STEP 4: Use translation controller to calculate smooth velocity ===
-        // The controller will respect acceleration limits for smooth motion
-        double desiredSpeed = translationController.calculate(
-                0.0,  // Current "error" (we use 0 since we're using setpoint as target speed)
-                Math.min(combinedForce.getNorm(), MAX_LINEAR_SPEED.in(MetersPerSecond))
-        );
-
-        // Create velocity vector in the direction of combined force
-        Translation2d velocityVector = combinedForce.getNorm() > 0.01
-                ? combinedForce.div(combinedForce.getNorm()).times(Math.abs(desiredSpeed))
-                : new Translation2d();
-
-        // === STEP 5: Use rotation controller for smooth rotation to goal ===
-        double targetAngle = goalPose.getRotation().getRadians();
-        double currentAngle = currentPose.getRotation().getRadians();
-
-        double rotationSpeed = rotationController.calculate(currentAngle, targetAngle);
-
-        // Limit rotation speed to maximum
-        rotationSpeed = Math.max(
-                -MAX_ROTATION_SPEED.in(RadiansPerSecond),
-                Math.min(MAX_ROTATION_SPEED.in(RadiansPerSecond), rotationSpeed)
-        );
-
-        // === STEP 6: Return field-relative speeds ===
-        return ChassisSpeeds.fromFieldRelativeSpeeds(
-                velocityVector.getX(),
-                velocityVector.getY(),
-                rotationSpeed,
-                currentPose.getRotation()
-        );
-    }
-
   public Command driveRobotRelative(Supplier<ChassisSpeeds> speedsSupplier)
   {
     return drive.drive(speedsSupplier);
@@ -339,7 +293,7 @@ public class SwerveSubsystem extends SubsystemBase
 
   public Command resetRobotPose() {
         return Commands.runOnce(() ->
-        drive.resetOdometry(new Pose2d(4, 4, Rotation2d.kZero)));
+        drive.resetOdometry(new Pose2d(3, 3, Rotation2d.kZero)));
   }
 
   @Override
@@ -347,12 +301,21 @@ public class SwerveSubsystem extends SubsystemBase
   {
     drive.updateTelemetry();
     field.setRobotPose(drive.getPose());
+
+    // Update opponent poses on Field2d
+    for (int i = 0; i < opponents.size(); i++) {
+      field.getObject("Opponent" + i).setPose(opponents.get(i).getPose());
+    }
   }
 
   @Override
   public void simulationPeriodic()
   {
     drive.simIterate();
+
+    // Update opponent simulations
+    for (SmartOpponent opponent : opponents) {
+      opponent.simulationPeriodic();
+    }
   }
 }
-

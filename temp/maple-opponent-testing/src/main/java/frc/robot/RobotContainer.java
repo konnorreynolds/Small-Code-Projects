@@ -37,8 +37,8 @@ public class RobotContainer {
               .toggleOnFalse(Commands.runOnce(() -> stream.withAllianceRelativeControl().withRobotRelative(() -> false)));
 
       xboxController.back().onTrue(drive.resetRobotPose());
-      // Binds a button to run the pathfind command
-      xboxController.a().whileTrue(drive.driveToPose(new Pose2d(new Translation2d(3, 3), Rotation2d.kZero)));
+      // A button: Drive to far goal while avoiding reefscape obstacles and opponents
+      xboxController.a().whileTrue(drive.driveToPose(new Pose2d(new Translation2d(14, 4), Rotation2d.kZero)));
 
   }
 
