@@ -45,7 +45,7 @@ public class SwerveSubsystem extends SubsystemBase {
   private LinearVelocity maxLinearVel = MetersPerSecond.of(8);
 
   // Compact obstacle-avoiding navigator with cached config for performance
-  private static class Navigator {
+  private static final class Navigator {
     private static final Translation2d ZERO = new Translation2d();
     private final ObstacleAvoidance controller = new ObstacleAvoidance();
     private final PIDController rotPID = new PIDController(1.5, 0, 0.1);
@@ -65,7 +65,7 @@ public class SwerveSubsystem extends SubsystemBase {
     }
 
     void addWall(double x, double y) {
-      ObstacleAvoidance.Obstacle w = ObstacleAvoidance.circle(new Translation2d(x, y), Meters.of(0.35));
+      var w = ObstacleAvoidance.circle(new Translation2d(x, y), Meters.of(0.35));
       w.type = ObstacleAvoidance.Obstacle.Type.DANGEROUS;
       w.avoidanceWeight = 2.0;
       w.priority = 1.0;
@@ -73,16 +73,16 @@ public class SwerveSubsystem extends SubsystemBase {
     }
 
     void addCircle(double x, double y, double r) {
-      ObstacleAvoidance.Obstacle c = ObstacleAvoidance.circle(new Translation2d(x, y), Meters.of(r));
+      var c = ObstacleAvoidance.circle(new Translation2d(x, y), Meters.of(r));
       c.avoidanceWeight = 2.0;
       obstacles.add(c);
     }
 
     ChassisSpeeds navigate(Pose2d current, Pose2d target, List<SmartOpponent> opps) {
-      List<ObstacleAvoidance.Obstacle> all = new ArrayList<>(obstacles.size() + opps.size());
+      var all = new ArrayList<ObstacleAvoidance.Obstacle>(obstacles.size() + opps.size());
       all.addAll(obstacles);
-      for (SmartOpponent opp : opps) {
-        ObstacleAvoidance.Obstacle o = ObstacleAvoidance.robot(opp.getPose(), ZERO, true);
+      for (var opp : opps) {
+        var o = ObstacleAvoidance.robot(opp.getPose(), ZERO, true);
         o.avoidanceWeight *= oppWeight;
         all.add(o);
       }
@@ -116,7 +116,7 @@ public class SwerveSubsystem extends SubsystemBase {
         maxAngularVel.times(rot.getAsDouble()).in(RadiansPerSecond));
   }
 
-  private SwerveModule createModule(SparkMax drive, SparkMax azimuth, CANcoder encoder, String name, Translation2d loc) {
+  private SwerveModule createModule(SparkMax driveMotor, SparkMax steerMotor, CANcoder encoder, String name, Translation2d loc) {
     var driveCfg = new SmartMotorControllerConfig(this)
         .withWheelDiameter(Inches.of(4)).withClosedLoopController(50, 0, 4)
         .withIdleMode(SmartMotorControllerConfig.MotorMode.BRAKE)
@@ -130,8 +130,8 @@ public class SwerveSubsystem extends SubsystemBase {
         .withStatorCurrentLimit(Amps.of(20))
         .withTelemetry("angleMotor", SmartMotorControllerConfig.TelemetryVerbosity.HIGH);
     return new SwerveModule(new SwerveModuleConfig(
-        new SparkWrapper(drive, DCMotor.getNEO(1), driveCfg),
-        new SparkWrapper(azimuth, DCMotor.getNEO(1), azimuthCfg))
+        new SparkWrapper(driveMotor, DCMotor.getNEO(1), driveCfg),
+        new SparkWrapper(steerMotor, DCMotor.getNEO(1), azimuthCfg))
         .withAbsoluteEncoder(encoder.getAbsolutePosition().asSupplier())
         .withTelemetry(name, SmartMotorControllerConfig.TelemetryVerbosity.HIGH)
         .withLocation(loc).withOptimization(true));
@@ -193,10 +193,10 @@ public class SwerveSubsystem extends SubsystemBase {
     });
   }
 
-  public Command drive(Supplier<ChassisSpeeds> speeds) { return drive.drive(speeds); }
-  public Command setRobotRelativeChassisSpeeds(ChassisSpeeds s) { return run(() -> drive.setRobotRelativeChassisSpeeds(s)); }
+  public Command driveWithSpeeds(Supplier<ChassisSpeeds> speeds) { return drive.drive(speeds); }
+  public Command setChassisSpeeds(ChassisSpeeds s) { return run(() -> drive.setRobotRelativeChassisSpeeds(s)); }
   public Command lock() { return run(drive::lockPose); }
-  public Command resetRobotPose() { return Commands.runOnce(() -> drive.resetOdometry(new Pose2d(3, 3, Rotation2d.kZero))); }
+  public Command resetPose() { return Commands.runOnce(() -> drive.resetOdometry(new Pose2d(3, 3, Rotation2d.kZero))); }
 
   @Override
   public void periodic() {

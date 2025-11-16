@@ -31,12 +31,12 @@ public class RobotContainer {
               xboxController::getLeftX,
               () -> xboxController.getRightX() * -1);
       // Sets the default command for the swerve drive
-      drive.setDefaultCommand(drive.driveRobotRelative(stream));
+      drive.setDefaultCommand(drive.driveWithSpeeds(stream));
       // Binds a toggle for the robot relative and alliance relative controls
       xboxController.start().toggleOnTrue(Commands.runOnce(() -> stream.withRobotRelative().withAllianceRelativeControl(() -> false)))
               .toggleOnFalse(Commands.runOnce(() -> stream.withAllianceRelativeControl().withRobotRelative(() -> false)));
 
-      xboxController.back().onTrue(drive.resetRobotPose());
+      xboxController.back().onTrue(drive.resetPose());
       // A button: Drive to far goal while avoiding reefscape obstacles and opponents
       xboxController.a().whileTrue(drive.driveToPose(new Pose2d(new Translation2d(14, 4), Rotation2d.kZero)));
 
