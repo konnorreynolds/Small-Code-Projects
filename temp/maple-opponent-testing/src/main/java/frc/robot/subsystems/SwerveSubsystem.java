@@ -64,8 +64,8 @@ public class SwerveSubsystem extends SubsystemBase
   private final ReefscapeOpponentManager opponentManager = new ReefscapeOpponentManager();
   private final List<SmartOpponent> opponents = new ArrayList<>();
 
-  private AngularVelocity maximumChassisSpeedsAngularVelocity = DegreesPerSecond.of(1080);
-  private LinearVelocity  maximumChassisSpeedsLinearVelocity  = MetersPerSecond.of(15);
+  private AngularVelocity maximumChassisSpeedsAngularVelocity = DegreesPerSecond.of(720);
+  private LinearVelocity  maximumChassisSpeedsLinearVelocity  = MetersPerSecond.of(6);
 
   /**
    * Get a {@link Supplier<ChassisSpeeds>} for the robot relative chassis speeds based on "standard" swerve drive
@@ -197,65 +197,72 @@ public class SwerveSubsystem extends SubsystemBase
   }
 
   private void createReefscapeObstacles() {
-    // Field boundaries - minimal size for high-speed navigation (14.5 m/s)
+    // Field boundaries - proper sizes for prediction-based avoidance
     // Left wall (vertical)
     ObstacleAvoidance.Obstacle leftWall = ObstacleAvoidance.line(
-        new Translation2d(0.6, 0), new Translation2d(0.6, 8.052), Meters.of(0.4)
+        new Translation2d(0.7, 0), new Translation2d(0.7, 8.052), Meters.of(0.6)
     );
-    leftWall.likelyDestination = new Translation2d(0.6, 8.052); // Mark as vertical
-    leftWall.type = ObstacleAvoidance.Obstacle.Type.STATIC;
-    leftWall.avoidanceWeight = 1.8;
+    leftWall.likelyDestination = new Translation2d(0.7, 8.052); // Mark as vertical
+    leftWall.type = ObstacleAvoidance.Obstacle.Type.DANGEROUS;
+    leftWall.avoidanceWeight = 2.5;
+    leftWall.priority = 1.0;
     staticObstacles.add(leftWall);
 
     // Right wall (vertical)
     ObstacleAvoidance.Obstacle rightWall = ObstacleAvoidance.line(
-        new Translation2d(16.948, 0), new Translation2d(16.948, 8.052), Meters.of(0.4)
+        new Translation2d(16.848, 0), new Translation2d(16.848, 8.052), Meters.of(0.6)
     );
-    rightWall.likelyDestination = new Translation2d(16.948, 8.052); // Mark as vertical
-    rightWall.type = ObstacleAvoidance.Obstacle.Type.STATIC;
-    rightWall.avoidanceWeight = 1.8;
+    rightWall.likelyDestination = new Translation2d(16.848, 8.052); // Mark as vertical
+    rightWall.type = ObstacleAvoidance.Obstacle.Type.DANGEROUS;
+    rightWall.avoidanceWeight = 2.5;
+    rightWall.priority = 1.0;
     staticObstacles.add(rightWall);
 
     // Bottom wall (horizontal)
     ObstacleAvoidance.Obstacle bottomWall = ObstacleAvoidance.line(
-        new Translation2d(0, 0.6), new Translation2d(17.548, 0.6), Meters.of(0.4)
+        new Translation2d(0, 0.7), new Translation2d(17.548, 0.7), Meters.of(0.6)
     );
-    bottomWall.likelyDestination = new Translation2d(17.548, 0.6); // Mark as horizontal
-    bottomWall.type = ObstacleAvoidance.Obstacle.Type.STATIC;
-    bottomWall.avoidanceWeight = 1.8;
+    bottomWall.likelyDestination = new Translation2d(17.548, 0.7); // Mark as horizontal
+    bottomWall.type = ObstacleAvoidance.Obstacle.Type.DANGEROUS;
+    bottomWall.avoidanceWeight = 2.5;
+    bottomWall.priority = 1.0;
     staticObstacles.add(bottomWall);
 
     // Top wall (horizontal)
     ObstacleAvoidance.Obstacle topWall = ObstacleAvoidance.line(
-        new Translation2d(0, 7.452), new Translation2d(17.548, 7.452), Meters.of(0.4)
+        new Translation2d(0, 7.352), new Translation2d(17.548, 7.352), Meters.of(0.6)
     );
-    topWall.likelyDestination = new Translation2d(17.548, 7.452); // Mark as horizontal
-    topWall.type = ObstacleAvoidance.Obstacle.Type.STATIC;
-    topWall.avoidanceWeight = 1.8;
+    topWall.likelyDestination = new Translation2d(17.548, 7.352); // Mark as horizontal
+    topWall.type = ObstacleAvoidance.Obstacle.Type.DANGEROUS;
+    topWall.avoidanceWeight = 2.5;
+    topWall.priority = 1.0;
     staticObstacles.add(topWall);
 
-    // Blue Reef (hexagon obstacle) - compact for high-speed clearance
+    // Blue Reef (hexagon obstacle)
     ObstacleAvoidance.Obstacle blueReef = ObstacleAvoidance.circle(
-        new Translation2d(4.489, 4.026), Meters.of(0.85)
+        new Translation2d(4.489, 4.026), Meters.of(0.9)
     );
     blueReef.type = ObstacleAvoidance.Obstacle.Type.STATIC;
-    blueReef.avoidanceWeight = 1.3;
+    blueReef.avoidanceWeight = 2.0;
+    blueReef.priority = 0.9;
     staticObstacles.add(blueReef);
 
-    // Red Reef (hexagon obstacle) - compact for high-speed clearance
+    // Red Reef (hexagon obstacle)
     ObstacleAvoidance.Obstacle redReef = ObstacleAvoidance.circle(
-        new Translation2d(13.059, 4.026), Meters.of(0.85)
+        new Translation2d(13.059, 4.026), Meters.of(0.9)
     );
     redReef.type = ObstacleAvoidance.Obstacle.Type.STATIC;
-    redReef.avoidanceWeight = 1.3;
+    redReef.avoidanceWeight = 2.0;
+    redReef.priority = 0.9;
     staticObstacles.add(redReef);
 
-    // Center pillar - compact for high-speed clearance
+    // Center pillar
     ObstacleAvoidance.Obstacle pillar = ObstacleAvoidance.circle(
-        new Translation2d(8.774, 4.026), Meters.of(0.45)
+        new Translation2d(8.774, 4.026), Meters.of(0.5)
     );
     pillar.type = ObstacleAvoidance.Obstacle.Type.STATIC;
-    pillar.avoidanceWeight = 1.3;
+    pillar.avoidanceWeight = 2.0;
+    pillar.priority = 0.9;
     staticObstacles.add(pillar);
 
     System.out.println("Created " + staticObstacles.size() + " Reefscape static obstacles");
@@ -336,31 +343,46 @@ public class SwerveSubsystem extends SubsystemBase
       // Add opponents as dynamic obstacles
       for (SmartOpponent opponent : opponents) {
         Pose2d opponentPose = opponent.getPose();
-        // Create robot obstacle with light avoidance for high-speed navigation
+        // Create robot obstacle with strong prediction-based avoidance
         // Using zero velocity for now - APF will handle avoidance based on position
         Translation2d velocity = new Translation2d();
 
         ObstacleAvoidance.Obstacle opponentObstacle = ObstacleAvoidance.robot(
             opponentPose, velocity, true
-        ).difficulty(0.5);  // Light difficulty - avoids gently at high speed
+        ).aggressive().difficulty(0.8);  // Strong avoidance with prediction
 
         obstacles.add(opponentObstacle);
       }
 
-      // Drive with obstacle avoidance using custom high-speed configuration
-      // Ultra-fast navigation at 14.5 m/s with strong decisiveness
-      ObstacleAvoidance.Config highSpeedConfig = ObstacleAvoidance.Config.opponent();
-      highSpeedConfig.maxVelocity = MetersPerSecond.of(14.5);
-      highSpeedConfig.goalBias = 30.0;  // Stronger goal pull for high speed
-      highSpeedConfig.pathCommitment = 0.999;  // Maximum decisiveness
-      highSpeedConfig.directBias = 35.0;  // Prefer direct paths
+      // Drive with prediction-based obstacle avoidance
+      // Strong prediction and velocity-aware collision avoidance
+      ObstacleAvoidance.Config predictiveConfig = new ObstacleAvoidance.Config();
+      predictiveConfig.maxVelocity = MetersPerSecond.of(6.0);
+
+      // Prediction settings - critical for avoiding obstacles
+      predictiveConfig.useCollisionPrediction = true;
+      predictiveConfig.useVelocityAwareAvoidance = true;
+      predictiveConfig.predictionLookAhead = 1.5;  // Look 1.5 seconds ahead
+      predictiveConfig.collisionUrgencyMultiplier = 4.0;  // Strong collision avoidance
+
+      // Avoidance strength
+      predictiveConfig.baseAvoidanceStrength = 1.8;
+      predictiveConfig.defaultAvoidanceRadius = Meters.of(1.5);  // Large safety margin
+      predictiveConfig.dangerRadius = Meters.of(0.6);
+
+      // Path behavior
+      predictiveConfig.goalBias = 2.5;  // Moderate goal pull
+      predictiveConfig.pathCommitment = 0.85;  // Allow course corrections
+      predictiveConfig.directBias = 2.0;  // Moderate direct preference
+      predictiveConfig.aggressiveness = 1.0;
+      predictiveConfig.smoothness = 0.6;
 
       ChassisSpeeds speeds = poseController.drive(
           drive.getPose(),
           pose,
           obstacles,
           rotationPID,
-          highSpeedConfig,
+          predictiveConfig,
           new Translation2d()
       );
 
