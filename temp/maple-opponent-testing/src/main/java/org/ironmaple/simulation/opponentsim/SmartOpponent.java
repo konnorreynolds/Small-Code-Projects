@@ -2,6 +2,7 @@ package org.ironmaple.simulation.opponentsim;
 
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.LinearFilter;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -9,6 +10,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.system.plant.DCMotor;
+import frc.robot.subsystems.ObstacleAvoidance;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StringPublisher;
 import edu.wpi.first.networktables.StructPublisher;
@@ -336,57 +338,90 @@ public abstract class SmartOpponent extends SubsystemBase {
     /**
      * Advanced pathfinding with obstacle avoidance
      */
+    // Compact APF-based navigator for smooth obstacle avoidance
+    private static final class Navigator {
+        private static final Translation2d ZERO = new Translation2d();
+        private final ObstacleAvoidance controller = new ObstacleAvoidance();
+        private final PIDController rotPID = new PIDController(1.5, 0, 0.1);
+        private final java.util.List<ObstacleAvoidance.Obstacle> obstacles = new java.util.ArrayList<>(60);
+        private final ObstacleAvoidance.Config cfg = new ObstacleAvoidance.Config();
+        private final double speed, goalPull, avoidStr, oppWeight;
+
+        Navigator(double speed, double goalPull, double avoidStr, double oppWeight) {
+            this.speed = speed; this.goalPull = goalPull; this.avoidStr = avoidStr; this.oppWeight = oppWeight;
+            rotPID.enableContinuousInput(-Math.PI, Math.PI);
+            cfg.maxVelocity = Meters.per(edu.wpi.first.units.Units.Second).of(speed);
+            cfg.baseAvoidanceStrength = avoidStr;
+            cfg.defaultAvoidanceRadius = Meters.of(1.2);
+            cfg.goalBias = goalPull;
+            cfg.predictionLookAhead = 1.2;
+            cfg.useCollisionPrediction = true;
+            cfg.useVelocityAwareAvoidance = true;
+        }
+
+        void addWall(double x, double y) {
+            var w = ObstacleAvoidance.circle(new Translation2d(x, y), Meters.of(0.35));
+            w.type = ObstacleAvoidance.Obstacle.Type.DANGEROUS;
+            w.avoidanceWeight = 2.0;
+            w.priority = 1.0;
+            obstacles.add(w);
+        }
+
+        void addCircle(double x, double y, double r) {
+            var c = ObstacleAvoidance.circle(new Translation2d(x, y), Meters.of(r));
+            c.avoidanceWeight = 2.0;
+            obstacles.add(c);
+        }
+
+        ChassisSpeeds navigate(Pose2d current, Pose2d target, java.util.List<SmartOpponent> opps) {
+            var all = new java.util.ArrayList<ObstacleAvoidance.Obstacle>(obstacles.size() + opps.size());
+            all.addAll(obstacles);
+            for (var opp : opps) {
+                var o = ObstacleAvoidance.robot(opp.getPose(), ZERO, true);
+                o.avoidanceWeight *= oppWeight;
+                all.add(o);
+            }
+            return controller.drive(current, target, all, rotPID, cfg, ZERO);
+        }
+    }
+
+    // Shared field obstacles for all opponents
+    private static final Navigator sharedNav = initializeNavigator();
+
+    private static Navigator initializeNavigator() {
+        var nav = new Navigator(5.0, 8.0, 1.5, 0.6); // speed, goalPull, avoidStr, oppWeight
+        // Reefscape 2025 field obstacles
+        addLine(nav, 0, 1.27, 0, 6.782); addLine(nav, 0, 1.27, 1.672, 0); addLine(nav, 0, 6.782, 1.672, 8.052);
+        addLine(nav, 17.548, 1.27, 17.548, 6.782); addLine(nav, 17.548, 1.27, 15.876, 0); addLine(nav, 17.548, 6.782, 15.876, 8.052);
+        addLine(nav, 1.672, 8.052, 11, 8.052); addLine(nav, 12, 8.052, 15.876, 8.052);
+        addLine(nav, 1.672, 0, 5.8, 0); addLine(nav, 6.3, 0, 15.876, 0);
+        nav.addCircle(4.489, 4.026, 0.9); nav.addCircle(13.059, 4.026, 0.9); nav.addCircle(8.774, 4.026, 0.2);
+        return nav;
+    }
+
+    private static void addLine(Navigator nav, double x1, double y1, double x2, double y2) {
+        double dx = x2 - x1, dy = y2 - y1, len = Math.sqrt(dx*dx + dy*dy);
+        if (len < 0.01) return;
+        for (double t = 0; t <= 1; t += 0.8 / len) nav.addWall(x1 + dx*t, y1 + dy*t);
+    }
+
     public Command pathfindCommand(Pose2d targetPose, Distance tolerance) {
         if (!simulation.isPresent()) {
             return Commands.runOnce(() -> DriverStation.reportWarning("No simulation found", false), this);
         }
 
         return Commands.run(() -> {
-            Pose2d robotPose = simulation.get().getActualPoseInSimulationWorld();
-            double rX = robotPose.getX(), rY = robotPose.getY();
-            double tX = targetPose.getX(), tY = targetPose.getY();
-            Pose2d driveTo = targetPose;
-
-            // Inline collision check with obstacle avoidance
-            if (obstacles.isPresent()) {
-                for (OpponentManager.ObstacleRect obs : obstacles.get()) {
-                    if (obs.intersectsLine(rX, rY, tX, tY, OBSTACLE_BUFFER)) {
-                        // Find closest obstacle using squared distance (no sqrt)
-                        double minDistSq = Double.MAX_VALUE;
-                        OpponentManager.ObstacleRect closest = null;
-                        for (OpponentManager.ObstacleRect o : obstacles.get()) {
-                            double dx = rX - o.centerX, dy = rY - o.centerY;
-                            double distSq = dx * dx + dy * dy;
-                            if (distSq < minDistSq) {
-                                minDistSq = distSq;
-                                closest = o;
-                            }
-                        }
-                        if (closest != null) {
-                            double offset = (rX < closest.centerX) ? -OBSTACLE_BUFFER * 2 : OBSTACLE_BUFFER * 2;
-                            driveTo = new Pose2d(closest.centerX + offset, closest.centerY, robotPose.getRotation());
-                        }
-                        break;
-                    }
+            Pose2d current = simulation.get().getActualPoseInSimulationWorld();
+            // Get other opponents for dynamic avoidance
+            java.util.List<SmartOpponent> others = new java.util.ArrayList<>();
+            if (manager.isPresent()) {
+                for (SmartOpponent opp : manager.get().getOpponents()) {
+                    if (opp != this) others.add(opp);
                 }
             }
-
-            // Calculate chassis speeds toward target
-            double dx = driveTo.getX() - rX;
-            double dy = driveTo.getY() - rY;
-            double distSq = dx * dx + dy * dy;
-            double distTolerance = tolerance.in(Meters);
-
-            if (distSq > distTolerance * distTolerance) {
-                double distance = Math.sqrt(distSq);
-                double maxVel = simulation.get().maxLinearVelocity().in(MetersPerSecond);
-                double vx = (dx / distance) * maxVel;
-                double vy = (dy / distance) * maxVel;
-                double omega = driveTo.getRotation().minus(robotPose.getRotation()).getRadians() * 2;
-                simulation.get().runChassisSpeeds(new ChassisSpeeds(vx, vy, omega), new Translation2d(), false, false);
-            } else {
-                simulation.get().runChassisSpeeds(new ChassisSpeeds(), new Translation2d(), false, false);
-            }
+            // Navigate with APF obstacle avoidance
+            ChassisSpeeds speeds = sharedNav.navigate(current, targetPose, others);
+            simulation.get().runChassisSpeeds(speeds, new Translation2d(), false, false);
         }, this).until(() -> simulation.isPresent() &&
                 simulation.get().getActualPoseInSimulationWorld().getTranslation()
                         .getDistance(targetPose.getTranslation()) <= tolerance.in(Meters));

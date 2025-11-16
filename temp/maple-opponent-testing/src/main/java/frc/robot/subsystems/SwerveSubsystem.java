@@ -40,56 +40,9 @@ import static edu.wpi.first.units.Units.*;
 public class SwerveSubsystem extends SubsystemBase {
   private final SwerveDrive drive;
   private final Field2d field = new Field2d();
-  private final Navigator nav = new Navigator();
   private final List<SmartOpponent> opponents = new ArrayList<>(2);
   private AngularVelocity maxAngularVel = DegreesPerSecond.of(720);
   private LinearVelocity maxLinearVel = MetersPerSecond.of(8);
-
-  // Compact obstacle-avoiding navigator with cached config for performance
-  private static final class Navigator {
-    private static final Translation2d ZERO = new Translation2d();
-    private final ObstacleAvoidance controller = new ObstacleAvoidance();
-    private final PIDController rotPID = new PIDController(1.5, 0, 0.1);
-    private final List<ObstacleAvoidance.Obstacle> obstacles = new ArrayList<>(60);
-    private final ObstacleAvoidance.Config cfg = new ObstacleAvoidance.Config();
-    private final double speed = 5.0, goalPull = 8.0, avoidStr = 1.5, oppWeight = 0.6;
-
-    Navigator() {
-      rotPID.enableContinuousInput(-Math.PI, Math.PI);
-      cfg.maxVelocity = Meters.per(Second).of(speed);
-      cfg.baseAvoidanceStrength = avoidStr;
-      cfg.defaultAvoidanceRadius = Meters.of(1.2);
-      cfg.goalBias = goalPull;
-      cfg.predictionLookAhead = 1.2;
-      cfg.useCollisionPrediction = true;
-      cfg.useVelocityAwareAvoidance = true;
-    }
-
-    void addWall(double x, double y) {
-      var w = ObstacleAvoidance.circle(new Translation2d(x, y), Meters.of(0.35));
-      w.type = ObstacleAvoidance.Obstacle.Type.DANGEROUS;
-      w.avoidanceWeight = 2.0;
-      w.priority = 1.0;
-      obstacles.add(w);
-    }
-
-    void addCircle(double x, double y, double r) {
-      var c = ObstacleAvoidance.circle(new Translation2d(x, y), Meters.of(r));
-      c.avoidanceWeight = 2.0;
-      obstacles.add(c);
-    }
-
-    ChassisSpeeds navigate(Pose2d current, Pose2d target, List<SmartOpponent> opps) {
-      var all = new ArrayList<ObstacleAvoidance.Obstacle>(obstacles.size() + opps.size());
-      all.addAll(obstacles);
-      for (var opp : opps) {
-        var o = ObstacleAvoidance.robot(opp.getPose(), ZERO, true);
-        o.avoidanceWeight *= oppWeight;
-        all.add(o);
-      }
-      return controller.drive(current, target, all, rotPID, cfg, ZERO);
-    }
-  }
 
   public SwerveInputStream getChassisSpeedsSupplier(DoubleSupplier x, DoubleSupplier y, DoubleSupplier rot) {
     return new SwerveInputStream(drive, x, y, rot)
@@ -141,10 +94,7 @@ public class SwerveSubsystem extends SubsystemBase {
         .withTranslationController(new PIDController(1, 0, 0))
         .withRotationController(new PIDController(1, 0, 0)));
 
-    // Use MapleSim's Reefscape obstacles (from Arena2025Reefscape.ReefscapeFieldObstacleMap)
-    addReefscapeObstacles();
-
-    // Opponents
+    // Opponents - they have built-in obstacle avoidance now
     var arena = new Arena2025Reefscape();
     opponents.add(new KitBot(arena, DriverStation.Alliance.Red, 1));
     opponents.add(new KitBot(arena, DriverStation.Alliance.Red, 2));
@@ -154,34 +104,20 @@ public class SwerveSubsystem extends SubsystemBase {
     SmartDashboard.putData("Field", field);
   }
 
-  private void addReefscapeObstacles() {
-    // Convert MapleSim field borders to navigation obstacles (as circles for smooth APF)
-    addLine(0, 1.27, 0, 6.782);           // Blue wall
-    addLine(0, 1.27, 1.672, 0);           // Blue coral station top
-    addLine(0, 6.782, 1.672, 8.052);      // Blue coral station bottom
-    addLine(17.548, 1.27, 17.548, 6.782); // Red wall
-    addLine(17.548, 1.27, 15.876, 0);     // Red coral station top
-    addLine(17.548, 6.782, 15.876, 8.052);// Red coral station bottom
-    addLine(1.672, 8.052, 11, 8.052);     // Upper wall left
-    addLine(12, 8.052, 15.876, 8.052);    // Upper wall right
-    addLine(1.672, 0, 5.8, 0);            // Lower wall left
-    addLine(6.3, 0, 15.876, 0);           // Lower wall right
-
-    // Reefs (hexagonal - use circles to approximate)
-    nav.addCircle(4.489, 4.026, 0.9);     // Blue reef
-    nav.addCircle(13.059, 4.026, 0.9);    // Red reef
-    nav.addCircle(8.774, 4.026, 0.2);     // Center pillar
-  }
-
-  private void addLine(double x1, double y1, double x2, double y2) {
-    double dx = x2 - x1, dy = y2 - y1, len = Math.sqrt(dx*dx + dy*dy);
-    if (len < 0.01) return; // Skip zero-length lines
-    for (double t = 0; t <= 1; t += 0.8 / len) nav.addWall(x1 + dx*t, y1 + dy*t);
-  }
-
   public Command driveToPose(Pose2d target) {
     return run(() -> {
-      drive.setRobotRelativeChassisSpeeds(nav.navigate(drive.getPose(), target, opponents));
+      var current = drive.getPose();
+      var delta = target.getTranslation().minus(current.getTranslation());
+      var dist = delta.getNorm();
+      if (dist > 0.1) {
+        var speed = Math.min(4.0, dist * 2.0);
+        var vx = (delta.getX() / dist) * speed;
+        var vy = (delta.getY() / dist) * speed;
+        var omega = target.getRotation().minus(current.getRotation()).getRadians() * 3.0;
+        drive.setRobotRelativeChassisSpeeds(new ChassisSpeeds(vx, vy, omega));
+      } else {
+        drive.setRobotRelativeChassisSpeeds(new ChassisSpeeds());
+      }
       field.getObject("Goal").setPose(target);
     });
   }
