@@ -49,60 +49,24 @@ import static edu.wpi.first.units.Units.Meters;
 
 public class SwerveSubsystem extends SubsystemBase
 {
-  // ========================================================================
-  // TUNABLE PARAMETERS - Adjust these for different obstacle avoidance behaviors
-  // ========================================================================
+  // Navigator - Choose one option below:
 
-  // Navigation Speed
-  private static final double NAV_SPEED_MPS = 5.0;  // Navigation speed in m/s (higher = faster but less safe)
+  // OPTION 1: Default balanced navigation
+  private final CompactNavigator navigator = new CompactNavigator();
 
-  // Obstacle Detection
-  private static final double WALL_RADIUS = 0.35;        // Radius of wall obstacle circles (m)
-  private static final double WALL_SPACING = 0.8;        // Spacing between wall circles (m) - larger = less overlap
-  private static final double WALL_WEIGHT = 2.0;         // Wall avoidance strength (higher = stronger)
-  private static final double REEF_RADIUS = 0.9;         // Reef obstacle radius (m)
-  private static final double REEF_WEIGHT = 2.0;         // Reef avoidance strength
+  // OPTION 2: Presets
+  // private final CompactNavigator navigator = CompactNavigator.aggressive();  // Fast, push through
+  // private final CompactNavigator navigator = CompactNavigator.defensive();   // Slow, safe
+  // private final CompactNavigator navigator = CompactNavigator.rally();       // High speed with control
+  // private final CompactNavigator navigator = CompactNavigator.bulldozer();   // Ignores opponents
 
-  // APF Avoidance Parameters
-  private static final double AVOIDANCE_RADIUS = 1.2;    // Safety margin around obstacles (m)
-  private static final double AVOIDANCE_STRENGTH = 1.5;  // Base repulsion force strength
-  private static final double GOAL_ATTRACTION = 8.0;     // Goal pull strength (higher = more aggressive) - DOMINANT FORCE
-  private static final double PREDICTION_TIME = 1.2;     // Collision prediction look-ahead (seconds)
-  private static final double OPPONENT_AVOIDANCE = 0.6;  // Opponent avoidance strength (lower = allow bumping)
-
-  // ========================================================================
-
-  // OPTION 1: Use custom tunable parameters
-  private final ObstacleAvoidanceNavigator navigator = new ObstacleAvoidanceNavigator(
-      NAV_SPEED_MPS, AVOIDANCE_RADIUS, AVOIDANCE_STRENGTH, GOAL_ATTRACTION, PREDICTION_TIME, OPPONENT_AVOIDANCE
-  );
-
-  // OPTION 2: Use presets (uncomment to use)
-  // Easy opponent - slow, cautious, avoids everything:
-  // private final ObstacleAvoidanceNavigator navigator = ObstacleAvoidanceNavigator.easy();
-
-  // Medium opponent - balanced (default competitive):
-  // private final ObstacleAvoidanceNavigator navigator = ObstacleAvoidanceNavigator.medium();
-
-  // Hard opponent - fast, aggressive, allows bumping:
-  // private final ObstacleAvoidanceNavigator navigator = ObstacleAvoidanceNavigator.hard();
-
-  // OPTION 3: Use drive styles
-  // Aggressive - maximum speed, push through:
-  // private final ObstacleAvoidanceNavigator navigator = ObstacleAvoidanceNavigator.aggressive();
-
-  // Defensive - prioritizes safety:
-  // private final ObstacleAvoidanceNavigator navigator = ObstacleAvoidanceNavigator.defensive();
-
-  // Precise - careful navigation:
-  // private final ObstacleAvoidanceNavigator navigator = ObstacleAvoidanceNavigator.precise();
-
-  // Rally - high speed with control:
-  // private final ObstacleAvoidanceNavigator navigator = ObstacleAvoidanceNavigator.rally();
-
-  // Bulldozer - ignores opponents, pushes through:
-  // private final ObstacleAvoidanceNavigator navigator = ObstacleAvoidanceNavigator.bulldozer();
-  private final List<ObstacleAvoidance.Obstacle> staticObstacles = new ArrayList<>();
+  // OPTION 3: Custom parameters
+  // private final CompactNavigator navigator = new CompactNavigator(
+  //     5.0,   // maxSpeed (m/s)
+  //     8.0,   // goalAttraction
+  //     1.5,   // avoidanceStrength
+  //     0.6    // opponentWeight (lower = allow bumping)
+  // );
 
   private final SwerveDrive drive;
   private final Field2d field = new Field2d();
@@ -110,7 +74,7 @@ public class SwerveSubsystem extends SubsystemBase
   // Maple-sim integration
   private final Arena2025Reefscape arena = new Arena2025Reefscape();
   private final ReefscapeOpponentManager opponentManager = new ReefscapeOpponentManager();
-  private final List<SmartOpponent> opponents = new ArrayList<>();
+  private final List<SmartKitBot> opponents = new ArrayList<>();
 
   private AngularVelocity maximumChassisSpeedsAngularVelocity = DegreesPerSecond.of(720);
   private LinearVelocity  maximumChassisSpeedsLinearVelocity  = MetersPerSecond.of(8);
@@ -217,38 +181,36 @@ public class SwerveSubsystem extends SubsystemBase
         .withRotationController(new PIDController(1, 0, 0));
     drive = new SwerveDrive(config);
 
-    // Configure rotation PID with continuous input
-    rotationPID.enableContinuousInput(-Math.PI, Math.PI);
-
     // Initialize Reefscape field obstacles
     createReefscapeObstacles();
 
-    // Share obstacles with opponent manager so they can use obstacle avoidance
-    opponentManager.setSharedObstacles(staticObstacles);
+    // Share obstacles with opponent manager
+    opponentManager.setSharedObstacles(CompactNavigator.fieldWalls());
+    opponentManager.getSharedObstacles().addAll(CompactNavigator.reefscapeObstacles());
 
     // Create smart opponents with obstacle avoidance (2 KitBots on red alliance)
     // Each can have different navigation styles!
 
-    // Opponent 1 - Use medium difficulty (default)
+    // Opponent 1 - Use default balanced navigation
     SmartKitBot opponent1 = new SmartKitBot(opponentManager, DriverStation.Alliance.Red, 1);
     opponents.add(opponent1);
 
-    // Opponent 2 - Use medium difficulty (default)
+    // Opponent 2 - Use default balanced navigation
     SmartKitBot opponent2 = new SmartKitBot(opponentManager, DriverStation.Alliance.Red, 2);
     opponents.add(opponent2);
 
     // Examples of different opponent styles:
-    // Easy opponent (slow, cautious):
-    // SmartKitBot opponent1 = new SmartKitBot(opponentManager, DriverStation.Alliance.Red, 1, ObstacleAvoidanceNavigator.easy());
+    // Aggressive opponent (fast, push through):
+    // SmartKitBot opponent1 = new SmartKitBot(opponentManager, DriverStation.Alliance.Red, 1, CompactNavigator.aggressive());
 
-    // Hard opponent (fast, aggressive):
-    // SmartKitBot opponent2 = new SmartKitBot(opponentManager, DriverStation.Alliance.Red, 2, ObstacleAvoidanceNavigator.hard());
+    // Defensive opponent (slow, cautious):
+    // SmartKitBot opponent2 = new SmartKitBot(opponentManager, DriverStation.Alliance.Red, 2, CompactNavigator.defensive());
 
     // Bulldozer opponent (pushes through other robots):
-    // SmartKitBot opponent1 = new SmartKitBot(opponentManager, DriverStation.Alliance.Red, 1, ObstacleAvoidanceNavigator.bulldozer());
+    // SmartKitBot opponent1 = new SmartKitBot(opponentManager, DriverStation.Alliance.Red, 1, CompactNavigator.bulldozer());
 
     // Rally opponent (high speed with control):
-    // SmartKitBot opponent2 = new SmartKitBot(opponentManager, DriverStation.Alliance.Red, 2, ObstacleAvoidanceNavigator.rally());
+    // SmartKitBot opponent2 = new SmartKitBot(opponentManager, DriverStation.Alliance.Red, 2, CompactNavigator.rally());
 
     // Set opponents to active state when teleop starts
     RobotModeTriggers.teleop().onTrue(Commands.runOnce(() -> {
@@ -258,99 +220,24 @@ public class SwerveSubsystem extends SubsystemBase
     }));
 
     SmartDashboard.putData("Field", field);
-    SmartDashboard.putString("Obstacle Count", "Static: " + staticObstacles.size() + ", Dynamic: 2");
-
-    // Visualize static obstacles on Field2d
-    visualizeObstacles();
+    SmartDashboard.putString("Obstacle Count", "Total: " + navigator.getObstacleCount() + ", Opponents: 2");
   }
 
   private void createReefscapeObstacles() {
-    // Use navigator factory methods for clean obstacle creation
-    staticObstacles.addAll(ObstacleAvoidanceNavigator.createFieldBoundaries(
-        WALL_RADIUS, WALL_SPACING, WALL_WEIGHT
-    ));
-    staticObstacles.addAll(ObstacleAvoidanceNavigator.createReefscapeObstacles(
-        REEF_RADIUS, REEF_WEIGHT
-    ));
+    // Add field walls and reefscape obstacles to navigator
+    navigator.addObstacles(CompactNavigator.fieldWalls());
+    navigator.addObstacles(CompactNavigator.reefscapeObstacles());
 
-    System.out.println("Created " + staticObstacles.size() + " obstacles using ObstacleAvoidanceNavigator");
+    System.out.println("Created " + navigator.getObstacleCount() + " obstacles using CompactNavigator");
   }
 
-  private void visualizeObstacles() {
-    int obstacleIndex = 0;
-
-    for (ObstacleAvoidance.Obstacle obstacle : staticObstacles) {
-      String name = "Obstacle" + obstacleIndex;
-
-      if (obstacle.shape == ObstacleAvoidance.Obstacle.Shape.CIRCLE) {
-        // Visualize circle as a single pose with rotation indicating radius
-        field.getObject(name).setPose(new Pose2d(
-            obstacle.position,
-            new Rotation2d()
-        ));
-
-        // Create a circle visualization using multiple poses
-        int numPoints = 16;
-        Pose2d[] circlePoses = new Pose2d[numPoints];
-        for (int i = 0; i < numPoints; i++) {
-          double angle = 2 * Math.PI * i / numPoints;
-          double x = obstacle.position.getX() + obstacle.radius.in(Meters) * Math.cos(angle);
-          double y = obstacle.position.getY() + obstacle.radius.in(Meters) * Math.sin(angle);
-          circlePoses[i] = new Pose2d(x, y, Rotation2d.fromRadians(angle + Math.PI/2));
-        }
-        field.getObject(name + "_circle").setPoses(circlePoses);
-
-      } else if (obstacle.shape == ObstacleAvoidance.Obstacle.Shape.RECTANGLE) {
-        // Visualize rectangular obstacle as a line
-        // Use likelyDestination to determine orientation
-        Translation2d center = obstacle.position;
-        Translation2d end = obstacle.likelyDestination;
-        double w = obstacle.width.in(Meters);
-
-        // Determine if vertical or horizontal by checking which coordinate changed
-        boolean isVertical = Math.abs(end.getX() - center.getX()) < 0.01;
-
-        int numPoints = Math.max(4, (int)(w / 0.5));
-        Pose2d[] linePoses = new Pose2d[numPoints];
-
-        for (int i = 0; i < numPoints; i++) {
-          double t = (double)i / (numPoints - 1) - 0.5;
-          if (isVertical) {
-            // Vertical wall
-            linePoses[i] = new Pose2d(
-                center.getX(),
-                center.getY() + w * t,
-                Rotation2d.fromDegrees(0)
-            );
-          } else {
-            // Horizontal wall
-            linePoses[i] = new Pose2d(
-                center.getX() + w * t,
-                center.getY(),
-                Rotation2d.fromDegrees(90)
-            );
-          }
-        }
-
-        field.getObject(name + "_line").setPoses(linePoses);
-      }
-
-      obstacleIndex++;
-    }
-
-    System.out.println("Visualized " + obstacleIndex + " static obstacles on Field2d");
-  }
 
   public Command driveToPose(Pose2d pose)
   {
     return run(() -> {
-      // Use compact navigator to get ChassisSpeeds
-      ChassisSpeeds speeds = navigator.navigate(
-          drive.getPose(),
-          pose,
-          staticObstacles,
-          opponents
-      );
+      // Use CompactNavigator like a PIDController
+      List<SmartOpponent> opponentList = new ArrayList<>(opponents);
+      ChassisSpeeds speeds = navigator.calculate(drive.getPose(), pose, opponentList);
 
       drive.setRobotRelativeChassisSpeeds(speeds);
 

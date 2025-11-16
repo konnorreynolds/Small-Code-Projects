@@ -25,8 +25,8 @@ public class ReefscapeOpponentManager extends OpponentManager {
     // Shared obstacles for all opponents
     private static List<ObstacleAvoidance.Obstacle> sharedStaticObstacles = new ArrayList<>();
 
-    // Navigator for opponents (can be customized per opponent)
-    private final ObstacleAvoidanceNavigator defaultOpponentNavigator = ObstacleAvoidanceNavigator.medium();
+    // Default navigator for opponents (can be customized per opponent)
+    private final CompactNavigator defaultOpponentNavigator = new CompactNavigator();
 
     public ReefscapeOpponentManager() {
         super();
@@ -43,6 +43,13 @@ public class ReefscapeOpponentManager extends OpponentManager {
     }
 
     /**
+     * Get shared obstacles list (for adding more obstacles)
+     */
+    public List<ObstacleAvoidance.Obstacle> getSharedObstacles() {
+        return sharedStaticObstacles;
+    }
+
+    /**
      * Navigate opponent to target using obstacle avoidance
      * @param opponent The opponent to navigate
      * @param targetPose Target destination
@@ -50,9 +57,9 @@ public class ReefscapeOpponentManager extends OpponentManager {
      * @return ChassisSpeeds for the opponent
      */
     public ChassisSpeeds navigateOpponent(SmartOpponent opponent, Pose2d targetPose,
-                                          ObstacleAvoidanceNavigator navigator) {
+                                          CompactNavigator navigator) {
         // Use default navigator if none provided
-        ObstacleAvoidanceNavigator nav = (navigator != null) ? navigator : defaultOpponentNavigator;
+        CompactNavigator nav = (navigator != null) ? navigator : defaultOpponentNavigator;
 
         // Get other opponents for dynamic avoidance
         List<SmartOpponent> otherOpponents = new ArrayList<>();
@@ -62,13 +69,12 @@ public class ReefscapeOpponentManager extends OpponentManager {
             }
         }
 
-        // Navigate with obstacle avoidance
-        return nav.navigate(
-            opponent.getPose(),
-            targetPose,
-            sharedStaticObstacles,
-            otherOpponents
-        );
+        // Navigate with obstacle avoidance using PIDController-like API
+        // Note: We need to add obstacles to the navigator first
+        nav.clearObstacles();
+        nav.addObstacles(sharedStaticObstacles);
+
+        return nav.calculate(opponent.getPose(), targetPose, otherOpponents);
     }
 
     @Override
@@ -120,11 +126,11 @@ public class ReefscapeOpponentManager extends OpponentManager {
      * Create a pathfinding command for an opponent using obstacle avoidance
      * @param opponent The opponent robot
      * @param targetPose Target position
-     * @param navigator Custom navigator (null for default medium difficulty)
+     * @param navigator Custom navigator (null for default)
      * @return Command that navigates the opponent
      */
     public Command createNavigationCommand(SmartOpponent opponent, Pose2d targetPose,
-                                          ObstacleAvoidanceNavigator navigator) {
+                                          CompactNavigator navigator) {
         return Commands.run(() -> {
             ChassisSpeeds speeds = navigateOpponent(opponent, targetPose, navigator);
 

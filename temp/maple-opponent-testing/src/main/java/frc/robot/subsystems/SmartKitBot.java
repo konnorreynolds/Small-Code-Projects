@@ -12,19 +12,19 @@ import org.ironmaple.simulation.seasonspecific.reefscape2025.opponentsim.KitBot;
 import static edu.wpi.first.units.Units.Meters;
 
 /**
- * Enhanced KitBot that uses ObstacleAvoidanceNavigator for intelligent pathfinding.
+ * Enhanced KitBot that uses CompactNavigator for intelligent pathfinding.
  * Extends the base KitBot with obstacle-aware navigation.
  */
 public class SmartKitBot extends KitBot {
 
     private final ReefscapeOpponentManager smartManager;
-    private final ObstacleAvoidanceNavigator navigator;
+    private final CompactNavigator navigator;
 
     /**
-     * Create a SmartKitBot with default medium difficulty navigation
+     * Create a SmartKitBot with default balanced navigation
      */
     public SmartKitBot(ReefscapeOpponentManager manager, DriverStation.Alliance alliance, int id) {
-        this(manager, alliance, id, ObstacleAvoidanceNavigator.medium());
+        this(manager, alliance, id, new CompactNavigator());
     }
 
     /**
@@ -32,10 +32,10 @@ public class SmartKitBot extends KitBot {
      * @param manager Opponent manager
      * @param alliance Robot alliance
      * @param id Robot ID
-     * @param navigator Custom navigator (easy, medium, hard, or custom style)
+     * @param navigator Custom navigator (use presets like CompactNavigator.aggressive() or custom)
      */
     public SmartKitBot(ReefscapeOpponentManager manager, DriverStation.Alliance alliance, int id,
-                       ObstacleAvoidanceNavigator navigator) {
+                       CompactNavigator navigator) {
         super(manager, alliance, id);
         this.smartManager = manager;
         this.navigator = navigator;
@@ -76,7 +76,7 @@ public class SmartKitBot extends KitBot {
     /**
      * Get the navigator being used by this opponent
      */
-    public ObstacleAvoidanceNavigator getNavigator() {
+    public CompactNavigator getNavigator() {
         return navigator;
     }
 }
