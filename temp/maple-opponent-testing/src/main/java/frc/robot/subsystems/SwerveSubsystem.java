@@ -32,7 +32,6 @@ import java.util.function.Supplier;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import org.ironmaple.simulation.opponentsim.SmartOpponent;
 import org.ironmaple.simulation.seasonspecific.reefscape2025.Arena2025Reefscape;
-import org.ironmaple.simulation.seasonspecific.reefscape2025.opponentsim.KitBot;
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
 import yams.gearing.GearBox;
 import yams.gearing.MechanismGearing;
@@ -224,12 +223,32 @@ public class SwerveSubsystem extends SubsystemBase
     // Initialize Reefscape field obstacles
     createReefscapeObstacles();
 
-    // Create maple-sim opponents (2 KitBots on red alliance)
-    // Note: KitBot constructor automatically registers opponents with the manager
-    KitBot opponent1 = new KitBot(opponentManager, DriverStation.Alliance.Red, 1);
-    KitBot opponent2 = new KitBot(opponentManager, DriverStation.Alliance.Red, 2);
+    // Share obstacles with opponent manager so they can use obstacle avoidance
+    opponentManager.setSharedObstacles(staticObstacles);
+
+    // Create smart opponents with obstacle avoidance (2 KitBots on red alliance)
+    // Each can have different navigation styles!
+
+    // Opponent 1 - Use medium difficulty (default)
+    SmartKitBot opponent1 = new SmartKitBot(opponentManager, DriverStation.Alliance.Red, 1);
     opponents.add(opponent1);
+
+    // Opponent 2 - Use medium difficulty (default)
+    SmartKitBot opponent2 = new SmartKitBot(opponentManager, DriverStation.Alliance.Red, 2);
     opponents.add(opponent2);
+
+    // Examples of different opponent styles:
+    // Easy opponent (slow, cautious):
+    // SmartKitBot opponent1 = new SmartKitBot(opponentManager, DriverStation.Alliance.Red, 1, ObstacleAvoidanceNavigator.easy());
+
+    // Hard opponent (fast, aggressive):
+    // SmartKitBot opponent2 = new SmartKitBot(opponentManager, DriverStation.Alliance.Red, 2, ObstacleAvoidanceNavigator.hard());
+
+    // Bulldozer opponent (pushes through other robots):
+    // SmartKitBot opponent1 = new SmartKitBot(opponentManager, DriverStation.Alliance.Red, 1, ObstacleAvoidanceNavigator.bulldozer());
+
+    // Rally opponent (high speed with control):
+    // SmartKitBot opponent2 = new SmartKitBot(opponentManager, DriverStation.Alliance.Red, 2, ObstacleAvoidanceNavigator.rally());
 
     // Set opponents to active state when teleop starts
     RobotModeTriggers.teleop().onTrue(Commands.runOnce(() -> {
