@@ -40,18 +40,29 @@ public class SwerveSubsystem extends SubsystemBase {
   private final SwerveDrive drive;
   private final Field2d field = new Field2d();
   private final Navigator nav = new Navigator();
-  private final List<SmartOpponent> opponents = new ArrayList<>();
-  private AngularVelocity maximumChassisSpeedsAngularVelocity = DegreesPerSecond.of(720);
-  private LinearVelocity maximumChassisSpeedsLinearVelocity = MetersPerSecond.of(8);
+  private final List<SmartOpponent> opponents = new ArrayList<>(2);
+  private AngularVelocity maxAngularVel = DegreesPerSecond.of(720);
+  private LinearVelocity maxLinearVel = MetersPerSecond.of(8);
 
-  // Compact obstacle-avoiding navigator
+  // Compact obstacle-avoiding navigator with cached config for performance
   private static class Navigator {
+    private static final Translation2d ZERO = new Translation2d();
     private final ObstacleAvoidance controller = new ObstacleAvoidance();
     private final PIDController rotPID = new PIDController(1.5, 0, 0.1);
-    private final List<ObstacleAvoidance.Obstacle> obstacles = new ArrayList<>();
-    private double speed = 5.0, goalPull = 8.0, avoidStr = 1.5, oppWeight = 0.6;
+    private final List<ObstacleAvoidance.Obstacle> obstacles = new ArrayList<>(60);
+    private final ObstacleAvoidance.Config cfg = new ObstacleAvoidance.Config();
+    private final double speed = 5.0, goalPull = 8.0, avoidStr = 1.5, oppWeight = 0.6;
 
-    Navigator() { rotPID.enableContinuousInput(-Math.PI, Math.PI); }
+    Navigator() {
+      rotPID.enableContinuousInput(-Math.PI, Math.PI);
+      cfg.maxVelocity = Meters.per(Second).of(speed);
+      cfg.baseAvoidanceStrength = avoidStr;
+      cfg.defaultAvoidanceRadius = Meters.of(1.2);
+      cfg.goalBias = goalPull;
+      cfg.predictionLookAhead = 1.2;
+      cfg.useCollisionPrediction = true;
+      cfg.useVelocityAwareAvoidance = true;
+    }
 
     void addWall(double x, double y) {
       ObstacleAvoidance.Obstacle w = ObstacleAvoidance.circle(new Translation2d(x, y), Meters.of(0.35));
@@ -68,21 +79,14 @@ public class SwerveSubsystem extends SubsystemBase {
     }
 
     ChassisSpeeds navigate(Pose2d current, Pose2d target, List<SmartOpponent> opps) {
-      List<ObstacleAvoidance.Obstacle> all = new ArrayList<>(obstacles);
+      List<ObstacleAvoidance.Obstacle> all = new ArrayList<>(obstacles.size() + opps.size());
+      all.addAll(obstacles);
       for (SmartOpponent opp : opps) {
-        ObstacleAvoidance.Obstacle o = ObstacleAvoidance.robot(opp.getPose(), new Translation2d(), true);
+        ObstacleAvoidance.Obstacle o = ObstacleAvoidance.robot(opp.getPose(), ZERO, true);
         o.avoidanceWeight *= oppWeight;
         all.add(o);
       }
-      ObstacleAvoidance.Config cfg = new ObstacleAvoidance.Config();
-      cfg.maxVelocity = Meters.per(Second).of(speed);
-      cfg.baseAvoidanceStrength = avoidStr;
-      cfg.defaultAvoidanceRadius = Meters.of(1.2);
-      cfg.goalBias = goalPull;
-      cfg.predictionLookAhead = 1.2;
-      cfg.useCollisionPrediction = true;
-      cfg.useVelocityAwareAvoidance = true;
-      return controller.drive(current, target, all, rotPID, cfg, new Translation2d());
+      return controller.drive(current, target, all, rotPID, cfg, ZERO);
     }
   }
 
@@ -95,114 +99,91 @@ public class SwerveSubsystem extends SubsystemBase {
    * @param rotationScalar     Rotation speed from [-1,1]
    * @return {@link Supplier<ChassisSpeeds>} for the robot relative chassis speeds.
    */
-  public SwerveInputStream getChassisSpeedsSupplier(DoubleSupplier translationXScalar,
-                                                    DoubleSupplier translationYScalar,
-                                                    DoubleSupplier rotationScalar)
-  {
-    return new SwerveInputStream(drive, translationXScalar, translationYScalar, rotationScalar)
-        .withMaximumAngularVelocity(maximumChassisSpeedsAngularVelocity)
-        .withMaximumLinearVelocity(maximumChassisSpeedsLinearVelocity)
+  public SwerveInputStream getChassisSpeedsSupplier(DoubleSupplier x, DoubleSupplier y, DoubleSupplier rot) {
+    return new SwerveInputStream(drive, x, y, rot)
+        .withMaximumAngularVelocity(maxAngularVel)
+        .withMaximumLinearVelocity(maxLinearVel)
         .withCubeRotationControllerAxis()
         .withCubeTranslationControllerAxis()
         .withAllianceRelativeControl()
         .withDeadband(0.01);
   }
 
-  /**
-   * Get a {@link Supplier<ChassisSpeeds>} for the robot relative chassis speeds based on "standard" swerve drive
-   * controls.
-   *
-   * @param translationXScalar Translation in the X direction from [-1,1]
-   * @param translationYScalar Translation in the Y direction from [-1,1]
-   * @param rotationScalar     Rotation speed from [-1,1]
-   * @return {@link Supplier<ChassisSpeeds>} for the robot relative chassis speeds.
-   */
-  public Supplier<ChassisSpeeds> getSimpleChassisSpeeds(DoubleSupplier translationXScalar,
-                                                        DoubleSupplier translationYScalar,
-                                                        DoubleSupplier rotationScalar)
-  {
-    return () -> new ChassisSpeeds(maximumChassisSpeedsLinearVelocity.times(translationXScalar.getAsDouble())
-                                                                     .in(MetersPerSecond),
-                                   maximumChassisSpeedsLinearVelocity.times(translationYScalar.getAsDouble())
-                                                                     .in(MetersPerSecond),
-                                   maximumChassisSpeedsAngularVelocity.times(rotationScalar.getAsDouble())
-                                                                      .in(RadiansPerSecond));
+  public Supplier<ChassisSpeeds> getSimpleChassisSpeeds(DoubleSupplier x, DoubleSupplier y, DoubleSupplier rot) {
+    return () -> new ChassisSpeeds(
+        maxLinearVel.times(x.getAsDouble()).in(MetersPerSecond),
+        maxLinearVel.times(y.getAsDouble()).in(MetersPerSecond),
+        maxAngularVel.times(rot.getAsDouble()).in(RadiansPerSecond));
   }
 
-  public SwerveModule createModule(SparkMax drive, SparkMax azimuth, CANcoder absoluteEncoder, String moduleName,
-                                   Translation2d location)
-  {
-    MechanismGearing driveGearing         = new MechanismGearing(GearBox.fromStages("12:1", "2:1"));
-    MechanismGearing azimuthGearing       = new MechanismGearing(GearBox.fromStages("21:1"));
-    PIDController    azimuthPIDController = new PIDController(1, 0, 0);
-    SmartMotorControllerConfig driveCfg = new SmartMotorControllerConfig(this)
-        .withWheelDiameter(Inches.of(4))
-        .withClosedLoopController(50, 0, 4)
+  private SwerveModule createModule(SparkMax drive, SparkMax azimuth, CANcoder encoder, String name, Translation2d loc) {
+    var driveCfg = new SmartMotorControllerConfig(this)
+        .withWheelDiameter(Inches.of(4)).withClosedLoopController(50, 0, 4)
         .withIdleMode(SmartMotorControllerConfig.MotorMode.BRAKE)
-        .withGearing(driveGearing)
+        .withGearing(new MechanismGearing(GearBox.fromStages("12:1", "2:1")))
         .withStatorCurrentLimit(Amps.of(40))
         .withTelemetry("driveMotor", SmartMotorControllerConfig.TelemetryVerbosity.HIGH);
-    SmartMotorControllerConfig azimuthCfg = new SmartMotorControllerConfig(this)
+    var azimuthCfg = new SmartMotorControllerConfig(this)
         .withClosedLoopController(50, 0, 4)
         .withContinuousWrapping(Radians.of(-Math.PI), Radians.of(Math.PI))
-        .withGearing(azimuthGearing)
+        .withGearing(new MechanismGearing(GearBox.fromStages("21:1")))
         .withStatorCurrentLimit(Amps.of(20))
         .withTelemetry("angleMotor", SmartMotorControllerConfig.TelemetryVerbosity.HIGH);
-    SmartMotorController driveSMC   = new SparkWrapper(drive, DCMotor.getNEO(1), driveCfg);
-    SmartMotorController azimuthSMC = new SparkWrapper(azimuth, DCMotor.getNEO(1), azimuthCfg);
-    SwerveModuleConfig moduleConfig = new SwerveModuleConfig(driveSMC, azimuthSMC)
-        .withAbsoluteEncoder(absoluteEncoder.getAbsolutePosition().asSupplier())
-        .withTelemetry(moduleName, SmartMotorControllerConfig.TelemetryVerbosity.HIGH)
-        .withLocation(location)
-        .withOptimization(true);
-    return new SwerveModule(moduleConfig);
+    return new SwerveModule(new SwerveModuleConfig(
+        new SparkWrapper(drive, DCMotor.getNEO(1), driveCfg),
+        new SparkWrapper(azimuth, DCMotor.getNEO(1), azimuthCfg))
+        .withAbsoluteEncoder(encoder.getAbsolutePosition().asSupplier())
+        .withTelemetry(name, SmartMotorControllerConfig.TelemetryVerbosity.HIGH)
+        .withLocation(loc).withOptimization(true));
   }
 
-  public SwerveSubsystem()
-  {
-    Pigeon2 gyro = new Pigeon2(14);
-    var fl = createModule(new SparkMax(1, MotorType.kBrushless),
-                          new SparkMax(2, MotorType.kBrushless),
-                          new CANcoder(3),
-                          "frontleft",
-                          new Translation2d(Inches.of(24), Inches.of(24)));
-    var fr = createModule(new SparkMax(4, MotorType.kBrushless),
-                          new SparkMax(5, MotorType.kBrushless),
-                          new CANcoder(6),
-                          "frontright",
-                          new Translation2d(Inches.of(24), Inches.of(-24)));
-    var bl = createModule(new SparkMax(7, MotorType.kBrushless),
-                          new SparkMax(8, MotorType.kBrushless),
-                          new CANcoder(9),
-                          "backleft",
-                          new Translation2d(Inches.of(-24), Inches.of(24)));
-    var br = createModule(new SparkMax(10, MotorType.kBrushless),
-                          new SparkMax(11, MotorType.kBrushless),
-                          new CANcoder(12),
-                          "backright",
-                          new Translation2d(Inches.of(-24), Inches.of(-24)));
-    SwerveDriveConfig config = new SwerveDriveConfig(this, fl, fr, bl, br)
-        .withGyro(gyro.getYaw().asSupplier())
-        .withStartingPose(new Pose2d(3, 3, Rotation2d.fromDegrees(0)))
+  public SwerveSubsystem() {
+    var d = Inches.of(24);
+    drive = new SwerveDrive(new SwerveDriveConfig(this,
+        createModule(new SparkMax(1, MotorType.kBrushless), new SparkMax(2, MotorType.kBrushless), new CANcoder(3), "fl", new Translation2d(d, d)),
+        createModule(new SparkMax(4, MotorType.kBrushless), new SparkMax(5, MotorType.kBrushless), new CANcoder(6), "fr", new Translation2d(d, d.negate())),
+        createModule(new SparkMax(7, MotorType.kBrushless), new SparkMax(8, MotorType.kBrushless), new CANcoder(9), "bl", new Translation2d(d.negate(), d)),
+        createModule(new SparkMax(10, MotorType.kBrushless), new SparkMax(11, MotorType.kBrushless), new CANcoder(12), "br", new Translation2d(d.negate(), d.negate())))
+        .withGyro(new Pigeon2(14).getYaw().asSupplier())
+        .withStartingPose(new Pose2d(3, 3, Rotation2d.kZero))
         .withTranslationController(new PIDController(1, 0, 0))
-        .withRotationController(new PIDController(1, 0, 0));
-    drive = new SwerveDrive(config);
+        .withRotationController(new PIDController(1, 0, 0)));
 
-    // Setup obstacles - field walls as circles for smooth APF
-    for (double y = 0; y <= 8.052; y += 0.8) { nav.addWall(0.8, y); nav.addWall(16.748, y); }
-    for (double x = 0; x <= 17.548; x += 0.8) { nav.addWall(x, 0.8); nav.addWall(x, 7.252); }
-    nav.addCircle(4.489, 4.026, 0.9);   // Blue reef
-    nav.addCircle(13.059, 4.026, 0.9);  // Red reef
-    nav.addCircle(8.774, 4.026, 0.54);  // Pillar
+    // Use MapleSim's Reefscape obstacles (from Arena2025Reefscape.ReefscapeFieldObstacleMap)
+    addReefscapeObstacles();
 
-    // Create opponents
-    Arena2025Reefscape arena = new Arena2025Reefscape();
+    // Opponents
+    var arena = new Arena2025Reefscape();
     opponents.add(new KitBot(arena, DriverStation.Alliance.Red, 1));
     opponents.add(new KitBot(arena, DriverStation.Alliance.Red, 2));
     RobotModeTriggers.teleop().onTrue(Commands.runOnce(() ->
       opponents.forEach(o -> o.setState(SmartOpponent.States.STARTING))));
 
     SmartDashboard.putData("Field", field);
+  }
+
+  private void addReefscapeObstacles() {
+    // Convert MapleSim field borders to navigation obstacles (as circles for smooth APF)
+    addLine(0, 1.27, 0, 6.782);           // Blue wall
+    addLine(0, 1.27, 1.672, 0);           // Blue coral station top
+    addLine(0, 6.782, 1.672, 8.052);      // Blue coral station bottom
+    addLine(17.548, 1.27, 17.548, 6.782); // Red wall
+    addLine(17.548, 1.27, 15.876, 0);     // Red coral station top
+    addLine(17.548, 6.782, 15.876, 8.052);// Red coral station bottom
+    addLine(1.672, 8.052, 11, 8.052);     // Upper wall left
+    addLine(12, 8.052, 15.876, 8.052);    // Upper wall right
+    addLine(1.672, 0, 5.8, 0);            // Lower wall left
+    addLine(6.3, 0, 15.876, 0);           // Lower wall right
+
+    // Reefs (hexagonal - use circles to approximate)
+    nav.addCircle(4.489, 4.026, 0.9);     // Blue reef
+    nav.addCircle(13.059, 4.026, 0.9);    // Red reef
+    nav.addCircle(8.774, 4.026, 0.2);     // Center pillar
+  }
+
+  private void addLine(double x1, double y1, double x2, double y2) {
+    double dx = x2 - x1, dy = y2 - y1, len = Math.sqrt(dx*dx + dy*dy);
+    for (double t = 0; t <= 1; t += 0.8 / len) nav.addWall(x1 + dx*t, y1 + dy*t);
   }
 
   public Command driveToPose(Pose2d target) {
@@ -212,57 +193,22 @@ public class SwerveSubsystem extends SubsystemBase {
     });
   }
 
-  /**
-   * Drive the {@link SwerveDrive} object with robot relative chassis speeds.
-   *
-   * @param speedsSupplier Robot relative {@link ChassisSpeeds}.
-   * @return {@link Command} to run the drive.
-   */
-  public Command drive(Supplier<ChassisSpeeds> speedsSupplier)
-  {
-    return drive.drive(speedsSupplier);
-  }
-
-  public Command setRobotRelativeChassisSpeeds(ChassisSpeeds speeds)
-  {
-    return run(() -> drive.setRobotRelativeChassisSpeeds(speeds));
-  }
-
-  public Command driveRobotRelative(Supplier<ChassisSpeeds> speedsSupplier)
-  {
-    return drive.drive(speedsSupplier);
-  }
-
-  public Command lock()
-  {
-    return run(drive::lockPose);
-  }
-
-  public Command resetRobotPose() {
-        return Commands.runOnce(() ->
-        drive.resetOdometry(new Pose2d(3, 3, Rotation2d.kZero)));
-  }
+  public Command drive(Supplier<ChassisSpeeds> speeds) { return drive.drive(speeds); }
+  public Command setRobotRelativeChassisSpeeds(ChassisSpeeds s) { return run(() -> drive.setRobotRelativeChassisSpeeds(s)); }
+  public Command lock() { return run(drive::lockPose); }
+  public Command resetRobotPose() { return Commands.runOnce(() -> drive.resetOdometry(new Pose2d(3, 3, Rotation2d.kZero))); }
 
   @Override
-  public void periodic()
-  {
+  public void periodic() {
     drive.updateTelemetry();
     field.setRobotPose(drive.getPose());
-
-    // Update opponent poses on Field2d
-    for (int i = 0; i < opponents.size(); i++) {
+    for (int i = 0; i < opponents.size(); i++)
       field.getObject("Opponent" + i).setPose(opponents.get(i).getPose());
-    }
   }
 
   @Override
-  public void simulationPeriodic()
-  {
+  public void simulationPeriodic() {
     drive.simIterate();
-
-    // Update opponent simulations
-    for (SmartOpponent opponent : opponents) {
-      opponent.simulationPeriodic();
-    }
+    opponents.forEach(SmartOpponent::simulationPeriodic);
   }
 }
