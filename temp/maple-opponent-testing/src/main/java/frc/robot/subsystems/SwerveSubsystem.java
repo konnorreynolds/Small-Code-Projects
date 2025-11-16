@@ -314,12 +314,9 @@ public class SwerveSubsystem extends SubsystemBase
       // Add opponents as dynamic obstacles
       for (SmartOpponent opponent : opponents) {
         Pose2d opponentPose = opponent.getPose();
-        // Create aggressive robot obstacle with velocity
-        ChassisSpeeds opponentSpeeds = opponent.getSpeeds();
-        Translation2d velocity = new Translation2d(
-            opponentSpeeds.vxMetersPerSecond,
-            opponentSpeeds.vyMetersPerSecond
-        );
+        // Create aggressive robot obstacle (velocity tracking not available from SmartOpponent)
+        // Using zero velocity for now - APF will handle avoidance based on position
+        Translation2d velocity = new Translation2d();
 
         ObstacleAvoidance.Obstacle opponentObstacle = ObstacleAvoidance.robot(
             opponentPose, velocity, true
@@ -329,14 +326,14 @@ public class SwerveSubsystem extends SubsystemBase
       }
 
       // Drive with obstacle avoidance
+      // Robot velocity parameter simplified to zero for now
       ChassisSpeeds speeds = poseController.drive(
           drive.getPose(),
           pose,
           obstacles,
           rotationPID,
           ObstacleAvoidance.Config.opponent(),
-          new Translation2d(drive.getRobotRelativeSpeed().vxMetersPerSecond,
-                            drive.getRobotRelativeSpeed().vyMetersPerSecond)
+          new Translation2d()
       );
 
       drive.setRobotRelativeChassisSpeeds(speeds);
