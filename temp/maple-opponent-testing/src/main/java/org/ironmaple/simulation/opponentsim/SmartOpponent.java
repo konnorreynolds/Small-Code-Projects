@@ -33,6 +33,8 @@ import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
 import org.ironmaple.simulation.drivesims.configs.DriveTrainSimulationConfig;
 import org.ironmaple.simulation.gamepieces.GamePieceProjectile;
 import org.ironmaple.simulation.seasonspecific.reefscape2025.ReefscapeAlgaeOnFly;
+import java.util.ArrayList;
+import java.util.List;
 import org.ironmaple.simulation.seasonspecific.reefscape2025.ReefscapeCoralOnFly;
 import org.ironmaple.utils.FieldMirroringUtils;
 
@@ -343,14 +345,14 @@ public abstract class SmartOpponent extends SubsystemBase {
         private static final Translation2d ZERO = new Translation2d();
         private final ObstacleAvoidance controller = new ObstacleAvoidance();
         private final PIDController rotPID = new PIDController(1.5, 0, 0.1);
-        private final java.util.List<ObstacleAvoidance.Obstacle> obstacles = new java.util.ArrayList<>(60);
+        private final List<ObstacleAvoidance.Obstacle> obstacles = new ArrayList<>(60);
         private final ObstacleAvoidance.Config cfg = new ObstacleAvoidance.Config();
         private final double speed, goalPull, avoidStr, oppWeight;
 
         Navigator(double speed, double goalPull, double avoidStr, double oppWeight) {
             this.speed = speed; this.goalPull = goalPull; this.avoidStr = avoidStr; this.oppWeight = oppWeight;
             rotPID.enableContinuousInput(-Math.PI, Math.PI);
-            cfg.maxVelocity = Meters.per(edu.wpi.first.units.Units.Second).of(speed);
+            cfg.maxVelocity = Meters.per(Second).of(speed);
             cfg.baseAvoidanceStrength = avoidStr;
             cfg.defaultAvoidanceRadius = Meters.of(1.2);
             cfg.goalBias = goalPull;
@@ -373,8 +375,8 @@ public abstract class SmartOpponent extends SubsystemBase {
             obstacles.add(c);
         }
 
-        ChassisSpeeds navigate(Pose2d current, Pose2d target, java.util.List<SmartOpponent> opps) {
-            var all = new java.util.ArrayList<ObstacleAvoidance.Obstacle>(obstacles.size() + opps.size());
+        ChassisSpeeds navigate(Pose2d current, Pose2d target, List<SmartOpponent> opps) {
+            var all = new ArrayList<ObstacleAvoidance.Obstacle>(obstacles.size() + opps.size());
             all.addAll(obstacles);
             for (var opp : opps) {
                 var o = ObstacleAvoidance.robot(opp.getPose(), ZERO, true);
@@ -413,7 +415,7 @@ public abstract class SmartOpponent extends SubsystemBase {
         return Commands.run(() -> {
             Pose2d current = simulation.get().getActualPoseInSimulationWorld();
             // Get other opponents for dynamic avoidance
-            java.util.List<SmartOpponent> others = new java.util.ArrayList<>();
+            List<SmartOpponent> others = new ArrayList<>();
             if (manager.isPresent()) {
                 for (SmartOpponent opp : manager.get().getOpponents()) {
                     if (opp != this) others.add(opp);
