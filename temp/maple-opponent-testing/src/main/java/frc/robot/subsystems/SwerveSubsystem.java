@@ -63,7 +63,6 @@ public class SwerveSubsystem extends SubsystemBase
   private static final double WALL_WEIGHT = 2.0;         // Wall avoidance strength (higher = stronger)
   private static final double REEF_RADIUS = 0.9;         // Reef obstacle radius (m)
   private static final double REEF_WEIGHT = 2.0;         // Reef avoidance strength
-  private static final double OPPONENT_WEIGHT = 1.0;     // Opponent avoidance strength multiplier
 
   // APF Avoidance Parameters
   private static final double AVOIDANCE_RADIUS = 1.2;    // Safety margin around obstacles (m)
@@ -73,11 +72,10 @@ public class SwerveSubsystem extends SubsystemBase
 
   // ========================================================================
 
-  private final List<ObstacleAvoidance.Obstacle> obstacles = new ArrayList<>();
+  private final ObstacleAvoidanceNavigator navigator = new ObstacleAvoidanceNavigator(
+      NAV_SPEED_MPS, AVOIDANCE_RADIUS, AVOIDANCE_STRENGTH, GOAL_ATTRACTION, PREDICTION_TIME
+  );
   private final List<ObstacleAvoidance.Obstacle> staticObstacles = new ArrayList<>();
-
-  private final ObstacleAvoidance poseController = new ObstacleAvoidance();
-  private final PIDController rotationPID = new PIDController(1.5, 0, 0.1);
 
   private final SwerveDrive drive;
   private final Field2d field = new Field2d();
@@ -220,75 +218,15 @@ public class SwerveSubsystem extends SubsystemBase
   }
 
   private void createReefscapeObstacles() {
-    // Create walls as series of circular obstacles for proper APF avoidance
-    // Using tunable parameters from top of class
+    // Use navigator factory methods for clean obstacle creation
+    staticObstacles.addAll(ObstacleAvoidanceNavigator.createFieldBoundaries(
+        WALL_RADIUS, WALL_SPACING, WALL_WEIGHT
+    ));
+    staticObstacles.addAll(ObstacleAvoidanceNavigator.createReefscapeObstacles(
+        REEF_RADIUS, REEF_WEIGHT
+    ));
 
-    // Left wall (vertical)
-    for (double y = 0; y <= 8.052; y += WALL_SPACING) {
-      ObstacleAvoidance.Obstacle wall = ObstacleAvoidance.circle(
-          new Translation2d(0.8, y), Meters.of(WALL_RADIUS)
-      );
-      wall.type = ObstacleAvoidance.Obstacle.Type.DANGEROUS;
-      wall.avoidanceWeight = WALL_WEIGHT;
-      wall.priority = 1.0;
-      staticObstacles.add(wall);
-    }
-
-    // Right wall (vertical)
-    for (double y = 0; y <= 8.052; y += WALL_SPACING) {
-      ObstacleAvoidance.Obstacle wall = ObstacleAvoidance.circle(
-          new Translation2d(16.748, y), Meters.of(WALL_RADIUS)
-      );
-      wall.type = ObstacleAvoidance.Obstacle.Type.DANGEROUS;
-      wall.avoidanceWeight = WALL_WEIGHT;
-      wall.priority = 1.0;
-      staticObstacles.add(wall);
-    }
-
-    // Bottom wall (horizontal)
-    for (double x = 0; x <= 17.548; x += WALL_SPACING) {
-      ObstacleAvoidance.Obstacle wall = ObstacleAvoidance.circle(
-          new Translation2d(x, 0.8), Meters.of(WALL_RADIUS)
-      );
-      wall.type = ObstacleAvoidance.Obstacle.Type.DANGEROUS;
-      wall.avoidanceWeight = WALL_WEIGHT;
-      wall.priority = 1.0;
-      staticObstacles.add(wall);
-    }
-
-    // Top wall (horizontal)
-    for (double x = 0; x <= 17.548; x += WALL_SPACING) {
-      ObstacleAvoidance.Obstacle wall = ObstacleAvoidance.circle(
-          new Translation2d(x, 7.252), Meters.of(WALL_RADIUS)
-      );
-      wall.type = ObstacleAvoidance.Obstacle.Type.DANGEROUS;
-      wall.avoidanceWeight = WALL_WEIGHT;
-      wall.priority = 1.0;
-      staticObstacles.add(wall);
-    }
-
-    // Blue Reef
-    ObstacleAvoidance.Obstacle blueReef = ObstacleAvoidance.circle(
-        new Translation2d(4.489, 4.026), Meters.of(REEF_RADIUS)
-    );
-    blueReef.avoidanceWeight = REEF_WEIGHT;
-    staticObstacles.add(blueReef);
-
-    // Red Reef
-    ObstacleAvoidance.Obstacle redReef = ObstacleAvoidance.circle(
-        new Translation2d(13.059, 4.026), Meters.of(REEF_RADIUS)
-    );
-    redReef.avoidanceWeight = REEF_WEIGHT;
-    staticObstacles.add(redReef);
-
-    // Center pillar
-    ObstacleAvoidance.Obstacle pillar = ObstacleAvoidance.circle(
-        new Translation2d(8.774, 4.026), Meters.of(REEF_RADIUS * 0.6)
-    );
-    pillar.avoidanceWeight = REEF_WEIGHT;
-    staticObstacles.add(pillar);
-
-    System.out.println("Created " + staticObstacles.size() + " obstacles (tunable config)");
+    System.out.println("Created " + staticObstacles.size() + " obstacles using ObstacleAvoidanceNavigator");
   }
 
   private void visualizeObstacles() {
@@ -359,39 +297,12 @@ public class SwerveSubsystem extends SubsystemBase
   public Command driveToPose(Pose2d pose)
   {
     return run(() -> {
-      // Update dynamic obstacles list with current opponents
-      obstacles.clear();
-      obstacles.addAll(staticObstacles);
-
-      // Add opponents as dynamic obstacles using tunable parameters
-      for (SmartOpponent opponent : opponents) {
-        Pose2d opponentPose = opponent.getPose();
-        Translation2d velocity = new Translation2d();
-
-        ObstacleAvoidance.Obstacle opponentObstacle = ObstacleAvoidance.robot(
-            opponentPose, velocity, true
-        );
-        opponentObstacle.avoidanceWeight *= OPPONENT_WEIGHT;  // Apply tunable weight
-        obstacles.add(opponentObstacle);
-      }
-
-      // Create simple, tunable APF configuration
-      ObstacleAvoidance.Config config = new ObstacleAvoidance.Config();
-      config.maxVelocity = MetersPerSecond.of(NAV_SPEED_MPS);
-      config.baseAvoidanceStrength = AVOIDANCE_STRENGTH;
-      config.defaultAvoidanceRadius = Meters.of(AVOIDANCE_RADIUS);
-      config.goalBias = GOAL_ATTRACTION;
-      config.predictionLookAhead = PREDICTION_TIME;
-      config.useCollisionPrediction = true;
-      config.useVelocityAwareAvoidance = true;
-
-      ChassisSpeeds speeds = poseController.drive(
+      // Use compact navigator to get ChassisSpeeds
+      ChassisSpeeds speeds = navigator.navigate(
           drive.getPose(),
           pose,
-          obstacles,
-          rotationPID,
-          config,
-          new Translation2d()
+          staticObstacles,
+          opponents
       );
 
       drive.setRobotRelativeChassisSpeeds(speeds);
@@ -400,8 +311,6 @@ public class SwerveSubsystem extends SubsystemBase
       field.getObject("Goal").setPose(pose);
 
       // Debug output
-      SmartDashboard.putNumber("Obstacles/Total", obstacles.size());
-      SmartDashboard.putNumber("Obstacles/Dynamic", opponents.size());
       SmartDashboard.putNumber("Distance to Goal", drive.getPose().getTranslation().getDistance(pose.getTranslation()));
     });
   }
