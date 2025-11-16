@@ -30,7 +30,6 @@ import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
-import org.ironmaple.simulation.opponentsim.OpponentManager;
 import org.ironmaple.simulation.opponentsim.SmartOpponent;
 import org.ironmaple.simulation.seasonspecific.reefscape2025.Arena2025Reefscape;
 import org.ironmaple.simulation.seasonspecific.reefscape2025.opponentsim.KitBot;
@@ -62,7 +61,7 @@ public class SwerveSubsystem extends SubsystemBase
 
   // Maple-sim integration
   private final Arena2025Reefscape arena = new Arena2025Reefscape();
-  private final OpponentManager opponentManager = new OpponentManager();
+  private final ReefscapeOpponentManager opponentManager = new ReefscapeOpponentManager();
   private final List<SmartOpponent> opponents = new ArrayList<>();
 
   private AngularVelocity maximumChassisSpeedsAngularVelocity = DegreesPerSecond.of(720);
@@ -177,12 +176,11 @@ public class SwerveSubsystem extends SubsystemBase
     createReefscapeObstacles();
 
     // Create maple-sim opponents (2 KitBots on red alliance)
+    // Note: KitBot constructor automatically registers opponents with the manager
     KitBot opponent1 = new KitBot(opponentManager, DriverStation.Alliance.Red, 1);
     KitBot opponent2 = new KitBot(opponentManager, DriverStation.Alliance.Red, 2);
     opponents.add(opponent1);
     opponents.add(opponent2);
-    opponentManager.registerOpponent(opponent1, DriverStation.Alliance.Red);
-    opponentManager.registerOpponent(opponent2, DriverStation.Alliance.Red);
 
     SmartDashboard.putData("Field", field);
     SmartDashboard.putString("Obstacle Count", "Static: " + staticObstacles.size() + ", Dynamic: 2");
