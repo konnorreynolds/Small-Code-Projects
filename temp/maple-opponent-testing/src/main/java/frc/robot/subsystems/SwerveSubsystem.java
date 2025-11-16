@@ -182,6 +182,13 @@ public class SwerveSubsystem extends SubsystemBase
     opponents.add(opponent1);
     opponents.add(opponent2);
 
+    // Set opponents to active state when teleop starts
+    RobotModeTriggers.teleop().onTrue(Commands.runOnce(() -> {
+      for (SmartOpponent opp : opponents) {
+        opp.setState(SmartOpponent.States.STARTING);
+      }
+    }));
+
     SmartDashboard.putData("Field", field);
     SmartDashboard.putString("Obstacle Count", "Static: " + staticObstacles.size() + ", Dynamic: 2");
 
@@ -190,49 +197,66 @@ public class SwerveSubsystem extends SubsystemBase
   }
 
   private void createReefscapeObstacles() {
-    // Field boundaries (smaller safety margin for testing)
+    // Field boundaries (thicker walls for stronger avoidance)
     // Left wall (vertical)
     ObstacleAvoidance.Obstacle leftWall = ObstacleAvoidance.line(
-        new Translation2d(0, 0), new Translation2d(0, 8.052), Meters.of(0.3)
+        new Translation2d(0, 0), new Translation2d(0, 8.052), Meters.of(1.0)
     );
     leftWall.likelyDestination = new Translation2d(0, 8.052); // Mark as vertical
+    leftWall.type = ObstacleAvoidance.Obstacle.Type.DANGEROUS;
+    leftWall.priority = 1.0;
     staticObstacles.add(leftWall);
 
     // Right wall (vertical)
     ObstacleAvoidance.Obstacle rightWall = ObstacleAvoidance.line(
-        new Translation2d(17.548, 0), new Translation2d(17.548, 8.052), Meters.of(0.3)
+        new Translation2d(17.548, 0), new Translation2d(17.548, 8.052), Meters.of(1.0)
     );
     rightWall.likelyDestination = new Translation2d(17.548, 8.052); // Mark as vertical
+    rightWall.type = ObstacleAvoidance.Obstacle.Type.DANGEROUS;
+    rightWall.priority = 1.0;
     staticObstacles.add(rightWall);
 
     // Bottom wall (horizontal)
     ObstacleAvoidance.Obstacle bottomWall = ObstacleAvoidance.line(
-        new Translation2d(0, 0), new Translation2d(17.548, 0), Meters.of(0.3)
+        new Translation2d(0, 0), new Translation2d(17.548, 0), Meters.of(1.0)
     );
     bottomWall.likelyDestination = new Translation2d(17.548, 0); // Mark as horizontal
+    bottomWall.type = ObstacleAvoidance.Obstacle.Type.DANGEROUS;
+    bottomWall.priority = 1.0;
     staticObstacles.add(bottomWall);
 
     // Top wall (horizontal)
     ObstacleAvoidance.Obstacle topWall = ObstacleAvoidance.line(
-        new Translation2d(0, 8.052), new Translation2d(17.548, 8.052), Meters.of(0.3)
+        new Translation2d(0, 8.052), new Translation2d(17.548, 8.052), Meters.of(1.0)
     );
     topWall.likelyDestination = new Translation2d(17.548, 8.052); // Mark as horizontal
+    topWall.type = ObstacleAvoidance.Obstacle.Type.DANGEROUS;
+    topWall.priority = 1.0;
     staticObstacles.add(topWall);
 
-    // Blue Reef (hexagon obstacle)
-    staticObstacles.add(ObstacleAvoidance.circle(
-        new Translation2d(4.489, 4.026), Meters.of(0.8)
-    ));
+    // Blue Reef (hexagon obstacle) - larger radius for better avoidance
+    ObstacleAvoidance.Obstacle blueReef = ObstacleAvoidance.circle(
+        new Translation2d(4.489, 4.026), Meters.of(1.0)
+    );
+    blueReef.type = ObstacleAvoidance.Obstacle.Type.STATIC;
+    blueReef.priority = 0.9;
+    staticObstacles.add(blueReef);
 
-    // Red Reef (hexagon obstacle)
-    staticObstacles.add(ObstacleAvoidance.circle(
-        new Translation2d(13.059, 4.026), Meters.of(0.8)
-    ));
+    // Red Reef (hexagon obstacle) - larger radius for better avoidance
+    ObstacleAvoidance.Obstacle redReef = ObstacleAvoidance.circle(
+        new Translation2d(13.059, 4.026), Meters.of(1.0)
+    );
+    redReef.type = ObstacleAvoidance.Obstacle.Type.STATIC;
+    redReef.priority = 0.9;
+    staticObstacles.add(redReef);
 
-    // Center pillar
-    staticObstacles.add(ObstacleAvoidance.circle(
-        new Translation2d(8.774, 4.026), Meters.of(0.4)
-    ));
+    // Center pillar - larger radius for better avoidance
+    ObstacleAvoidance.Obstacle pillar = ObstacleAvoidance.circle(
+        new Translation2d(8.774, 4.026), Meters.of(0.6)
+    );
+    pillar.type = ObstacleAvoidance.Obstacle.Type.STATIC;
+    pillar.priority = 0.9;
+    staticObstacles.add(pillar);
 
     System.out.println("Created " + staticObstacles.size() + " Reefscape static obstacles");
   }
@@ -323,14 +347,14 @@ public class SwerveSubsystem extends SubsystemBase
         obstacles.add(opponentObstacle);
       }
 
-      // Drive with obstacle avoidance
-      // Robot velocity parameter simplified to zero for now
+      // Drive with obstacle avoidance using ultra-safe configuration
+      // This ensures strong avoidance behavior
       ChassisSpeeds speeds = poseController.drive(
           drive.getPose(),
           pose,
           obstacles,
           rotationPID,
-          ObstacleAvoidance.Config.opponent(),
+          ObstacleAvoidance.Config.ultraSafe(),
           new Translation2d()
       );
 
