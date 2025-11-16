@@ -58,18 +58,18 @@ public class SwerveSubsystem extends SubsystemBase
   private static final double NAV_SPEED_MPS = 5.0;  // Navigation speed in m/s (higher = faster but less safe)
 
   // Obstacle Detection
-  private static final double WALL_RADIUS = 0.4;         // Radius of wall obstacle circles (m)
-  private static final double WALL_SPACING = 0.6;        // Spacing between wall circles (m)
-  private static final double WALL_WEIGHT = 3.0;         // Wall avoidance strength (higher = stronger)
-  private static final double REEF_RADIUS = 0.95;        // Reef obstacle radius (m)
-  private static final double REEF_WEIGHT = 2.5;         // Reef avoidance strength
-  private static final double OPPONENT_WEIGHT = 1.2;     // Opponent avoidance strength multiplier
+  private static final double WALL_RADIUS = 0.35;        // Radius of wall obstacle circles (m)
+  private static final double WALL_SPACING = 0.8;        // Spacing between wall circles (m) - larger = less overlap
+  private static final double WALL_WEIGHT = 2.0;         // Wall avoidance strength (higher = stronger)
+  private static final double REEF_RADIUS = 0.9;         // Reef obstacle radius (m)
+  private static final double REEF_WEIGHT = 2.0;         // Reef avoidance strength
+  private static final double OPPONENT_WEIGHT = 1.0;     // Opponent avoidance strength multiplier
 
   // APF Avoidance Parameters
-  private static final double AVOIDANCE_RADIUS = 1.5;    // Safety margin around obstacles (m)
-  private static final double AVOIDANCE_STRENGTH = 1.8;  // Base repulsion force strength
-  private static final double GOAL_ATTRACTION = 2.5;     // Goal pull strength (higher = more aggressive)
-  private static final double PREDICTION_TIME = 1.5;     // Collision prediction look-ahead (seconds)
+  private static final double AVOIDANCE_RADIUS = 1.2;    // Safety margin around obstacles (m)
+  private static final double AVOIDANCE_STRENGTH = 1.5;  // Base repulsion force strength
+  private static final double GOAL_ATTRACTION = 8.0;     // Goal pull strength (higher = more aggressive) - DOMINANT FORCE
+  private static final double PREDICTION_TIME = 1.2;     // Collision prediction look-ahead (seconds)
 
   // ========================================================================
 
